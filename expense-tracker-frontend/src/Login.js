@@ -10,16 +10,20 @@ function Login({ onLoginSuccess }) {
 
     try {
       // Make a POST request to your Django backend
-      const response = await fetch("http://localhost:8000/api/login/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+      // const response = await fetch("http://localhost:8000/api/login/", {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/login/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();

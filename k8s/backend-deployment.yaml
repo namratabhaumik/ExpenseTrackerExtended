@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expense-tracker-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: expense-tracker-backend
+  template:
+    metadata:
+      labels:
+        app: expense-tracker-backend
+    spec:
+      containers:
+        - name: expense-tracker-backend
+          image: expense-tracker-backend
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
