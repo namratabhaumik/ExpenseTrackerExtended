@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: expense-tracker-frontend
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
         - name: expense-tracker-frontend
-          image: expense-tracker-frontend
-          imagePullPolicy: Never
+          image: 897722688090.dkr.ecr.us-east-1.amazonaws.com/expense-tracker-frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
