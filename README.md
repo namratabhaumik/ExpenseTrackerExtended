@@ -1,4 +1,4 @@
-# AWS Expense Tracker App with Kubernetes and EKS
+# AWS Expense Tracker App with Kubernetes and AWS EKS
 
 This project is an extension of my previous AWS-based [expense tracker app](https://github.com/namratabhaumik/ExpenseTracker), where I integrated Docker, Kubernetes and AWS EKS (Elastic Kubernetes Service) for container orchestration and scalability. The goal of this project was to explore the power of AWS services, containerization with Docker, and orchestration with Kubernetes to build a scalable, cloud-native application.
 
@@ -7,7 +7,7 @@ This project is an extension of my previous AWS-based [expense tracker app](http
 - **Serverless Architecture**: Utilizes AWS Lambda for backend logic, DynamoDB for data storage, and AWS Cognito for authentication.
 - **Containerization with Docker**: The frontend (React) and backend (Django) are containerized, ensuring a consistent environment across different stages of deployment.
 - **Kubernetes and AWS EKS**: Kubernetes orchestrates the containers, with AWS EKS managing the Kubernetes clusters for scalability and reliability.
-- **AWS Services Integration**: 
+- **AWS Services Integration**:
   - **IAM (Identity and Access Management)**: Secure service-to-service communication.
   - **S3**: For static asset storage (e.g., images, logs).
   - **DynamoDB**: A serverless NoSQL database for storing expense data.
@@ -36,12 +36,14 @@ This project follows a microservices architecture with separate frontend and bac
 To run this project locally, follow these steps:
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/your-username/aws-expense-tracker-k8s.git
    cd aws-expense-tracker-k8s
    ```
 
 2. **Set up the backend (Django)**:
+
    - Navigate to the backend directory:
      ```bash
      cd expense-tracker-backend
@@ -56,6 +58,7 @@ To run this project locally, follow these steps:
      ```
 
 3. **Set up the frontend (React)**:
+
    - Navigate to the frontend directory:
      ```bash
      cd expense-tracker-frontend
@@ -66,6 +69,7 @@ To run this project locally, follow these steps:
      ```
 
 4. **Dockerize the Application**:
+
    - Build the Docker containers for the frontend and backend:
      ```bash
      docker build -t react-frontend ./expense-tracker-frontend
@@ -73,6 +77,7 @@ To run this project locally, follow these steps:
      ```
 
 5. **Start the Docker Containers**:
+
    - Run the containers using Docker Compose (if you have a `docker-compose.yml` file configured):
      ```bash
      docker-compose up
@@ -87,6 +92,7 @@ To run this project locally, follow these steps:
 To deploy the project on AWS using Kubernetes and EKS, follow these steps:
 
 1. **Set up AWS EKS**:
+
    - Configure your AWS CLI and ensure you have the necessary permissions.
    - Follow the steps in the [EKS documentation](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html) to create an EKS cluster.
 
@@ -115,4 +121,3 @@ These challenges provided valuable learning experiences and helped me improve my
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 For any queries or feedback, please open an issue or reach out!
-
