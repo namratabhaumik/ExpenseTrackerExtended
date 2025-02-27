@@ -91,6 +91,21 @@ To run this project locally, follow these steps:
 
 To deploy the project on AWS using Kubernetes and EKS, follow these steps:
 
+### **Infrastructure as Code (CloudFormation)**
+
+This project includes a **CloudFormation template (`expense-tracker-stack.yaml`)** that provisions key AWS resources such as:
+
+- **S3 bucket** for storing receipts
+- **DynamoDB table** for expense tracking
+- **SNS topic** for notifications
+- **IAM role** with permissions for Lambda functions
+
+To deploy the CloudFormation stack, run the following command:
+
+```bash
+aws cloudformation create-stack --stack-name ExpenseTrackerStack --template-body file://cloudformation/expense-tracker-stack.yaml --capabilities CAPABILITY_NAMED_IAM
+```
+
 1. **Set up AWS EKS**:
 
    - Configure your AWS CLI and ensure you have the necessary permissions.
