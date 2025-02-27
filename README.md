@@ -1,6 +1,10 @@
 # AWS Expense Tracker App with Kubernetes and AWS EKS
 
-This project is an extension of my previous AWS-based [expense tracker app](https://github.com/namratabhaumik/ExpenseTracker), where I integrated Docker, Kubernetes and AWS EKS (Elastic Kubernetes Service) for microservices based container orchestration and scalability. The goal of this project was to explore the power of AWS services, containerization with Docker, and orchestration with Kubernetes to build a scalable, cloud-native application.
+This project is an extension of my previous AWS-based [expense tracker app](https://github.com/namratabhaumik/ExpenseTracker) (All the APIs can be found there). Here I integrated Docker and also Kubernetes using AWS EKS (Elastic Kubernetes Service) for microservices based container orchestration and scalability. The goal of this project was to explore the power of AWS services, containerization with Docker, and orchestration with Kubernetes to build a scalable, cloud-native application.
+
+## Medium Links
+- [Mastering Containerization and Orchestration: Lessons from My First AWS EKS Project](https://namrata-bhaumik.medium.com/mastering-containerization-and-orchestration-lessons-from-my-first-aws-eks-project-0e9918f43b12?source=friends_link&sk=08cef3208d13c6e2dc68b067e3576285)
+- [Overcoming Cloud Challenges: Lessons Learned from Building a Serverless AWS App](https://namrata-bhaumik.medium.com/overcoming-cloud-challenges-lessons-learned-from-building-a-serverless-aws-app-5d3c59efc9eb?source=friends_link&sk=437b217db913371db42d0e9ec5831cc4)
 
 ## Features
 
