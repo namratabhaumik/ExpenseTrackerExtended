@@ -47,4 +47,9 @@ jobs:
       #     cd expense-tracker-backend/expense_tracker
       #     python manage.py test
 
+      - name: Build Docker image
+        run: |
+          cd expense-tracker-backend
+          docker build -t expense-tracker-backend:ci .
+
 #test commit
