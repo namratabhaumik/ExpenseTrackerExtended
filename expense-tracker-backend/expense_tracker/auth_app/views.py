@@ -247,17 +247,97 @@ def get_expenses(request):
 
 @csrf_exempt
 def upload_receipt(request):
-    """Upload a receipt file."""
+    """Upload a receipt file to S3."""
     if request.method == 'POST':
         try:
-            # For now, we'll just return a success message
-            # TODO: Implement actual file upload to S3
-            logger.info("Receipt upload endpoint called (not yet implemented)")
-            return JsonResponse({
-                'message': 'Receipt upload endpoint - S3 integration pending',
-                'status': 'not_implemented'
-            }, status=501)
+            data = json.loads(request.body)
 
+            # Extract data
+            file_data = data.get('file')
+            file_name = data.get('filename')
+            user_id = data.get('user_id')
+            # Optional: link to existing expense
+            expense_id = data.get('expense_id')
+
+            # Validate required fields
+            if not all([file_data, file_name, user_id]):
+                logger.warning(
+                    f"Receipt upload attempt with missing fields: file_data={bool(file_data)}, file_name={bool(file_name)}, user_id={bool(user_id)}")
+                return JsonResponse({
+                    'error': 'Missing required fields: file, filename, user_id',
+                    'status': 'error'
+                }, status=400)
+
+            # Validate file size (max 10MB)
+            try:
+                if file_data.startswith('data:'):
+                    header, encoded = file_data.split(',', 1)
+                    file_data = encoded
+
+                file_bytes = base64.b64decode(file_data)
+                if len(file_bytes) > 10 * 1024 * 1024:  # 10MB limit
+                    logger.warning(f"File too large: {len(file_bytes)} bytes")
+                    return JsonResponse({
+                        'error': 'File size exceeds 10MB limit',
+                        'status': 'error'
+                    }, status=400)
+            except Exception as e:
+                logger.error(f"Error processing file data: {str(e)}")
+                return JsonResponse({
+                    'error': 'Invalid file data format',
+                    'status': 'error'
+                }, status=400)
+
+            # Upload to S3
+            from utils.s3_utils import S3Handler
+            s3_handler = S3Handler()
+
+            # Check if bucket exists
+            if not s3_handler.check_bucket_exists():
+                logger.error(
+                    f"S3 bucket {s3_handler.bucket_name} does not exist")
+                return JsonResponse({
+                    'error': 'Storage service not available',
+                    'status': 'error'
+                }, status=503)
+
+            # Upload file
+            upload_result = s3_handler.upload_file(
+                file_data, file_name, user_id)
+
+            if not upload_result['success']:
+                logger.error(f"S3 upload failed: {upload_result.get('error')}")
+                return JsonResponse({
+                    'error': 'Failed to upload file',
+                    'status': 'error'
+                }, status=500)
+
+            # If expense_id provided, update the expense with receipt URL
+            if expense_id:
+                from .models import DynamoDBExpense
+                expense_db = DynamoDBExpense()
+                expense_db.update_receipt_url(
+                    expense_id, upload_result['file_url'])
+                logger.info(f"Receipt URL updated for expense: {expense_id}")
+
+            logger.info(
+                f"Receipt uploaded successfully: {upload_result['file_key']} for user {user_id}")
+
+            return JsonResponse({
+                'message': 'Receipt uploaded successfully',
+                'file_url': upload_result['file_url'],
+                'file_key': upload_result['file_key'],
+                'file_name': upload_result['file_name'],
+                'expense_id': expense_id,
+                'status': 'success'
+            }, status=201)
+
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in receipt upload request")
+            return JsonResponse({
+                'error': 'Invalid JSON format',
+                'status': 'error'
+            }, status=400)
         except Exception as e:
             logger.error(f"Error uploading receipt: {str(e)}", exc_info=True)
             return JsonResponse({

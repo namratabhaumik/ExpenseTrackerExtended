@@ -35,12 +35,11 @@
   - ✅ Add structured logging with file and console output.
   - ✅ Standardize error response format with status field.
 
-- **🔄 Integrate with AWS Services** (NEXT PRIORITY)
+- **✅ Integrate with AWS Services**
 
-  - Ensure backend can:
-    - Upload receipts to S3
-    - Store/retrieve expenses in DynamoDB ✅
-    - Send notifications via SNS (if required for MVP)
+  - ✅ Upload receipts to S3
+  - ✅ Store/retrieve expenses in DynamoDB
+  - ✅ Send notifications via SNS (if required for MVP)
 
 - **Testing** (NEXT PRIORITY)
   - Add at least one test for each endpoint (success and failure cases).
@@ -95,11 +94,18 @@
      - `AWS_REGION`
      - `DYNAMODB_TABLE_NAME`
 
-3. **Setup DynamoDB table**
+3. **Setup AWS Resources**
 
    ```bash
-   python setup_dynamodb.py
+   # Run the master setup script to create DynamoDB table
+   python scripts/setup_all.py
+
+   # Or run individual scripts:
+   python scripts/setup_dynamodb.py  # Create DynamoDB table
+   python scripts/check_s3.py        # Check S3 bucket (using existing bucket)
    ```
+
+   **Note:** Using existing S3 bucket `my-finance-tracker-receipts`
 
 4. **Start the server**
 
@@ -112,6 +118,7 @@
    - The login endpoint is available at: `POST /api/login/`
    - Add expense: `POST /api/expenses/`
    - Get expenses: `GET /api/expenses/list/?user_id=<user_id>`
+   - Upload receipt: `POST /api/receipts/upload/`
    - Use Postman or curl to test with your Cognito credentials.
 
 ---

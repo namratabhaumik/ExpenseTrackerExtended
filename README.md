@@ -91,11 +91,19 @@ DYNAMODB_TABLE_NAME=expense-tracker-table
 pip install -r requirements.txt
 ```
 
-### 4. Setup DynamoDB Table
+### 4. Setup AWS Resources
 
 ```bash
-python setup_dynamodb.py
+# Run the master setup script to create DynamoDB table
+python scripts/setup_all.py
+
+# Or run individual scripts:
+python scripts/setup_dynamodb.py  # Create DynamoDB table
+python scripts/check_s3.py        # Check S3 bucket (using existing bucket)
+python scripts/test_s3_upload.py  # Test S3 upload functionality
 ```
+
+**Note:** This project uses your existing S3 bucket `my-finance-tracker-receipts`. If you want to use a different bucket, update the `S3_BUCKET_NAME` in your `.env` file.
 
 ### 5. Run Django Server
 
@@ -186,22 +194,33 @@ curl -X GET "http://127.0.0.1:8000/api/expenses/list/?user_id=test_user"
 }
 ```
 
-### 4. Upload Receipt (Placeholder)
+### 4. Upload Receipt
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/receipts/upload/" \
   -H "Content-Type: application/json" \
-  -d "{\"file\": \"base64-encoded-file\", \"filename\": \"receipt.jpg\"}"
+  -d "{\"file\": \"base64-encoded-file-content\", \"filename\": \"receipt.jpg\", \"user_id\": \"test_user\", \"expense_id\": \"optional-expense-id\"}"
 ```
 
 **Response:**
 
 ```json
 {
-  "message": "Receipt upload endpoint - S3 integration pending",
-  "status": "not_implemented"
+  "message": "Receipt uploaded successfully",
+  "file_url": "https://my-finance-tracker-receipts.s3.us-east-1.amazonaws.com/user_id/filename.jpg",
+  "file_key": "user_id/filename.jpg",
+  "file_name": "receipt.jpg",
+  "expense_id": "optional-expense-id",
+  "status": "success"
 }
 ```
+
+**Note:**
+
+- `file`: Base64 encoded file content (max 10MB)
+- `filename`: Name of the file
+- `user_id`: Required user identifier
+- `expense_id`: Optional - if provided, links receipt to existing expense
 
 ## AWS Deployment
 

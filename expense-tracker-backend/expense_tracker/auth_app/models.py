@@ -80,6 +80,24 @@ class DynamoDBExpense:
             }
         )
 
+    def add_expense_with_receipt(self, user_id, amount, category, description='', receipt_url=None):
+        """Create a new expense with optional receipt URL."""
+        expense_id = str(uuid.uuid4())
+        timestamp = datetime.utcnow().isoformat()
+
+        item = {
+            'expense_id': expense_id,
+            'user_id': user_id,
+            'amount': Decimal(str(amount)),
+            'category': category,
+            'description': description,
+            'timestamp': timestamp,
+            'receipt_url': receipt_url
+        }
+
+        self.table.put_item(Item=item)
+        return item
+
 # Keep the Django model for compatibility but mark it as deprecated
 
 
