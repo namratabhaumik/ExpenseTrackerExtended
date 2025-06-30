@@ -143,12 +143,13 @@ curl -X POST "http://127.0.0.1:8000/api/login/" \
 }
 ```
 
-### 2. Add Expense
+### 2. Add Expense (Requires Authentication)
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/expenses/" \
   -H "Content-Type: application/json" \
-  -d "{\"user_id\": \"test_user\", \"amount\": 25.50, \"category\": \"Food\", \"description\": \"Lunch\"}"
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d "{\"amount\": 25.50, \"category\": \"Food\", \"description\": \"Lunch\"}"
 ```
 
 **Response:**
@@ -159,7 +160,7 @@ curl -X POST "http://127.0.0.1:8000/api/expenses/" \
   "expense_id": "550e8400-e29b-41d4-a716-446655440000",
   "expense": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "user_id": "test_user",
+    "user_id": "user@example.com",
     "amount": "25.50",
     "category": "Food",
     "description": "Lunch",
@@ -168,10 +169,11 @@ curl -X POST "http://127.0.0.1:8000/api/expenses/" \
 }
 ```
 
-### 3. Get User Expenses
+### 3. Get User Expenses (Requires Authentication)
 
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/expenses/list/?user_id=test_user"
+curl -X GET "http://127.0.0.1:8000/api/expenses/list/" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 **Response:**
@@ -182,7 +184,7 @@ curl -X GET "http://127.0.0.1:8000/api/expenses/list/?user_id=test_user"
   "expenses": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
-      "user_id": "test_user",
+      "user_id": "user@example.com",
       "amount": "25.50",
       "category": "Food",
       "description": "Lunch",
@@ -194,12 +196,13 @@ curl -X GET "http://127.0.0.1:8000/api/expenses/list/?user_id=test_user"
 }
 ```
 
-### 4. Upload Receipt
+### 4. Upload Receipt (Requires Authentication)
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/receipts/upload/" \
   -H "Content-Type: application/json" \
-  -d "{\"file\": \"base64-encoded-file-content\", \"filename\": \"receipt.jpg\", \"user_id\": \"test_user\", \"expense_id\": \"optional-expense-id\"}"
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d "{\"file\": \"base64-encoded-file-content\", \"filename\": \"receipt.jpg\", \"expense_id\": \"optional-expense-id\"}"
 ```
 
 **Response:**
@@ -217,9 +220,11 @@ curl -X POST "http://127.0.0.1:8000/api/receipts/upload/" \
 
 **Note:**
 
+- All endpoints except `/api/login/` require authentication
+- Include `Authorization: Bearer YOUR_ACCESS_TOKEN` header
+- `user_id` is automatically extracted from the JWT token
 - `file`: Base64 encoded file content (max 10MB)
 - `filename`: Name of the file
-- `user_id`: Required user identifier
 - `expense_id`: Optional - if provided, links receipt to existing expense
 
 ## AWS Deployment
