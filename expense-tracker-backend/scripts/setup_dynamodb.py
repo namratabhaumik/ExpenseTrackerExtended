@@ -4,9 +4,15 @@ Script to create DynamoDB table for expense tracker.
 Run this once to set up your DynamoDB table.
 """
 
+from dotenv import load_dotenv
 import boto3
 import os
-from dotenv import load_dotenv
+import sys
+from pathlib import Path
+
+# Add the parent directory to Python path to import Django settings
+sys.path.append(str(Path(__file__).parent.parent))
+
 
 # Load environment variables
 load_dotenv()
