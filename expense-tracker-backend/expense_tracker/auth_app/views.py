@@ -7,6 +7,7 @@ import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import os
+from .middleware import require_auth
 
 # Get logger for this module
 logger = logging.getLogger(__name__)
@@ -116,25 +117,27 @@ def login_view(request):
     }, status=405)
 
 
-@csrf_exempt
+@require_auth
 def add_expense(request):
     """Add a new expense."""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
+            # Get user_id from authenticated request
+            user_id = request.user_info['user_id']
+
             # Extract expense data
-            user_id = data.get('user_id')
             amount = data.get('amount')
             category = data.get('category')
             description = data.get('description', '')
 
             # Validate required fields
-            if not all([user_id, amount, category]):
+            if not all([amount, category]):
                 logger.warning(
-                    f"Add expense attempt with missing fields: user_id={bool(user_id)}, amount={bool(amount)}, category={bool(category)}")
+                    f"Add expense attempt with missing fields: amount={bool(amount)}, category={bool(category)}")
                 return JsonResponse({
-                    'error': 'Missing required fields: user_id, amount, category',
+                    'error': 'Missing required fields: amount, category',
                     'status': 'error'
                 }, status=400)
 
@@ -189,20 +192,13 @@ def add_expense(request):
     }, status=405)
 
 
-@csrf_exempt
+@require_auth
 def get_expenses(request):
     """Get expenses for a user."""
     if request.method == 'GET':
         try:
-            user_id = request.GET.get('user_id')
-
-            if not user_id:
-                logger.warning(
-                    "Get expenses attempt without user_id parameter")
-                return JsonResponse({
-                    'error': 'user_id parameter is required',
-                    'status': 'error'
-                }, status=400)
+            # Get user_id from authenticated request
+            user_id = request.user_info['user_id']
 
             # Get expenses using DynamoDB
             from .models import DynamoDBExpense
@@ -245,26 +241,28 @@ def get_expenses(request):
     }, status=405)
 
 
-@csrf_exempt
+@require_auth
 def upload_receipt(request):
     """Upload a receipt file to S3."""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
+            # Get user_id from authenticated request
+            user_id = request.user_info['user_id']
+
             # Extract data
             file_data = data.get('file')
             file_name = data.get('filename')
-            user_id = data.get('user_id')
             # Optional: link to existing expense
             expense_id = data.get('expense_id')
 
             # Validate required fields
-            if not all([file_data, file_name, user_id]):
+            if not all([file_data, file_name]):
                 logger.warning(
-                    f"Receipt upload attempt with missing fields: file_data={bool(file_data)}, file_name={bool(file_name)}, user_id={bool(user_id)}")
+                    f"Receipt upload attempt with missing fields: file_data={bool(file_data)}, file_name={bool(file_name)}")
                 return JsonResponse({
-                    'error': 'Missing required fields: file, filename, user_id',
+                    'error': 'Missing required fields: file, filename',
                     'status': 'error'
                 }, status=400)
 

@@ -71,14 +71,19 @@ class DynamoDBExpense:
         return item
 
     def update_receipt_url(self, expense_id, receipt_url):
-        """Update receipt URL for an expense."""
-        self.table.update_item(
-            Key={'expense_id': expense_id},
-            UpdateExpression='SET receipt_url = :receipt_url',
-            ExpressionAttributeValues={
-                ':receipt_url': receipt_url
-            }
-        )
+        """Update an expense with a receipt URL."""
+        try:
+            self.table.update_item(
+                Key={'expense_id': expense_id},
+                UpdateExpression='SET receipt_url = :receipt_url',
+                ExpressionAttributeValues={
+                    ':receipt_url': receipt_url
+                }
+            )
+            return True
+        except Exception as e:
+            print(f"Error updating receipt URL: {str(e)}")
+            return False
 
     def add_expense_with_receipt(self, user_id, amount, category, description='', receipt_url=None):
         """Create a new expense with optional receipt URL."""
