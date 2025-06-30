@@ -5,11 +5,43 @@ import hashlib
 import base64
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+import os
+
+# Try to load .env file directly in this module
+try:
+    from dotenv import load_dotenv
+    env_file_path = os.path.join(os.path.dirname(
+        os.path.dirname(os.path.dirname(__file__))), '.env')
+    load_dotenv(env_file_path)
+    print(f"[DEBUG] dotenv imported and .env loaded from: {env_file_path}")
+except ImportError as e:
+    print(f"[DEBUG] Failed to import dotenv: {e}")
+except Exception as e:
+    print(f"[DEBUG] Failed to load .env: {e}")
 
 # Cognito configuration
-COGNITO_REGION = 'us-east-1'
-COGNITO_CLIENT_ID = '7p5c71fj183ut48sh0o6smqais'
-COGNITO_CLIENT_SECRET = '10li562ia72k7spdfc9cn45u28r6uk4fdl9mtmj4fvu7a4m2su4o'
+COGNITO_REGION = os.environ.get('COGNITO_REGION', 'us-east-1')
+COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
+COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
+
+print(f"[DEBUG] COGNITO_REGION: {COGNITO_REGION}")
+print(f"[DEBUG] COGNITO_CLIENT_ID: {COGNITO_CLIENT_ID}")
+print(f"[DEBUG] COGNITO_CLIENT_SECRET: {COGNITO_CLIENT_SECRET}")
+
+# Debug: Check if .env file exists
+env_file_path = os.path.join(os.path.dirname(
+    os.path.dirname(os.path.dirname(__file__))), '.env')
+print(f"[DEBUG] .env file path: {env_file_path}")
+print(f"[DEBUG] .env file exists: {os.path.exists(env_file_path)}")
+
+# Debug: Try to read .env file contents directly
+try:
+    with open(env_file_path, 'r') as f:
+        env_contents = f.read()
+        print(
+            f"[DEBUG] .env file contents (first 100 chars): {env_contents[:100]}...")
+except Exception as e:
+    print(f"[DEBUG] Failed to read .env file: {e}")
 
 # Initialize Cognito client
 cognito_client = boto3.client('cognito-idp', region_name=COGNITO_REGION)
