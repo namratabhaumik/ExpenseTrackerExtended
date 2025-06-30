@@ -2,25 +2,32 @@
 
 ## 1. Backend (Django) - Immediate Priorities
 
-- **Move Secrets to Environment Variables**
+- **✅ Move Secrets to Environment Variables**
 
-  - Remove hardcoded Cognito client ID/secret and Django SECRET_KEY from code.
-  - Use `os.environ.get()` in settings and views.
-  - Document required environment variables in this file or README.
+  - ✅ Remove hardcoded Cognito client ID/secret and Django SECRET_KEY from code.
+  - ✅ Use `os.environ.get()` in settings and views.
+  - ✅ Document required environment variables in this file or README.
 
-- **Implement Core Expense Endpoints**
+- **✅ Implement Core Expense Endpoints**
 
-  - Add endpoints for:
+  - ✅ Add endpoints for:
     - Add Expense (POST)
     - Get Expenses (GET, filter by user)
     - Upload Receipt (POST, file upload)
-  - Use Django REST Framework for serialization and validation (optional, but recommended for maintainability).
+  - ✅ Use Django REST Framework for serialization and validation (optional, but recommended for maintainability).
 
-- **Integrate with AWS Services**
+- **✅ Switch to DynamoDB (Cloud-Native Database)**
+
+  - ✅ Replace SQLite with DynamoDB for expense storage
+  - ✅ Create DynamoDB table with proper schema and indexes
+  - ✅ Update models and views to use DynamoDB
+  - ✅ Keep Django for API framework and Cognito integration
+
+- **🔄 Integrate with AWS Services**
 
   - Ensure backend can:
     - Upload receipts to S3
-    - Store/retrieve expenses in DynamoDB
+    - Store/retrieve expenses in DynamoDB ✅
     - Send notifications via SNS (if required for MVP)
 
 - **Error Handling & Logging**

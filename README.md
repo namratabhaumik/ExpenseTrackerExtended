@@ -1,6 +1,6 @@
-# AWS Expense Tracker App with Kubernetes and AWS EKS
+# AWS Expense Tracker App - Cloud-Native Backend with DynamoDB
 
-This project is an extension of my previous AWS-based [expense tracker app](https://github.com/namratabhaumik/ExpenseTracker) (All the APIs can be found there). Here I integrated Docker and also Kubernetes using AWS EKS (Elastic Kubernetes Service) for microservices based container orchestration and scalability. The goal of this project was to explore the power of AWS services, containerization with Docker, and orchestration with Kubernetes to build a scalable, cloud-native application.
+This project is an extension of my previous AWS-based [expense tracker app](https://github.com/namratabhaumik/ExpenseTracker) with a focus on cloud-native architecture. Here I've integrated Django with AWS services, containerization with Docker, and orchestration with Kubernetes using AWS EKS for microservices-based scalability.
 
 ## Medium Links
 
@@ -9,132 +9,260 @@ This project is an extension of my previous AWS-based [expense tracker app](http
 
 ## Features
 
-- **Serverless Architecture**: Utilizes AWS Lambda for backend logic, DynamoDB for data storage, and AWS Cognito for authentication.
-- **Containerization with Docker**: The frontend (React) and backend (Django) are containerized, ensuring a consistent environment across different stages of deployment.
-- **Kubernetes and AWS EKS**: Kubernetes orchestrates the containers, with AWS EKS managing the Kubernetes clusters for scalability and reliability.
+- **Cloud-Native Backend**: Django API with AWS DynamoDB for serverless, scalable data storage
+- **Serverless Authentication**: AWS Cognito for secure user authentication and JWT token management
+- **Containerization with Docker**: Frontend (React) and backend (Django) containerized for consistent deployment
+- **Kubernetes and AWS EKS**: Container orchestration for scalability and high availability
 - **AWS Services Integration**:
-  - **IAM (Identity and Access Management)**: Secure service-to-service communication.
-  - **S3**: For static asset storage (e.g., images, logs).
-  - **DynamoDB**: A serverless NoSQL database for storing expense data.
-  - **Cognito**: User authentication and authorization.
-  - **EKS**: Manages the deployment and scaling of containerized applications.
+  - **DynamoDB**: Serverless NoSQL database for expense data (free tier friendly)
+  - **Cognito**: User authentication and authorization
+  - **S3**: For receipt file storage (planned)
+  - **SNS**: For notifications (planned)
+  - **IAM**: Secure service-to-service communication
+  - **EKS**: Kubernetes cluster management
 
 ## Architecture
 
-This project follows a microservices architecture with separate frontend and backend components:
+This project follows a cloud-native microservices architecture:
 
-1. **Frontend**: A React application that communicates with the backend via APIs.
-2. **Backend**: A Django-based API that handles the business logic for expense tracking and integrates with AWS services.
-3. **Kubernetes**: Manages the containerized frontend and backend applications, ensuring scalability and high availability.
-4. **AWS EKS**: Orchestrates the Kubernetes clusters, integrating with AWS services for seamless communication.
+1. **Frontend**: React application communicating with Django APIs
+2. **Backend**: Django API with DynamoDB integration for expense management
+3. **Database**: AWS DynamoDB (serverless, auto-scaling)
+4. **Authentication**: AWS Cognito (JWT tokens)
+5. **Containerization**: Docker for consistent environments
+6. **Orchestration**: Kubernetes (AWS EKS) for deployment and scaling
 
 ## Technologies Used
 
 - **Frontend**: React.js
-- **Backend**: Django (Python)
+- **Backend**: Django (Python) with boto3 for AWS integration
+- **Database**: AWS DynamoDB (serverless NoSQL)
+- **Authentication**: AWS Cognito
 - **Containerization**: Docker
 - **Orchestration**: Kubernetes (AWS EKS)
-- **Cloud Services**: AWS (IAM, S3, DynamoDB, Cognito, Lambda, CloudWatch, SNS)
+- **Cloud Services**: AWS (DynamoDB, Cognito, S3, SNS, IAM, EKS)
+
+## API Endpoints
+
+### Authentication
+
+- **POST** `/api/login/` - User login with Cognito
+
+### Expense Management
+
+- **POST** `/api/expenses/` - Add a new expense
+- **GET** `/api/expenses/list/?user_id=<user_id>` - Get expenses for a user
+- **POST** `/api/receipts/upload/` - Upload receipt (placeholder for S3 integration)
 
 ## Setup and Installation
 
-To run this project locally, follow these steps:
+### Prerequisites
 
-1. **Clone the repository**:
+- Python 3.8+
+- Node.js 14+
+- AWS Account with appropriate permissions
+- AWS CLI configured
 
-   ```bash
-   git clone https://github.com/your-username/aws-expense-tracker-k8s.git
-   cd aws-expense-tracker-k8s
-   ```
+### 1. Clone and Setup Backend
 
-2. **Set up the backend (Django)**:
+```bash
+git clone https://github.com/your-username/aws-expense-tracker-k8s.git
+cd aws-expense-tracker-k8s/expense-tracker-backend
+```
 
-   - Navigate to the backend directory:
-     ```bash
-     cd expense-tracker-backend
-     ```
-   - Install dependencies:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   - Set up the Django database and run migrations:
-     ```bash
-     python manage.py migrate
-     ```
+### 2. Environment Configuration
 
-3. **Set up the frontend (React)**:
+Create a `.env` file in `expense-tracker-backend/`:
 
-   - Navigate to the frontend directory:
-     ```bash
-     cd expense-tracker-frontend
-     ```
-   - Install dependencies:
-     ```bash
-     npm install
-     ```
+```env
+DJANGO_SECRET_KEY=your-django-secret-key
+COGNITO_REGION=us-east-1
+COGNITO_CLIENT_ID=your-cognito-client-id
+COGNITO_CLIENT_SECRET=your-cognito-client-secret
+AWS_ACCESS_KEY_ID=your-aws-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+AWS_REGION=us-east-1
+DYNAMODB_TABLE_NAME=expense-tracker-table
+```
 
-4. **Dockerize the Application**:
+### 3. Install Dependencies
 
-   - Build the Docker containers for the frontend and backend:
-     ```bash
-     docker build -t react-frontend ./expense-tracker-frontend
-     docker build -t django-backend ./expense-tracker-backend
-     ```
+```bash
+pip install -r requirements.txt
+```
 
-5. **Start the Docker Containers**:
+### 4. Setup DynamoDB Table
 
-   - Run the containers using Docker Compose (if you have a `docker-compose.yml` file configured):
-     ```bash
-     docker-compose up
-     ```
+```bash
+python setup_dynamodb.py
+```
 
-6. **Access the Application**:
-   - Navigate to `http://localhost:8000` to see the backend API.
-   - The frontend will be accessible via `http://localhost:3000`.
+### 5. Run Django Server
+
+```bash
+cd expense_tracker
+python manage.py runserver
+```
+
+The API will be available at `http://127.0.0.1:8000/`
+
+### 6. Setup Frontend (Optional)
+
+```bash
+cd ../expense-tracker-frontend
+npm install
+npm start
+```
+
+## API Testing with curl
+
+### 1. User Login
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/login/" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\": \"your-email@example.com\", \"password\": \"your-password\"}"
+```
+
+**Response:**
+
+```json
+{
+  "message": "Login successful",
+  "access_token": "eyJraWQiOiJ...",
+  "id_token": "eyJraWQiOiJ...",
+  "refresh_token": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ..."
+}
+```
+
+### 2. Add Expense
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/expenses/" \
+  -H "Content-Type: application/json" \
+  -d "{\"user_id\": \"test_user\", \"amount\": 25.50, \"category\": \"Food\", \"description\": \"Lunch\"}"
+```
+
+**Response:**
+
+```json
+{
+  "message": "Expense added successfully",
+  "expense_id": "550e8400-e29b-41d4-a716-446655440000",
+  "expense": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "user_id": "test_user",
+    "amount": "25.50",
+    "category": "Food",
+    "description": "Lunch",
+    "timestamp": "2025-06-29T22:30:00.123456"
+  }
+}
+```
+
+### 3. Get User Expenses
+
+```bash
+curl -X GET "http://127.0.0.1:8000/api/expenses/list/?user_id=test_user"
+```
+
+**Response:**
+
+```json
+{
+  "message": "Expenses retrieved successfully",
+  "expenses": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "user_id": "test_user",
+      "amount": "25.50",
+      "category": "Food",
+      "description": "Lunch",
+      "timestamp": "2025-06-29T22:30:00.123456",
+      "receipt_url": null
+    }
+  ],
+  "count": 1
+}
+```
+
+### 4. Upload Receipt (Placeholder)
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/receipts/upload/" \
+  -H "Content-Type: application/json" \
+  -d "{\"file\": \"base64-encoded-file\", \"filename\": \"receipt.jpg\"}"
+```
+
+**Response:**
+
+```json
+{
+  "message": "Receipt upload endpoint - S3 integration pending",
+  "status": "not_implemented"
+}
+```
 
 ## AWS Deployment
 
-To deploy the project on AWS using Kubernetes and EKS, follow these steps:
+### Infrastructure as Code (CloudFormation)
 
-### **Infrastructure as Code (CloudFormation)**
-
-This project includes a **CloudFormation template (`expense-tracker-stack.yaml`)** that provisions key AWS resources such as:
-
-- **S3 bucket** for storing receipts
-- **DynamoDB table** for expense tracking
-- **SNS topic** for notifications
-- **IAM role** with permissions for Lambda functions
-
-To deploy the CloudFormation stack, run the following command:
+Deploy the CloudFormation stack:
 
 ```bash
-aws cloudformation create-stack --stack-name ExpenseTrackerStack --template-body file://cloudformation/expense-tracker-stack.yaml --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack \
+  --stack-name ExpenseTrackerStack \
+  --template-body file://cloudformation/expense-tracker-stack.yaml \
+  --capabilities CAPABILITY_NAMED_IAM
 ```
 
-1. **Set up AWS EKS**:
+### Kubernetes Deployment
 
-   - Configure your AWS CLI and ensure you have the necessary permissions.
-   - Follow the steps in the [EKS documentation](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html) to create an EKS cluster.
+1. **Build and push Docker images:**
 
-2. **Deploy to Kubernetes**:
-   - Use Kubernetes manifests to deploy the frontend and backend services on EKS.
-   - Configure the LoadBalancer to expose services externally.
+   ```bash
+   docker build -t expense-tracker-backend ./expense-tracker-backend
+   docker build -t expense-tracker-frontend ./expense-tracker-frontend
+   ```
 
-## Challenges Faced
+2. **Deploy to EKS:**
+   ```bash
+   kubectl apply -f k8s/
+   ```
 
-Throughout the development of this project, I faced several challenges, such as:
+## Current Status
 
-- **IAM Permissions**: Getting the right permissions for Lambda, DynamoDB, and EKS to work together without over-permissioning services.
-- **Kubernetes Networking**: Configuring Kubernetes services, Load Balancers, and security groups properly for external communication.
-- **EKS Cluster Setup**: Learning how to create and manage EKS clusters and deploying containerized applications with Kubernetes.
+### ✅ Completed
 
-These challenges provided valuable learning experiences and helped me improve my skills in cloud-native development.
+- Cloud-native Django backend with DynamoDB integration
+- AWS Cognito authentication
+- Core expense management APIs (add, list)
+- Environment variable configuration
+- Docker containerization
+- Kubernetes deployment manifests
 
-## Future Enhancements
+### 🔄 In Progress
 
-1. **Infrastructure as Code (IaC)**: Implement AWS CloudFormation to automate the provisioning and configuration of AWS resources.
-2. **CloudFront CDN**: Improve the performance of the frontend by using CloudFront to deliver static assets faster and securely.
-3. **Frontend and Backend Improvements**: Add new features such as interactive dashboards, advanced filtering, and better user management.
+- S3 integration for receipt uploads
+- SNS notifications
+- Frontend React integration
+- Comprehensive testing
+
+### 📋 Planned
+
+- Advanced expense analytics
+- Receipt OCR processing
+- Multi-user support with proper authorization
+- Performance monitoring and logging
+
+## Free Tier Considerations
+
+This project is designed to work within AWS Free Tier limits:
+
+- **DynamoDB**: 25GB storage + 25 WCU/RCU per month
+- **Cognito**: 50,000 MAUs
+- **S3**: 5GB storage
+- **EKS**: Not included in free tier (consider Lambda for serverless)
 
 ## License
 
