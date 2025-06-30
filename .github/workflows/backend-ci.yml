@@ -55,7 +55,7 @@ jobs:
   deploy-to-cloud-run:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Only deploy on main branch
+    # if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
 
     steps:
       - name: Checkout code
