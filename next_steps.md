@@ -23,26 +23,28 @@
   - ✅ Update models and views to use DynamoDB
   - ✅ Keep Django for API framework and Cognito integration
 
-- **🔄 Integrate with AWS Services**
+- **✅ Documentation**
+
+  - ✅ Add endpoint documentation (in README or as docstrings).
+  - ✅ Document environment variables and AWS setup requirements.
+
+- **✅ Error Handling & Logging**
+
+  - ✅ Replace all `print` statements with Django logging.
+  - ✅ Return clear, consistent error messages to the frontend.
+  - ✅ Add structured logging with file and console output.
+  - ✅ Standardize error response format with status field.
+
+- **🔄 Integrate with AWS Services** (NEXT PRIORITY)
 
   - Ensure backend can:
     - Upload receipts to S3
     - Store/retrieve expenses in DynamoDB ✅
     - Send notifications via SNS (if required for MVP)
 
-- **Error Handling & Logging**
-
-  - Replace all `print` statements with Django logging.
-  - Return clear, consistent error messages to the frontend.
-
-- **Testing**
-
+- **Testing** (NEXT PRIORITY)
   - Add at least one test for each endpoint (success and failure cases).
   - Use Django's test client for API tests.
-
-- **Documentation**
-  - Add endpoint documentation (in README or as docstrings).
-  - Document environment variables and AWS setup requirements.
 
 ## 2. Frontend (Minimal)
 
@@ -88,23 +90,29 @@
      - `DJANGO_SECRET_KEY`
      - `COGNITO_CLIENT_ID`
      - `COGNITO_CLIENT_SECRET`
-     - Any AWS credentials needed for boto3
+     - `AWS_ACCESS_KEY_ID`
+     - `AWS_SECRET_ACCESS_KEY`
+     - `AWS_REGION`
+     - `DYNAMODB_TABLE_NAME`
 
-3. **Run migrations**
+3. **Setup DynamoDB table**
 
    ```bash
-   python manage.py migrate
+   python setup_dynamodb.py
    ```
 
 4. **Start the server**
 
    ```bash
+   cd expense_tracker
    python manage.py runserver
    ```
 
 5. **Test existing functionality**
    - The login endpoint is available at: `POST /api/login/`
-   - Use Postman or curl to test login with your Cognito credentials.
+   - Add expense: `POST /api/expenses/`
+   - Get expenses: `GET /api/expenses/list/?user_id=<user_id>`
+   - Use Postman or curl to test with your Cognito credentials.
 
 ---
 
