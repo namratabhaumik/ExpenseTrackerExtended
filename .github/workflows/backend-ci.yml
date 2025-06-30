@@ -1,4 +1,4 @@
-name: Django Backend CI
+name: Django Backend CI/CD
 
 on:
   push:
@@ -51,5 +51,60 @@ jobs:
         run: |
           cd expense-tracker-backend
           docker build -t expense-tracker-backend:ci .
+
+  deploy-to-cloud-run:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Only deploy on main branch
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/876160330159/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+          service_account: "cloud-run-sa@nimble-analyst-402215.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Create Artifact Registry repository
+        run: |
+          gcloud artifacts repositories create expense-tracker-backend \
+            --repository-format=docker \
+            --location=us-central1 \
+            --quiet || echo "Repository already exists"
+
+      - name: Build and push Docker image
+        run: |
+          cd expense-tracker-backend
+          docker build -t us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} .
+          docker push us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy expense-tracker-backend \
+            --image=us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} \
+            --platform=managed \
+            --region=us-central1 \
+            --allow-unauthenticated \
+            --port=8000 \
+            --set-env-vars="DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }},COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }},COGNITO_CLIENT_SECRET=${{ secrets.COGNITO_CLIENT_SECRET }},AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }},AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}"
+
+      - name: Get Cloud Run URL
+        id: get-url
+        run: |
+          URL=$(gcloud run services describe expense-tracker-backend --region=us-central1 --format='value(status.url)')
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Show deployment URL
+        run: |
+          echo "🚀 Backend deployed to: ${{ steps.get-url.outputs.url }}"
+          echo " Test your API with: curl -X POST ${{ steps.get-url.outputs.url }}/api/login/"
 
 #test commit
