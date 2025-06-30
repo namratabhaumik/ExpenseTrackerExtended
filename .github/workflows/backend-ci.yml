@@ -32,6 +32,9 @@ jobs:
       #     pip install flake8
       #     flake8 expense_tracker
 
+      - name: Create logs directory
+        run: mkdir -p expense-tracker-backend/logs
+
       - name: Run Django checks
         run: |
           cd expense-tracker-backend/expense_tracker
