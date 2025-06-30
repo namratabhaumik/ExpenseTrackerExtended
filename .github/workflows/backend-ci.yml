@@ -10,6 +10,10 @@ on:
       - "expense-tracker-backend/**"
       - ".github/workflows/**"
 
+permissions:
+  contents: "read"
+  id-token: "write"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
