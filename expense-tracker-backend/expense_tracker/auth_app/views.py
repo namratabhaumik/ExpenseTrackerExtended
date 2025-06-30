@@ -3,9 +3,13 @@ import json
 import hmac
 import hashlib
 import base64
+import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import os
+
+# Get logger for this module
+logger = logging.getLogger(__name__)
 
 # Load .env file for environment variables
 try:
@@ -42,6 +46,15 @@ def login_view(request):
             email = data.get('email')
             password = data.get('password')
 
+            # Validate required fields
+            if not email or not password:
+                logger.warning(
+                    f"Login attempt with missing credentials: email={bool(email)}")
+                return JsonResponse({
+                    'error': 'Missing required fields: email and password',
+                    'status': 'error'
+                }, status=400)
+
             # Calculate the secret hash
             secret_hash = calculate_secret_hash(email)
 
@@ -52,7 +65,7 @@ def login_view(request):
                 AuthParameters={
                     'USERNAME': email,
                     'PASSWORD': password,
-                    'SECRET_HASH': secret_hash,  # Add the secret hash here
+                    'SECRET_HASH': secret_hash,
                 }
             )
 
@@ -61,22 +74,46 @@ def login_view(request):
             id_token = response['AuthenticationResult']['IdToken']
             refresh_token = response['AuthenticationResult']['RefreshToken']
 
+            logger.info(f"Successful login for user: {email}")
             return JsonResponse({
                 'message': 'Login successful',
                 'access_token': access_token,
                 'id_token': id_token,
                 'refresh_token': refresh_token,
+                'status': 'success'
             })
 
         except cognito_client.exceptions.NotAuthorizedException:
-            return JsonResponse({'message': 'Invalid credentials'}, status=400)
+            logger.warning(f"Invalid credentials for user: {email}")
+            return JsonResponse({
+                'error': 'Invalid credentials',
+                'status': 'error'
+            }, status=401)
         except cognito_client.exceptions.UserNotFoundException:
-            return JsonResponse({'message': 'User does not exist'}, status=404)
+            logger.warning(f"User not found: {email}")
+            return JsonResponse({
+                'error': 'User does not exist',
+                'status': 'error'
+            }, status=404)
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in login request")
+            return JsonResponse({
+                'error': 'Invalid JSON format',
+                'status': 'error'
+            }, status=400)
         except Exception as e:
-            print(f"Error during Cognito authentication: {e}")
-            return JsonResponse({'message': 'An error occurred'}, status=500)
+            logger.error(
+                f"Unexpected error during login: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'An unexpected error occurred',
+                'status': 'error'
+            }, status=500)
 
-    return JsonResponse({'message': 'Method not allowed'}, status=405)
+    logger.warning(f"Invalid method {request.method} for login endpoint")
+    return JsonResponse({
+        'error': 'Method not allowed',
+        'status': 'error'
+    }, status=405)
 
 
 @csrf_exempt
@@ -94,8 +131,21 @@ def add_expense(request):
 
             # Validate required fields
             if not all([user_id, amount, category]):
+                logger.warning(
+                    f"Add expense attempt with missing fields: user_id={bool(user_id)}, amount={bool(amount)}, category={bool(category)}")
                 return JsonResponse({
-                    'message': 'Missing required fields: user_id, amount, category'
+                    'error': 'Missing required fields: user_id, amount, category',
+                    'status': 'error'
+                }, status=400)
+
+            # Validate amount is numeric
+            try:
+                float(amount)
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid amount format: {amount}")
+                return JsonResponse({
+                    'error': 'Amount must be a valid number',
+                    'status': 'error'
                 }, status=400)
 
             # Create expense using DynamoDB
@@ -103,6 +153,8 @@ def add_expense(request):
             expense_db = DynamoDBExpense()
             expense = expense_db.create(user_id, amount, category, description)
 
+            logger.info(
+                f"Expense added successfully: user_id={user_id}, amount={amount}, category={category}")
             return JsonResponse({
                 'message': 'Expense added successfully',
                 'expense_id': expense['expense_id'],
@@ -113,16 +165,28 @@ def add_expense(request):
                     'category': expense['category'],
                     'description': expense['description'],
                     'timestamp': expense['timestamp']
-                }
+                },
+                'status': 'success'
             }, status=201)
 
         except json.JSONDecodeError:
-            return JsonResponse({'message': 'Invalid JSON'}, status=400)
+            logger.error("Invalid JSON in add expense request")
+            return JsonResponse({
+                'error': 'Invalid JSON format',
+                'status': 'error'
+            }, status=400)
         except Exception as e:
-            print(f"Error adding expense: {e}")
-            return JsonResponse({'message': 'An error occurred'}, status=500)
+            logger.error(f"Error adding expense: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'An error occurred while adding expense',
+                'status': 'error'
+            }, status=500)
 
-    return JsonResponse({'message': 'Method not allowed'}, status=405)
+    logger.warning(f"Invalid method {request.method} for add expense endpoint")
+    return JsonResponse({
+        'error': 'Method not allowed',
+        'status': 'error'
+    }, status=405)
 
 
 @csrf_exempt
@@ -133,8 +197,11 @@ def get_expenses(request):
             user_id = request.GET.get('user_id')
 
             if not user_id:
+                logger.warning(
+                    "Get expenses attempt without user_id parameter")
                 return JsonResponse({
-                    'message': 'user_id parameter is required'
+                    'error': 'user_id parameter is required',
+                    'status': 'error'
                 }, status=400)
 
             # Get expenses using DynamoDB
@@ -154,17 +221,28 @@ def get_expenses(request):
                     'receipt_url': expense.get('receipt_url')
                 })
 
+            logger.info(
+                f"Retrieved {len(expense_list)} expenses for user: {user_id}")
             return JsonResponse({
                 'message': 'Expenses retrieved successfully',
                 'expenses': expense_list,
-                'count': len(expense_list)
+                'count': len(expense_list),
+                'status': 'success'
             })
 
         except Exception as e:
-            print(f"Error getting expenses: {e}")
-            return JsonResponse({'message': 'An error occurred'}, status=500)
+            logger.error(f"Error getting expenses: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'An error occurred while retrieving expenses',
+                'status': 'error'
+            }, status=500)
 
-    return JsonResponse({'message': 'Method not allowed'}, status=405)
+    logger.warning(
+        f"Invalid method {request.method} for get expenses endpoint")
+    return JsonResponse({
+        'error': 'Method not allowed',
+        'status': 'error'
+    }, status=405)
 
 
 @csrf_exempt
@@ -174,13 +252,22 @@ def upload_receipt(request):
         try:
             # For now, we'll just return a success message
             # TODO: Implement actual file upload to S3
+            logger.info("Receipt upload endpoint called (not yet implemented)")
             return JsonResponse({
                 'message': 'Receipt upload endpoint - S3 integration pending',
                 'status': 'not_implemented'
             }, status=501)
 
         except Exception as e:
-            print(f"Error uploading receipt: {e}")
-            return JsonResponse({'message': 'An error occurred'}, status=500)
+            logger.error(f"Error uploading receipt: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'An error occurred while uploading receipt',
+                'status': 'error'
+            }, status=500)
 
-    return JsonResponse({'message': 'Method not allowed'}, status=405)
+    logger.warning(
+        f"Invalid method {request.method} for upload receipt endpoint")
+    return JsonResponse({
+        'error': 'Method not allowed',
+        'status': 'error'
+    }, status=405)
