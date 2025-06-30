@@ -86,6 +86,21 @@ WSGI_APPLICATION = 'expense_tracker.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# AWS Configuration
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+
+# DynamoDB Configuration
+DYNAMODB_TABLE_NAME = os.environ.get(
+    'DYNAMODB_TABLE_NAME', 'expense-tracker-table')
+
+# For development, you can use DynamoDB Local
+# Set DYNAMODB_ENDPOINT_URL to 'http://localhost:8000' for local DynamoDB
+# Leave it as None to use AWS DynamoDB directly
+DYNAMODB_ENDPOINT_URL = os.environ.get('DYNAMODB_ENDPOINT_URL', None)
+
+# Keep SQLite for Django's internal tables (sessions, etc.)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
