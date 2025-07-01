@@ -1,3 +1,22 @@
+# Next Steps / TODO
+
+## Completed
+
+- [x] Backend (Django) deployed to GCP Cloud Run
+- [x] AWS Cognito, DynamoDB, S3 integration
+- [x] CI/CD with GitHub Actions and Workload Identity Federation
+- [x] API tested and working (login, add expense, get expenses, upload receipt)
+
+## In Progress / Next
+
+- [ ] Frontend integration with backend API (React)
+- [ ] Frontend deployment to AWS S3 + CloudFront
+
+## Notes
+
+- CloudFormation and Kubernetes manifests are present in the repo for reference and to demonstrate IaC/k8s skills, but are not used in the current deployment.
+- The current architecture is optimized for serverless, cost-effective, and quick demo deployments.
+
 # Next Steps: Backend-First Roadmap for Expense Tracker
 
 ## 1. Backend (Django) - Immediate Priorities
