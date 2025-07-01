@@ -16,7 +16,6 @@ function Expenses({ onLogout, accessToken }) {
   const [receiptFilename, setReceiptFilename] = useState("");
   const [receiptExpenseId, setReceiptExpenseId] = useState("");
   const [receiptStatus, setReceiptStatus] = useState("");
-  const [receiptUrl, setReceiptUrl] = useState("");
 
   // Fetch expenses on mount
   useEffect(() => {
@@ -99,7 +98,6 @@ function Expenses({ onLogout, accessToken }) {
   const handleReceiptUpload = async (e) => {
     e.preventDefault();
     setReceiptStatus("");
-    setReceiptUrl("");
     if (!receiptFile) {
       setReceiptStatus("Please select a file.");
       return;
