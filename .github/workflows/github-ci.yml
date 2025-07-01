@@ -1,4 +1,4 @@
-name: Django Backend CI/CD
+name: Fullstack CI/CD
 
 on:
   push:
@@ -17,7 +17,7 @@ permissions:
   id-token: "write"
 
 jobs:
-  build-and-test:
+  build-and-test-backend:
     runs-on: ubuntu-latest
     env:
       # These variables are injected from GitHub Actions repository variables.
@@ -65,8 +65,8 @@ jobs:
           cd expense-tracker-backend
           docker build -t expense-tracker-backend:ci .
 
-  deploy-to-cloud-run:
-    needs: build-and-test
+  deploy-backend:
+    needs: build-and-test-backend
     runs-on: ubuntu-latest
     # if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
 
@@ -120,4 +120,45 @@ jobs:
           echo "🚀 Backend deployed to: ${{ steps.get-url.outputs.url }}"
           echo " Test your API with: curl -X POST ${{ steps.get-url.outputs.url }}/api/login/"
 
+  build-and-test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: |
+          cd expense-tracker-frontend
+          npm ci
+      - name: Build React app
+        run: |
+          cd expense-tracker-frontend
+          npm run build
+
+  deploy-frontend:
+    needs: build-and-test-frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: |
+          cd expense-tracker-frontend
+          npm ci
+      - name: Build React app
+        run: |
+          cd expense-tracker-frontend
+          npm run build
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          channelId: live
+          projectId: expense-tracker-frontend-1a909
 #test commit
