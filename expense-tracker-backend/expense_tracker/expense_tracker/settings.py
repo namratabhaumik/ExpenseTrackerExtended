@@ -26,17 +26,15 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-insecure-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-CORS_ALLOW_ALL_ORIGINS = True
 
 ALLOWED_HOSTS = ['*']
 
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000",
-]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',  # frontend URL
+    'http://localhost:3000',
+    # Add your deployed frontend URL here if needed
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
 

@@ -27,7 +27,7 @@ function Login({ onLoginSuccess }) {
       if (response.ok) {
         const result = await response.json();
         console.log("Login successful:", result);
-        onLoginSuccess(); // Notify parent component about login success
+        onLoginSuccess(result.access_token); // Pass token up
       } else {
         const errorData = await response.json();
         console.error("Login failed:", errorData);
