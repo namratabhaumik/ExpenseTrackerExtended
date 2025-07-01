@@ -161,4 +161,5 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           channelId: live
           projectId: expense-tracker-frontend-1a909
+          entryPoint: expense-tracker-frontend
 #test commit
