@@ -133,6 +133,8 @@ jobs:
           cd expense-tracker-frontend
           npm ci
       - name: Build React app
+        env:
+          REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
         run: |
           cd expense-tracker-frontend
           npm run build
@@ -151,6 +153,8 @@ jobs:
           cd expense-tracker-frontend
           npm ci
       - name: Build React app
+        env:
+          REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
         run: |
           cd expense-tracker-frontend
           npm run build
