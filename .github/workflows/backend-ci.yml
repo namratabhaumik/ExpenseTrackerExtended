@@ -17,6 +17,13 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      # These variables are injected from GitHub Actions repository variables.
+      # For production, set REACT_APP_BACKEND_URL to your Cloud Run backend URL.
+      REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
+      REACT_APP_AWS_REGION: ${{ vars.REACT_APP_AWS_REGION }}
+      REACT_APP_AWS_USER_POOL_ID: ${{ vars.REACT_APP_AWS_USER_POOL_ID }}
+      REACT_APP_AWS_CLIENT_ID: ${{ vars.REACT_APP_AWS_CLIENT_ID }}
 
     steps:
       - name: Checkout code
