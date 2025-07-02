@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 
 function Login({ onLoginSuccess }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -13,29 +14,26 @@ function Login({ onLoginSuccess }) {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/login/`,
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             email,
             password,
           }),
-        }
+        },
       );
 
       if (response.ok) {
         const result = await response.json();
-        console.log("Login successful:", result);
         onLoginSuccess(result.access_token); // Pass token up
       } else {
         const errorData = await response.json();
-        console.error("Login failed:", errorData);
-        setError(errorData.message || "Login failed. Please try again.");
+        setError(errorData.message || 'Login failed. Please try again.');
       }
     } catch (err) {
-      console.error("An error occurred:", err);
-      setError("An error occurred. Please try again later.");
+      setError('An error occurred. Please try again later.');
     }
   };
 
@@ -44,8 +42,9 @@ function Login({ onLoginSuccess }) {
       <h2>Login</h2>
       <form onSubmit={handleLogin}>
         <div>
-          <label>Email:</label>
+          <label htmlFor="email">Email:</label>
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -53,8 +52,9 @@ function Login({ onLoginSuccess }) {
           />
         </div>
         <div>
-          <label>Password:</label>
+          <label htmlFor="password">Password:</label>
           <input
+            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -63,9 +63,13 @@ function Login({ onLoginSuccess }) {
         </div>
         <button type="submit">Login</button>
       </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 }
+
+Login.propTypes = {
+  onLoginSuccess: PropTypes.func.isRequired,
+};
 
 export default Login;

@@ -42,10 +42,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # - name: Lint with flake8
-      #   run: |
-      #     pip install flake8
-      #     flake8 expense_tracker
+      - name: Lint with flake8
+        run: |
+          cd expense-tracker-backend
+          flake8 expense_tracker --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 expense_tracker --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
       - name: Create logs directory
         run: mkdir -p expense-tracker-backend/logs
@@ -55,10 +56,20 @@ jobs:
           cd expense-tracker-backend/expense_tracker
           python manage.py check
 
-      # - name: Run tests (if you add any)
-      #   run: |
-      #     cd expense-tracker-backend/expense_tracker
-      #     python manage.py test
+      - name: Run backend tests
+        run: |
+          cd expense-tracker-backend/expense_tracker
+          python -m pytest --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=70
+        env:
+          DJANGO_SECRET_KEY: test-secret-key
+          COGNITO_CLIENT_ID: test-client-id
+          COGNITO_CLIENT_SECRET: test-client-secret
+          AWS_ACCESS_KEY_ID: test-access-key
+          AWS_SECRET_ACCESS_KEY: test-secret-key
+          AWS_REGION: us-east-1
+          DYNAMODB_TABLE_NAME: test-expenses-table
+          S3_BUCKET_NAME: test-bucket
+          S3_REGION: us-east-1
 
       - name: Build Docker image
         run: |
@@ -132,6 +143,20 @@ jobs:
         run: |
           cd expense-tracker-frontend
           npm ci
+
+      - name: Lint frontend code
+        run: |
+          cd expense-tracker-frontend
+          npm run lint
+
+      - name: Run frontend tests
+        run: |
+          cd expense-tracker-frontend
+          npm run test:coverage
+        env:
+          CI: true
+          REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
+
       - name: Build React app
         env:
           REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
@@ -152,6 +177,7 @@ jobs:
         run: |
           cd expense-tracker-frontend
           npm ci
+
       - name: Build React app
         env:
           REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}

@@ -6,11 +6,14 @@
 - [x] AWS Cognito, DynamoDB, S3 integration
 - [x] CI/CD with GitHub Actions and Workload Identity Federation
 - [x] API tested and working (login, add expense, get expenses, upload receipt)
+- [x] Linting and testing implemented (flake8, pytest, ESLint, Jest)
+- [x] Frontend deployed to Firebase Hosting
+- [x] End-to-end functionality working
 
 ## In Progress / Next
 
 - [ ] Frontend integration with backend API (React)
-- [ ] Frontend deployment to AWS S3 + CloudFront
+- [ ] Frontend deployment to AWS S3 + CloudFront (optional - Firebase is working)
 
 ## Notes
 
@@ -60,9 +63,12 @@
   - ✅ Store/retrieve expenses in DynamoDB
   - ✅ Send notifications via SNS (if required for MVP)
 
-- **Testing** (NEXT PRIORITY)
-  - Add at least one test for each endpoint (success and failure cases).
-  - Use Django's test client for API tests.
+- **✅ Testing** (COMPLETED)
+  - ✅ Added comprehensive tests for all endpoints (success and failure cases).
+  - ✅ Used Django's test client for API tests.
+  - ✅ Added unit tests for S3 utilities.
+  - ✅ Added React component tests with Jest and Testing Library.
+  - ✅ Set up code coverage reporting (70% threshold).
 
 ## 2. Frontend (Minimal)
 

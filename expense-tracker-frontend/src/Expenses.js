@@ -1,27 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 
 function Expenses({ onLogout, accessToken }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [form, setForm] = useState({
-    amount: "",
-    category: "",
-    description: "",
+    amount: '',
+    category: '',
+    description: '',
   });
-  const [addError, setAddError] = useState("");
-  const [addSuccess, setAddSuccess] = useState("");
+  const [addError, setAddError] = useState('');
+  const [addSuccess, setAddSuccess] = useState('');
   // Receipt upload state
   const [receiptFile, setReceiptFile] = useState(null);
-  const [receiptFilename, setReceiptFilename] = useState("");
-  const [receiptExpenseId, setReceiptExpenseId] = useState("");
-  const [receiptStatus, setReceiptStatus] = useState("");
+  const [receiptFilename, setReceiptFilename] = useState('');
+  const [receiptExpenseId, setReceiptExpenseId] = useState('');
+  const [receiptStatus, setReceiptStatus] = useState('');
 
   // Fetch expenses on mount
   useEffect(() => {
     const fetchExpenses = async () => {
       setLoading(true);
-      setError("");
+      setError('');
       try {
         const resp = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`,
@@ -29,19 +30,19 @@ function Expenses({ onLogout, accessToken }) {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-            credentials: "include",
-          }
+            credentials: 'include',
+          },
         );
         if (!resp.ok) {
           const err = await resp.json();
-          setError(err.error || "Failed to fetch expenses");
+          setError(err.error || 'Failed to fetch expenses');
           setExpenses([]);
         } else {
           const data = await resp.json();
           setExpenses(data.expenses || []);
         }
       } catch (e) {
-        setError("An error occurred while fetching expenses.");
+        setError('An error occurred while fetching expenses.');
         setExpenses([]);
       } finally {
         setLoading(false);
@@ -58,54 +59,54 @@ function Expenses({ onLogout, accessToken }) {
   // Handle add expense
   const handleAddExpense = async (e) => {
     e.preventDefault();
-    setAddError("");
-    setAddSuccess("");
+    setAddError('');
+    setAddSuccess('');
     try {
       const resp = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/expenses/`,
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
           },
-          credentials: "include",
+          credentials: 'include',
           body: JSON.stringify(form),
-        }
+        },
       );
       if (!resp.ok) {
         const err = await resp.json();
-        setAddError(err.error || "Failed to add expense");
+        setAddError(err.error || 'Failed to add expense');
       } else {
-        setAddSuccess("Expense added successfully!");
-        setForm({ amount: "", category: "", description: "" });
+        setAddSuccess('Expense added successfully!');
+        setForm({ amount: '', category: '', description: '' });
         // Refresh expenses
         const data = await resp.json();
         setExpenses((prev) => [data.expense, ...prev]);
       }
     } catch (e) {
-      setAddError("An error occurred while adding expense.");
+      setAddError('An error occurred while adding expense.');
     }
   };
 
   // Handle receipt file change
   const handleReceiptFileChange = (e) => {
     setReceiptFile(e.target.files[0]);
-    setReceiptFilename(e.target.files[0]?.name || "");
+    setReceiptFilename(e.target.files[0]?.name || '');
   };
 
   // Handle receipt upload
   const handleReceiptUpload = async (e) => {
     e.preventDefault();
-    setReceiptStatus("");
+    setReceiptStatus('');
     if (!receiptFile) {
-      setReceiptStatus("Please select a file.");
+      setReceiptStatus('Please select a file.');
       return;
     }
     // Read file as base64
-    const reader = new FileReader();
+    const reader = new window.FileReader();
     reader.onload = async () => {
-      const base64Data = reader.result.split(",")[1];
+      const base64Data = reader.result.split(',')[1];
       const payload = {
         file: base64Data,
         filename: receiptFilename,
@@ -115,26 +116,26 @@ function Expenses({ onLogout, accessToken }) {
         const resp = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/receipts/upload/`,
           {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
               Authorization: `Bearer ${accessToken}`,
             },
-            credentials: "include",
+            credentials: 'include',
             body: JSON.stringify(payload),
-          }
+          },
         );
         const data = await resp.json();
         if (!resp.ok) {
-          setReceiptStatus(data.error || "Failed to upload receipt");
+          setReceiptStatus(data.error || 'Failed to upload receipt');
         } else {
-          setReceiptStatus("Receipt uploaded successfully!");
+          setReceiptStatus('Receipt uploaded successfully!');
           setReceiptFile(null);
-          setReceiptFilename("");
-          setReceiptExpenseId("");
+          setReceiptFilename('');
+          setReceiptExpenseId('');
         }
       } catch (e) {
-        setReceiptStatus("An error occurred while uploading receipt.");
+        setReceiptStatus('An error occurred while uploading receipt.');
       }
     };
     reader.readAsDataURL(receiptFile);
@@ -171,8 +172,8 @@ function Expenses({ onLogout, accessToken }) {
         />
         <button type="submit">Add</button>
       </form>
-      {addError && <p style={{ color: "red" }}>{addError}</p>}
-      {addSuccess && <p style={{ color: "green" }}>{addSuccess}</p>}
+      {addError && <p style={{ color: 'red' }}>{addError}</p>}
+      {addSuccess && <p style={{ color: 'green' }}>{addSuccess}</p>}
       <h3>Upload Receipt</h3>
       <form onSubmit={handleReceiptUpload}>
         <input
@@ -196,7 +197,7 @@ function Expenses({ onLogout, accessToken }) {
       </form>
       {receiptStatus && (
         <p
-          style={{ color: receiptStatus.includes("success") ? "green" : "red" }}
+          style={{ color: receiptStatus.includes('success') ? 'green' : 'red' }}
         >
           {receiptStatus}
         </p>
@@ -205,11 +206,11 @@ function Expenses({ onLogout, accessToken }) {
       {loading ? (
         <p>Loading...</p>
       ) : error ? (
-        <p style={{ color: "red" }}>{error}</p>
+        <p style={{ color: 'red' }}>{error}</p>
       ) : expenses.length === 0 ? (
         <p>No expenses found.</p>
       ) : (
-        <table style={{ margin: "0 auto" }}>
+        <table style={{ margin: '0 auto' }}>
           <thead>
             <tr>
               <th>Amount</th>
@@ -233,5 +234,10 @@ function Expenses({ onLogout, accessToken }) {
     </div>
   );
 }
+
+Expenses.propTypes = {
+  onLogout: PropTypes.func.isRequired,
+  accessToken: PropTypes.string.isRequired,
+};
 
 export default Expenses;

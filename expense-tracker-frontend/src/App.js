@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import Login from "./Login";
-import Expenses from "./Expenses";
+import React, { useState } from 'react';
+import Login from './Login';
+import Expenses from './Expenses';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [accessToken, setAccessToken] = useState("");
+  const [accessToken, setAccessToken] = useState('');
 
   const handleLoginSuccess = (token) => {
     setIsAuthenticated(true);
@@ -13,7 +13,7 @@ function App() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setAccessToken("");
+    setAccessToken('');
   };
 
   return (

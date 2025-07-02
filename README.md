@@ -60,8 +60,10 @@ curl -X POST "https://expense-tracker-backend-876160330159.us-central1.run.app/a
 - [x] API tested and working (login, add expense, get expenses, upload receipt)
 - [x] AWS Cognito, DynamoDB, S3 integration
 - [x] CI/CD with GitHub Actions and Workload Identity Federation
-- [ ] Frontend integration (next step)
-- [ ] Frontend deployment to S3/CloudFront (next step)
+- [x] Linting and testing implemented (flake8, pytest, ESLint, Jest)
+- [x] Frontend deployed to Firebase Hosting
+- [x] End-to-end functionality working
+- [ ] Frontend integration with backend API (next step)
 
 ## Note
 
