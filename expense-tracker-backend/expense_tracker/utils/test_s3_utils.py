@@ -2,7 +2,7 @@ from .s3_utils import S3Handler
 import unittest
 from unittest.mock import patch, MagicMock
 import boto3
-from moto import mock_s3
+from moto.s3 import mock_s3
 import os
 import tempfile
 import base64
