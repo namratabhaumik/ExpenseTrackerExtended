@@ -1,3 +1,4 @@
+import unittest
 from .s3_utils import S3Handler
 from django.test import TestCase
 from unittest.mock import patch, MagicMock
@@ -192,7 +193,3 @@ class S3UtilsTestCase(TestCase):
             aws_access_key_id='test-access-key',
             aws_secret_access_key='test-secret-key'
         )
-
-
-if __name__ == '__main__':
-    unittest.main()
