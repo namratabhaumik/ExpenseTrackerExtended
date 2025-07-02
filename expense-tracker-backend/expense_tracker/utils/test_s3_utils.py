@@ -1,4 +1,4 @@
-from .s3_utils import S3Utils
+from .s3_utils import S3Handler
 import unittest
 from unittest.mock import patch, MagicMock
 import boto3
@@ -27,7 +27,7 @@ class S3UtilsTestCase(unittest.TestCase):
         })
         self.env_patcher.start()
 
-        self.s3_utils = S3Utils()
+        self.s3_utils = S3Handler()
 
     def tearDown(self):
         """Clean up after tests."""
@@ -179,7 +179,7 @@ class S3UtilsTestCase(unittest.TestCase):
         mock_boto3_client.return_value = mock_s3_client
 
         # Create new instance to trigger client initialization
-        s3_utils = S3Utils()
+        s3_utils = S3Handler()
 
         mock_boto3_client.assert_called_with('s3', region_name='us-east-1')
 
