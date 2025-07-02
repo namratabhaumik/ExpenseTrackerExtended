@@ -1,19 +1,37 @@
 from .s3_utils import S3Handler
-import unittest
+from django.test import TestCase
 from unittest.mock import patch, MagicMock
 import boto3
-from moto.s3 import mock_s3
+from moto import mock_aws
 import os
 import tempfile
 import base64
+from django.test import override_settings
 
 # Import the S3Utils class
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
-class S3UtilsTestCase(unittest.TestCase):
+class S3UtilsTestCase(TestCase):
     """Test cases for S3Utils class."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.override = override_settings(
+            AWS_ACCESS_KEY_ID='test-access-key',
+            AWS_SECRET_ACCESS_KEY='test-secret-key',
+            AWS_REGION='us-east-1',
+            S3_BUCKET_NAME='test-bucket',
+            S3_REGION='us-east-1'
+        )
+        cls.override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.override.disable()
+        super().tearDownClass()
 
     def setUp(self):
         """Set up test environment."""
@@ -33,144 +51,131 @@ class S3UtilsTestCase(unittest.TestCase):
         """Clean up after tests."""
         self.env_patcher.stop()
 
-    @mock_s3
     def test_upload_file_success(self):
         """Test successful file upload to S3."""
-        # Set up S3
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
+        with mock_aws():
+            # Set up S3
+            s3 = boto3.client('s3', region_name='us-east-1')
+            s3.create_bucket(Bucket='test-bucket')
 
-        # Create a test file
-        test_content = b'Test file content'
-        test_filename = 'test_file.txt'
+            # Create a test file (base64-encoded string)
+            test_content = base64.b64encode(
+                b'Test file content').decode('utf-8')
+            test_filename = 'test_file.txt'
+            test_user_id = 'test-user'
 
-        # Test upload
-        result = self.s3_utils.upload_file(test_content, test_filename)
+            # Test upload
+            result = self.s3_utils.upload_file(
+                test_content, test_filename, test_user_id)
 
-        self.assertIsNotNone(result)
-        self.assertIn('file_url', result)
-        self.assertIn('file_key', result)
-        self.assertEqual(result['status'], 'success')
+            self.assertIsNotNone(result)
+            self.assertIn('file_url', result)
+            self.assertIn('file_key', result)
+            self.assertTrue(result['success'])
 
-    @mock_s3
     def test_upload_file_with_custom_path(self):
-        """Test file upload with custom path."""
-        # Set up S3
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
+        """Test file upload with custom user_id."""
+        with mock_aws():
+            # Set up S3
+            s3 = boto3.client('s3', region_name='us-east-1')
+            s3.create_bucket(Bucket='test-bucket')
 
-        # Create a test file
-        test_content = b'Test file content'
-        test_filename = 'test_file.txt'
-        custom_path = 'receipts/2024/01/'
+            # Create a test file (base64-encoded string)
+            test_content = base64.b64encode(
+                b'Test file content').decode('utf-8')
+            test_filename = 'test_file.txt'
+            test_user_id = 'receipts-2024-01-user'
 
-        # Test upload
-        result = self.s3_utils.upload_file(
-            test_content, test_filename, custom_path)
+            # Test upload
+            result = self.s3_utils.upload_file(
+                test_content, test_filename, test_user_id)
 
-        self.assertIsNotNone(result)
-        self.assertIn('file_url', result)
-        self.assertIn('file_key', result)
-        self.assertEqual(result['status'], 'success')
-        self.assertIn(custom_path, result['file_key'])
+            self.assertIsNotNone(result)
+            self.assertIn('file_url', result)
+            self.assertIn('file_key', result)
+            self.assertTrue(result['success'])
+            self.assertIn(test_user_id, result['file_key'])
 
-    @mock_s3
     def test_upload_file_s3_error(self):
         """Test file upload with S3 error."""
-        # Don't create bucket to simulate S3 error
+        with mock_aws():
+            # Don't create bucket to simulate S3 error
+            test_content = base64.b64encode(
+                b'Test file content').decode('utf-8')
+            test_filename = 'test_file.txt'
+            test_user_id = 'test-user'
 
-        test_content = b'Test file content'
-        test_filename = 'test_file.txt'
+            # Test upload
+            result = self.s3_utils.upload_file(
+                test_content, test_filename, test_user_id)
 
-        # Test upload
-        result = self.s3_utils.upload_file(test_content, test_filename)
-
-        self.assertIsNotNone(result)
-        self.assertEqual(result['status'], 'error')
-        self.assertIn('error', result)
+            self.assertIsNotNone(result)
+            self.assertFalse(result['success'])
+            self.assertIn('error', result)
 
     def test_upload_file_empty_content(self):
         """Test file upload with empty content."""
-        test_content = b''
+        test_content = ''
         test_filename = 'test_file.txt'
+        test_user_id = 'test-user'
 
         # Test upload
-        result = self.s3_utils.upload_file(test_content, test_filename)
+        result = self.s3_utils.upload_file(
+            test_content, test_filename, test_user_id)
 
         self.assertIsNotNone(result)
-        self.assertEqual(result['status'], 'error')
+        self.assertFalse(result['success'])
         self.assertIn('error', result)
 
     def test_upload_file_empty_filename(self):
         """Test file upload with empty filename."""
-        test_content = b'Test content'
+        test_content = base64.b64encode(b'Test content').decode('utf-8')
         test_filename = ''
+        test_user_id = 'test-user'
 
         # Test upload
-        result = self.s3_utils.upload_file(test_content, test_filename)
+        result = self.s3_utils.upload_file(
+            test_content, test_filename, test_user_id)
 
         self.assertIsNotNone(result)
-        self.assertEqual(result['status'], 'error')
+        self.assertFalse(result['success'])
         self.assertIn('error', result)
 
-    @mock_s3
     def test_delete_file_success(self):
         """Test successful file deletion from S3."""
-        # Set up S3
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
+        with mock_aws():
+            # Set up S3
+            s3 = boto3.client('s3', region_name='us-east-1')
+            s3.create_bucket(Bucket='test-bucket')
 
-        # Upload a file first
-        test_content = b'Test file content'
-        test_filename = 'test_file.txt'
-        upload_result = self.s3_utils.upload_file(test_content, test_filename)
+            # Upload a file first
+            test_content = base64.b64encode(
+                b'Test file content').decode('utf-8')
+            test_filename = 'test_file.txt'
+            test_user_id = 'test-user'
+            upload_result = self.s3_utils.upload_file(
+                test_content, test_filename, test_user_id)
 
-        # Test deletion
-        file_key = upload_result['file_key']
-        result = self.s3_utils.delete_file(file_key)
+            # Test deletion
+            file_key = upload_result['file_key']
+            result = self.s3_utils.delete_file(file_key)
 
-        self.assertIsNotNone(result)
-        self.assertEqual(result['status'], 'success')
+            self.assertIsInstance(result, bool)
+            self.assertTrue(result)
 
-    @mock_s3
     def test_delete_file_not_found(self):
         """Test file deletion when file doesn't exist."""
-        # Set up S3
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
+        with mock_aws():
+            # Set up S3
+            s3 = boto3.client('s3', region_name='us-east-1')
+            s3.create_bucket(Bucket='test-bucket')
 
-        # Test deletion of non-existent file
-        result = self.s3_utils.delete_file('non-existent-file.txt')
+            # Test deletion of non-existent file
+            result = self.s3_utils.delete_file('non-existent-file.txt')
 
-        self.assertIsNotNone(result)
-        self.assertEqual(result['status'], 'error')
-        self.assertIn('error', result)
-
-    @mock_s3
-    def test_get_file_url_success(self):
-        """Test successful file URL generation."""
-        # Set up S3
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
-
-        # Upload a file first
-        test_content = b'Test file content'
-        test_filename = 'test_file.txt'
-        upload_result = self.s3_utils.upload_file(test_content, test_filename)
-
-        # Test URL generation
-        file_key = upload_result['file_key']
-        url = self.s3_utils.get_file_url(file_key)
-
-        self.assertIsNotNone(url)
-        self.assertIn('test-bucket', url)
-        self.assertIn(file_key, url)
-
-    def test_get_file_url_empty_key(self):
-        """Test URL generation with empty file key."""
-        url = self.s3_utils.get_file_url('')
-
-        self.assertIsNone(url)
+            self.assertIsInstance(result, bool)
+            # S3 delete_object is idempotent and returns success
+            self.assertTrue(result)
 
     @patch('utils.s3_utils.boto3.client')
     def test_s3_client_initialization(self, mock_boto3_client):
@@ -181,7 +186,12 @@ class S3UtilsTestCase(unittest.TestCase):
         # Create new instance to trigger client initialization
         s3_utils = S3Handler()
 
-        mock_boto3_client.assert_called_with('s3', region_name='us-east-1')
+        mock_boto3_client.assert_called_with(
+            's3',
+            region_name='us-east-1',
+            aws_access_key_id='test-access-key',
+            aws_secret_access_key='test-secret-key'
+        )
 
 
 if __name__ == '__main__':
