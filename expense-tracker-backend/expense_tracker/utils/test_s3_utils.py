@@ -1,4 +1,4 @@
-from utils.s3_utils import S3Utils
+from .s3_utils import S3Utils
 import unittest
 from unittest.mock import patch, MagicMock
 import boto3
