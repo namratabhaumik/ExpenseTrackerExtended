@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['*']
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
+    "https://expense-tracker-frontend-1a909.web.app",
+    "https://expense-tracker-frontend-1a909.firebaseapp.com",
     # Add your deployed frontend URL here if needed
 ]
 CORS_ALLOW_CREDENTIALS = True
