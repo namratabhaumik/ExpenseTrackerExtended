@@ -1,145 +1,429 @@
-# AWS Expense Tracker App with Kubernetes and AWS EKS
+# Expense Tracker - Cloud-Native Serverless Application
 
-This project is an extension of my previous AWS-based [expense tracker app](https://github.com/namratabhaumik/ExpenseTracker) (All the APIs can be found there). Here I integrated Docker and also Kubernetes using AWS EKS (Elastic Kubernetes Service) for microservices based container orchestration and scalability. The goal of this project was to explore the power of AWS services, containerization with Docker, and orchestration with Kubernetes to build a scalable, cloud-native application.
+## Project Overview
 
-## Medium Links
+A fully functional, cloud-native expense tracker with:
 
-- [Mastering Containerization and Orchestration: Lessons from My First AWS EKS Project](https://namrata-bhaumik.medium.com/mastering-containerization-and-orchestration-lessons-from-my-first-aws-eks-project-0e9918f43b12?source=friends_link&sk=08cef3208d13c6e2dc68b067e3576285)
-- [Overcoming Cloud Challenges: Lessons Learned from Building a Serverless AWS App](https://namrata-bhaumik.medium.com/overcoming-cloud-challenges-lessons-learned-from-building-a-serverless-aws-app-5d3c59efc9eb?source=friends_link&sk=437b217db913371db42d0e9ec5831cc4)
+- **Backend**: Django API deployed on GCP Cloud Run
+- **Frontend**: React app deployed on Firebase Hosting
+- **Authentication**: AWS Cognito for secure user management
+- **Database**: AWS DynamoDB for expense storage
+- **File Storage**: AWS S3 for receipt uploads
+- **CI/CD**: GitHub Actions with automated testing and deployment
 
-## Features
+## 🚀 Live Demo
 
-- **Serverless Architecture**: Utilizes AWS Lambda for backend logic, DynamoDB for data storage, and AWS Cognito for authentication.
-- **Containerization with Docker**: The frontend (React) and backend (Django) are containerized, ensuring a consistent environment across different stages of deployment.
-- **Kubernetes and AWS EKS**: Kubernetes orchestrates the containers, with AWS EKS managing the Kubernetes clusters for scalability and reliability.
-- **AWS Services Integration**:
-  - **IAM (Identity and Access Management)**: Secure service-to-service communication.
-  - **S3**: For static asset storage (e.g., images, logs).
-  - **DynamoDB**: A serverless NoSQL database for storing expense data.
-  - **Cognito**: User authentication and authorization.
-  - **EKS**: Manages the deployment and scaling of containerized applications.
+- **Frontend**: https://expense-tracker-frontend-1a909.web.app
+- **Backend API**: https://expense-tracker-backend-876160330159.us-central1.run.app
 
-## Architecture
+## 🏗️ Architecture
 
-This project follows a microservices architecture with separate frontend and backend components:
-
-1. **Frontend**: A React application that communicates with the backend via APIs.
-2. **Backend**: A Django-based API that handles the business logic for expense tracking and integrates with AWS services.
-3. **Kubernetes**: Manages the containerized frontend and backend applications, ensuring scalability and high availability.
-4. **AWS EKS**: Orchestrates the Kubernetes clusters, integrating with AWS services for seamless communication.
-
-## Technologies Used
-
-- **Frontend**: React.js
-- **Backend**: Django (Python)
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes (AWS EKS)
-- **Cloud Services**: AWS (IAM, S3, DynamoDB, Cognito, Lambda, CloudWatch, SNS)
-
-## Setup and Installation
-
-To run this project locally, follow these steps:
-
-1. **Clone the repository**:
-
-   ```bash
-   git clone https://github.com/your-username/aws-expense-tracker-k8s.git
-   cd aws-expense-tracker-k8s
-   ```
-
-2. **Set up the backend (Django)**:
-
-   - Navigate to the backend directory:
-     ```bash
-     cd expense-tracker-backend
-     ```
-   - Install dependencies:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   - Set up the Django database and run migrations:
-     ```bash
-     python manage.py migrate
-     ```
-
-3. **Set up the frontend (React)**:
-
-   - Navigate to the frontend directory:
-     ```bash
-     cd expense-tracker-frontend
-     ```
-   - Install dependencies:
-     ```bash
-     npm install
-     ```
-
-4. **Dockerize the Application**:
-
-   - Build the Docker containers for the frontend and backend:
-     ```bash
-     docker build -t react-frontend ./expense-tracker-frontend
-     docker build -t django-backend ./expense-tracker-backend
-     ```
-
-5. **Start the Docker Containers**:
-
-   - Run the containers using Docker Compose (if you have a `docker-compose.yml` file configured):
-     ```bash
-     docker-compose up
-     ```
-
-6. **Access the Application**:
-   - Navigate to `http://localhost:8000` to see the backend API.
-   - The frontend will be accessible via `http://localhost:3000`.
-
-## AWS Deployment
-
-To deploy the project on AWS using Kubernetes and EKS, follow these steps:
-
-### **Infrastructure as Code (CloudFormation)**
-
-This project includes a **CloudFormation template (`expense-tracker-stack.yaml`)** that provisions key AWS resources such as:
-
-- **S3 bucket** for storing receipts
-- **DynamoDB table** for expense tracking
-- **SNS topic** for notifications
-- **IAM role** with permissions for Lambda functions
-
-To deploy the CloudFormation stack, run the following command:
-
-```bash
-aws cloudformation create-stack --stack-name ExpenseTrackerStack --template-body file://cloudformation/expense-tracker-stack.yaml --capabilities CAPABILITY_NAMED_IAM
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React App     │    │   Django API    │    │   AWS Services  │
+│  (Firebase)     │◄──►│  (Cloud Run)    │◄──►│  (Cognito,      │
+│                 │    │                 │    │   DynamoDB, S3) │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-1. **Set up AWS EKS**:
+## 📋 Prerequisites
 
-   - Configure your AWS CLI and ensure you have the necessary permissions.
-   - Follow the steps in the [EKS documentation](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html) to create an EKS cluster.
+- Python 3.11+
+- Node.js 20+
+- AWS CLI configured
+- Google Cloud CLI (for deployment)
+- Firebase CLI (for frontend deployment)
 
-2. **Deploy to Kubernetes**:
-   - Use Kubernetes manifests to deploy the frontend and backend services on EKS.
-   - Configure the LoadBalancer to expose services externally.
+## 🛠️ Local Development Setup
 
-## Challenges Faced
+### 1. Clone and Setup
 
-Throughout the development of this project, I faced several challenges, such as:
+```bash
+git clone <your-repo-url>
+cd ExpenseTrackerExtended
+```
 
-- **IAM Permissions**: Getting the right permissions for Lambda, DynamoDB, and EKS to work together without over-permissioning services.
-- **Kubernetes Networking**: Configuring Kubernetes services, Load Balancers, and security groups properly for external communication.
-- **EKS Cluster Setup**: Learning how to create and manage EKS clusters and deploying containerized applications with Kubernetes.
+### 2. Backend Setup
 
-These challenges provided valuable learning experiences and helped me improve my skills in cloud-native development.
+#### Install Dependencies
 
-## Future Enhancements
+```bash
+cd expense-tracker-backend
+pip install -r requirements.txt
+```
 
-1. **Infrastructure as Code (IaC)**: Implement AWS CloudFormation to automate the provisioning and configuration of AWS resources.
-2. **CloudFront CDN**: Improve the performance of the frontend by using CloudFront to deliver static assets faster and securely.
-3. **Frontend and Backend Improvements**: Add new features such as interactive dashboards, advanced filtering, and better user management.
+#### Environment Variables
 
-## License
+Create `.env` file in `expense-tracker-backend/`:
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+```env
+DJANGO_SECRET_KEY=your-secret-key-here
+COGNITO_CLIENT_ID=your-cognito-client-id
+COGNITO_CLIENT_SECRET=your-cognito-client-secret
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_REGION=us-east-1
+DYNAMODB_TABLE_NAME=expenses-table
+S3_BUCKET_NAME=my-finance-tracker-receipts
+S3_REGION=us-east-1
+```
 
-For any queries or feedback, please open an issue or reach out!
+#### Setup AWS Resources
 
-#Test commit
+```bash
+cd expense-tracker-backend
+python scripts/setup_all.py
+```
+
+#### Run Django Server
+
+```bash
+cd expense_tracker
+python manage.py runserver
+```
+
+### 3. Frontend Setup
+
+#### Install Dependencies
+
+```bash
+cd expense-tracker-frontend
+npm install
+```
+
+#### Environment Variables
+
+Create `.env` file in `expense-tracker-frontend/`:
+
+```env
+REACT_APP_BACKEND_URL=http://localhost:8000
+REACT_APP_AWS_REGION=us-east-1
+REACT_APP_AWS_USER_POOL_ID=your-user-pool-id
+REACT_APP_AWS_CLIENT_ID=your-client-id
+```
+
+#### Start Development Server
+
+```bash
+npm start
+```
+
+## 🧪 Testing
+
+### Backend Testing
+
+```bash
+cd expense-tracker-backend/expense_tracker
+
+# Run all tests
+python -m pytest
+
+# Run with coverage
+python -m pytest --cov=. --cov-report=html --cov-report=term-missing
+
+# Run specific test file
+python -m pytest auth_app/tests.py -v
+```
+
+### Frontend Testing
+
+```bash
+cd expense-tracker-frontend
+
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm test -- --watch
+```
+
+### Code Quality
+
+#### Backend Linting
+
+```bash
+cd expense-tracker-backend
+flake8 expense_tracker
+```
+
+#### Frontend Linting
+
+```bash
+cd expense-tracker-frontend
+npm run lint
+npm run lint:fix  # Auto-fix issues
+```
+
+## 📡 API Documentation
+
+### Authentication
+
+All protected endpoints require a Bearer token from AWS Cognito login.
+
+### 1. Login
+
+**Endpoint:** `POST /api/login/`
+
+**Request:**
+
+```json
+{
+  "email": "your-email@example.com",
+  "password": "your-password"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Login successful",
+  "access_token": "eyJ...",
+  "id_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "status": "success"
+}
+```
+
+### 2. Add Expense
+
+**Endpoint:** `POST /api/expenses/`
+
+**Headers:** `Authorization: Bearer YOUR_ACCESS_TOKEN`
+
+**Request:**
+
+```json
+{
+  "amount": 25.5,
+  "category": "Food",
+  "description": "Lunch expense"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Expense added successfully",
+  "expense_id": "uuid-here",
+  "expense": {
+    "id": "uuid-here",
+    "user_id": "user-id",
+    "amount": "25.50",
+    "category": "Food",
+    "description": "Lunch expense",
+    "timestamp": "2024-01-01T12:00:00"
+  },
+  "status": "success"
+}
+```
+
+### 3. Get Expenses
+
+**Endpoint:** `GET /api/expenses/list/`
+
+**Headers:** `Authorization: Bearer YOUR_ACCESS_TOKEN`
+
+**Response:**
+
+```json
+{
+  "message": "Expenses retrieved successfully",
+  "expenses": [
+    {
+      "id": "uuid-here",
+      "user_id": "user-id",
+      "amount": "25.50",
+      "category": "Food",
+      "description": "Lunch expense",
+      "timestamp": "2024-01-01T12:00:00",
+      "receipt_url": "https://..."
+    }
+  ],
+  "count": 1,
+  "status": "success"
+}
+```
+
+### 4. Upload Receipt
+
+**Endpoint:** `POST /api/receipts/upload/`
+
+**Headers:** `Authorization: Bearer YOUR_ACCESS_TOKEN`
+
+**Request:**
+
+```json
+{
+  "file": "base64-encoded-file-content",
+  "filename": "receipt.jpg"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Receipt uploaded successfully",
+  "file_url": "https://s3.amazonaws.com/bucket/filename.jpg",
+  "status": "success"
+}
+```
+
+## 🚀 Deployment
+
+### Backend (GCP Cloud Run)
+
+The backend is automatically deployed via GitHub Actions when code is pushed to main branch.
+
+**Manual Deployment:**
+
+```bash
+cd expense-tracker-backend
+gcloud builds submit --tag gcr.io/PROJECT_ID/expense-tracker-backend
+gcloud run deploy expense-tracker-backend \
+  --image gcr.io/PROJECT_ID/expense-tracker-backend \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
+```
+
+### Frontend (Firebase Hosting)
+
+The frontend is automatically deployed via GitHub Actions.
+
+**Manual Deployment:**
+
+```bash
+cd expense-tracker-frontend
+npm run build
+firebase deploy
+```
+
+## 🔧 Configuration
+
+### Environment Variables Reference
+
+#### Backend (.env)
+
+| Variable                | Description               | Required | Example               |
+| ----------------------- | ------------------------- | -------- | --------------------- |
+| `DJANGO_SECRET_KEY`     | Django secret key         | Yes      | `django-insecure-...` |
+| `COGNITO_CLIENT_ID`     | AWS Cognito client ID     | Yes      | `1234567890abcdef`    |
+| `COGNITO_CLIENT_SECRET` | AWS Cognito client secret | Yes      | `secret-key-here`     |
+| `AWS_ACCESS_KEY_ID`     | AWS access key            | Yes      | `AKIA...`             |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key            | Yes      | `secret-key-here`     |
+| `AWS_REGION`            | AWS region                | Yes      | `us-east-1`           |
+| `DYNAMODB_TABLE_NAME`   | DynamoDB table name       | Yes      | `expenses-table`      |
+| `S3_BUCKET_NAME`        | S3 bucket name            | Yes      | `my-receipts-bucket`  |
+| `S3_REGION`             | S3 region                 | Yes      | `us-east-1`           |
+
+#### Frontend (.env)
+
+| Variable                     | Description          | Required | Example                 |
+| ---------------------------- | -------------------- | -------- | ----------------------- |
+| `REACT_APP_BACKEND_URL`      | Backend API URL      | Yes      | `http://localhost:8000` |
+| `REACT_APP_AWS_REGION`       | AWS region           | Yes      | `us-east-1`             |
+| `REACT_APP_AWS_USER_POOL_ID` | Cognito user pool ID | Yes      | `us-east-1_abcdef`      |
+| `REACT_APP_AWS_CLIENT_ID`    | Cognito client ID    | Yes      | `1234567890abcdef`      |
+
+## 🐳 Docker Development
+
+### Backend
+
+```bash
+cd expense-tracker-backend
+docker build -t expense-tracker-backend:dev .
+docker run -p 8000:8000 --env-file .env expense-tracker-backend:dev
+```
+
+## 📊 Code Quality Standards
+
+### Backend (Python/Django)
+
+- **Linting**: flake8 with max line length 100
+- **Testing**: pytest with 70% coverage threshold
+- **Code Style**: PEP 8 compliant
+- **Documentation**: Docstrings for all functions and classes
+
+### Frontend (React/JavaScript)
+
+- **Linting**: ESLint with React and accessibility rules
+- **Testing**: Jest with React Testing Library
+- **Code Style**: Single quotes, semicolons, 2-space indentation
+- **Coverage**: 70% threshold for statements, branches, functions, lines
+
+## 🔍 Troubleshooting
+
+### Common Backend Issues
+
+1. **Import errors in tests**
+
+   - Ensure you're running tests from the correct directory
+   - Check that `PYTHONPATH` includes the project root
+
+2. **AWS credentials not found**
+
+   - Verify `.env` file exists and has correct values
+   - Check AWS CLI configuration: `aws configure list`
+
+3. **DynamoDB table not found**
+   - Run setup script: `python scripts/setup_all.py`
+   - Verify table name in environment variables
+
+### Common Frontend Issues
+
+1. **ESLint errors**
+
+   - Run `npm run lint:fix` to auto-fix issues
+   - Check `.eslintrc.js` for rule configuration
+
+2. **Test failures**
+
+   - Ensure all mocks are properly set up
+   - Check that test environment variables are set
+
+3. **Build failures**
+   - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+   - Check for syntax errors in React components
+
+## 🤝 Contributing
+
+1. **Create a feature branch**
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make changes and test locally**
+
+   - Run backend tests: `python -m pytest`
+   - Run frontend tests: `npm test`
+   - Run linting: `flake8` and `npm run lint`
+
+3. **Commit with descriptive message**
+
+   ```bash
+   git commit -m "feat: add new expense category feature"
+   ```
+
+4. **Push and create pull request**
+   - Ensure CI/CD pipeline passes
+   - Request code review
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- AWS Cognito for authentication
+- AWS DynamoDB for database
+- AWS S3 for file storage
+- GCP Cloud Run for backend hosting
+- Firebase for frontend hosting
+- GitHub Actions for CI/CD
