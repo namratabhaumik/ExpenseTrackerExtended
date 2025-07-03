@@ -12,7 +12,7 @@ python-dotenv==1.0.0
 s3transfer==0.10.4
 six==1.17.0
 sqlparse==0.5.3
-tzdata==2024.2
+tzdata==2025.2
 urllib3==2.3.0
 
 # Testing and linting dependencies
