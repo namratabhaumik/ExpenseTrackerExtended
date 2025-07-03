@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from "react";
-import Login from "./Login";
-import axios from "axios";
+import React, { useState } from 'react';
+import Login from './Login';
+import Expenses from './Expenses';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [error, setError] = useState(null);
+  const [accessToken, setAccessToken] = useState('');
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (token) => {
     setIsAuthenticated(true);
+    setAccessToken(token);
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    // Add any logout logic here if needed
+    setAccessToken('');
   };
 
   return (
@@ -22,12 +23,7 @@ function App() {
       {!isAuthenticated ? (
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
-        <div>
-          <p>Welcome! You are logged in.</p>
-          <button onClick={handleLogout}>Logout</button>
-          <h2>Upload Receipt</h2>
-          {/* Placeholder for future receipt upload logic */}
-        </div>
+        <Expenses onLogout={handleLogout} accessToken={accessToken} />
       )}
     </div>
   );

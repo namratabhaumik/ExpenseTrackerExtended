@@ -19,6 +19,9 @@ venv/
 env/
 pip-log.txt
 
+# Django/Database
+expense-tracker-backend/expense_tracker/db.sqlite3
+
 # Docker
 .dockerignore
 
@@ -26,7 +29,9 @@ pip-log.txt
 .kube/
 
 # Logs
+logs/
 *.log
+expense-tracker-backend/logs/
 
 # IDE/Editor
 .vscode/

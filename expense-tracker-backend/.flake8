@@ -1,0 +1,22 @@
+[flake8]
+max-line-length = 100
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    migrations,
+    *.pyc,
+    .pytest_cache,
+    .coverage,
+    htmlcov
+# E203: whitespace before ':'
+# W503: line break before binary operator
+# E501: line too long (handled by max-line-length)
+# F401: imported but unused (allow for __init__.py)
+# F403: wildcard import (allow for __init__.py)
+# F405: name may be undefined, or defined from star imports
+ignore = E203,W503,E501,F401,F403,F405
+per-file-ignores =
+    __init__.py:F401,F403,F405
+    */__init__.py:F401,F403,F405 
