@@ -15,6 +15,8 @@ on:
 permissions:
   contents: "read"
   id-token: "write"
+  checks: "write"
+  deployments: "write"
 
 jobs:
   build-and-test-backend:
@@ -167,6 +169,10 @@ jobs:
   deploy-frontend:
     needs: build-and-test-frontend
     runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      checks: "write"
+      deployments: "write"
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js
