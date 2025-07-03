@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import os
 from .middleware import require_auth
+from botocore.exceptions import ClientError
 
 # Get logger for this module
 logger = logging.getLogger(__name__)
@@ -84,18 +85,26 @@ def login_view(request):
                 'status': 'success'
             })
 
-        except cognito_client.exceptions.NotAuthorizedException:
-            logger.warning(f"Invalid credentials for user: {email}")
-            return JsonResponse({
-                'error': 'Invalid credentials',
-                'status': 'error'
-            }, status=401)
-        except cognito_client.exceptions.UserNotFoundException:
-            logger.warning(f"User not found: {email}")
-            return JsonResponse({
-                'error': 'User does not exist',
-                'status': 'error'
-            }, status=404)
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'NotAuthorizedException':
+                logger.warning(f"Invalid credentials for user: {email}")
+                return JsonResponse({
+                    'error': 'Invalid credentials',
+                    'status': 'error'
+                }, status=401)
+            elif error_code == 'UserNotFoundException':
+                logger.warning(f"User not found: {email}")
+                return JsonResponse({
+                    'error': 'User does not exist',
+                    'status': 'error'
+                }, status=404)
+            else:
+                logger.error(f"Unexpected Cognito error: {str(e)}")
+                return JsonResponse({
+                    'error': 'An unexpected error occurred',
+                    'status': 'error'
+                }, status=500)
         except json.JSONDecodeError:
             logger.error("Invalid JSON in login request")
             return JsonResponse({

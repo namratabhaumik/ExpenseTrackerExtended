@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.conf import settings
 import boto3
-from moto import mock_dynamodb, mock_s3
+from moto import mock_aws
 import os
 
 
@@ -24,7 +24,7 @@ class AuthAppTestCase(TestCase):
         # Mock environment variables for testing
         self.env_patcher = patch.dict(os.environ, {
             'DJANGO_SECRET_KEY': 'test-secret-key',
-            'COGNITO_CLIENT_ID': 'test-client-id',
+            'COGNITO_CLIENT_ID': 'testclientid123',
             'COGNITO_CLIENT_SECRET': 'test-client-secret',
             'AWS_ACCESS_KEY_ID': 'test-access-key',
             'AWS_SECRET_ACCESS_KEY': 'test-secret-key',
@@ -43,19 +43,17 @@ class AuthAppTestCase(TestCase):
 class LoginViewTest(AuthAppTestCase):
     """Test cases for login endpoint."""
 
-    @patch('auth_app.views.boto3.client')
-    def test_login_success(self, mock_boto3_client):
+    @patch('auth_app.views.cognito_client')
+    def test_login_success(self, mock_cognito_client):
         """Test successful login with valid credentials."""
         # Mock Cognito response
-        mock_cognito = MagicMock()
-        mock_cognito.initiate_auth.return_value = {
+        mock_cognito_client.initiate_auth.return_value = {
             'AuthenticationResult': {
                 'AccessToken': 'test-access-token',
                 'IdToken': 'test-id-token',
                 'RefreshToken': 'test-refresh-token'
             }
         }
-        mock_boto3_client.return_value = mock_cognito
 
         response = self.client.post(
             reverse('login'),
@@ -69,14 +67,15 @@ class LoginViewTest(AuthAppTestCase):
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'success')
 
-    @patch('auth_app.views.boto3.client')
-    def test_login_invalid_credentials(self, mock_boto3_client):
+    @patch('auth_app.views.cognito_client')
+    def test_login_invalid_credentials(self, mock_cognito_client):
         """Test login with invalid credentials."""
         # Mock Cognito error response
-        mock_cognito = MagicMock()
-        mock_cognito.initiate_auth.side_effect = Exception(
-            'Invalid credentials')
-        mock_boto3_client.return_value = mock_cognito
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'NotAuthorizedException', 'Message': 'Invalid credentials'}}
+        mock_cognito_client.initiate_auth.side_effect = ClientError(
+            error_response, 'InitiateAuth')
 
         response = self.client.post(
             reverse('login'),
@@ -116,24 +115,30 @@ class ExpenseViewTest(AuthAppTestCase):
         }
         self.test_token = 'test-access-token'
 
-    @mock_dynamodb
-    @patch('auth_app.views.verify_cognito_token')
-    def test_add_expense_success(self, mock_verify_token):
+    @mock_aws
+    @patch('auth_app.middleware.boto3.client')
+    @patch('auth_app.models.settings.DYNAMODB_TABLE_NAME', 'test-expenses-table')
+    def test_add_expense_success(self, mock_boto3_client):
         """Test successful expense addition."""
-        # Mock token verification
-        mock_verify_token.return_value = {'sub': 'test-user-id'}
+        # Mock Cognito user validation
+        mock_cognito = MagicMock()
+        mock_cognito.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'}
+            ]
+        }
+        mock_boto3_client.return_value = mock_cognito
 
-        # Set up DynamoDB
+        # Set up DynamoDB with correct table name
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         table = dynamodb.create_table(
             TableName='test-expenses-table',
             KeySchema=[
-                {'AttributeName': 'id', 'KeyType': 'HASH'},
-                {'AttributeName': 'user_id', 'KeyType': 'RANGE'}
+                {'AttributeName': 'expense_id', 'KeyType': 'HASH'}
             ],
             AttributeDefinitions=[
-                {'AttributeName': 'id', 'AttributeType': 'S'},
-                {'AttributeName': 'user_id', 'AttributeType': 'S'}
+                {'AttributeName': 'expense_id', 'AttributeType': 'S'}
             ],
             BillingMode='PAY_PER_REQUEST'
         )
@@ -152,11 +157,8 @@ class ExpenseViewTest(AuthAppTestCase):
         self.assertEqual(data['status'], 'success')
         self.assertIn('expense_id', data)
 
-    @patch('auth_app.views.verify_cognito_token')
-    def test_add_expense_invalid_token(self, mock_verify_token):
+    def test_add_expense_invalid_token(self):
         """Test expense addition with invalid token."""
-        mock_verify_token.side_effect = Exception('Invalid token')
-
         response = self.client.post(
             reverse('add_expense'),
             data=json.dumps(self.test_expense_data),
@@ -169,8 +171,19 @@ class ExpenseViewTest(AuthAppTestCase):
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
 
-    def test_add_expense_missing_data(self):
+    @patch('auth_app.middleware.boto3.client')
+    def test_add_expense_missing_data(self, mock_boto3_client):
         """Test expense addition with missing required fields."""
+        # Mock Cognito user validation
+        mock_cognito = MagicMock()
+        mock_cognito.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'}
+            ]
+        }
+        mock_boto3_client.return_value = mock_cognito
+
         response = self.client.post(
             reverse('add_expense'),
             data=json.dumps({'amount': 25.50}),
@@ -183,24 +196,30 @@ class ExpenseViewTest(AuthAppTestCase):
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
 
-    @mock_dynamodb
-    @patch('auth_app.views.verify_cognito_token')
-    def test_get_expenses_success(self, mock_verify_token):
+    @mock_aws
+    @patch('auth_app.middleware.boto3.client')
+    @patch('auth_app.models.settings.DYNAMODB_TABLE_NAME', 'test-expenses-table')
+    def test_get_expenses_success(self, mock_boto3_client):
         """Test successful expense retrieval."""
-        # Mock token verification
-        mock_verify_token.return_value = {'sub': 'test-user-id'}
+        # Mock Cognito user validation
+        mock_cognito = MagicMock()
+        mock_cognito.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'}
+            ]
+        }
+        mock_boto3_client.return_value = mock_cognito
 
-        # Set up DynamoDB
+        # Set up DynamoDB with correct table name
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         table = dynamodb.create_table(
             TableName='test-expenses-table',
             KeySchema=[
-                {'AttributeName': 'id', 'KeyType': 'HASH'},
-                {'AttributeName': 'user_id', 'KeyType': 'RANGE'}
+                {'AttributeName': 'expense_id', 'KeyType': 'HASH'}
             ],
             AttributeDefinitions=[
-                {'AttributeName': 'id', 'AttributeType': 'S'},
-                {'AttributeName': 'user_id', 'AttributeType': 'S'}
+                {'AttributeName': 'expense_id', 'AttributeType': 'S'}
             ],
             BillingMode='PAY_PER_REQUEST'
         )
@@ -230,12 +249,19 @@ class ReceiptUploadTest(AuthAppTestCase):
             'filename': 'test_receipt.txt'
         }
 
-    @mock_s3
-    @patch('auth_app.views.verify_cognito_token')
-    def test_upload_receipt_success(self, mock_verify_token):
+    @mock_aws
+    @patch('auth_app.middleware.boto3.client')
+    def test_upload_receipt_success(self, mock_boto3_client):
         """Test successful receipt upload."""
-        # Mock token verification
-        mock_verify_token.return_value = {'sub': 'test-user-id'}
+        # Mock Cognito user validation
+        mock_cognito = MagicMock()
+        mock_cognito.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'}
+            ]
+        }
+        mock_boto3_client.return_value = mock_cognito
 
         # Set up S3
         s3 = boto3.client('s3', region_name='us-east-1')
@@ -254,11 +280,8 @@ class ReceiptUploadTest(AuthAppTestCase):
         self.assertEqual(data['status'], 'success')
         self.assertIn('file_url', data)
 
-    @patch('auth_app.views.verify_cognito_token')
-    def test_upload_receipt_invalid_token(self, mock_verify_token):
+    def test_upload_receipt_invalid_token(self):
         """Test receipt upload with invalid token."""
-        mock_verify_token.side_effect = Exception('Invalid token')
-
         response = self.client.post(
             reverse('upload_receipt'),
             data=json.dumps(self.test_file_data),
@@ -271,8 +294,19 @@ class ReceiptUploadTest(AuthAppTestCase):
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
 
-    def test_upload_receipt_missing_data(self):
+    @patch('auth_app.middleware.boto3.client')
+    def test_upload_receipt_missing_data(self, mock_boto3_client):
         """Test receipt upload with missing required fields."""
+        # Mock Cognito user validation
+        mock_cognito = MagicMock()
+        mock_cognito.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'}
+            ]
+        }
+        mock_boto3_client.return_value = mock_cognito
+
         response = self.client.post(
             reverse('upload_receipt'),
             data=json.dumps({'filename': 'test.txt'}),
@@ -284,36 +318,3 @@ class ReceiptUploadTest(AuthAppTestCase):
         data = json.loads(response.content)
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
-
-
-class UtilityFunctionTest(TestCase):
-    """Test cases for utility functions."""
-
-    @patch('auth_app.views.boto3.client')
-    def test_verify_cognito_token_success(self, mock_boto3_client):
-        """Test successful token verification."""
-        mock_cognito = MagicMock()
-        mock_cognito.get_user.return_value = {
-            'Username': 'test-user-id',
-            'UserAttributes': [
-                {'Name': 'email', 'Value': 'test@example.com'}
-            ]
-        }
-        mock_boto3_client.return_value = mock_cognito
-
-        from auth_app.views import verify_cognito_token
-        result = verify_cognito_token('valid-token')
-
-        self.assertEqual(result['sub'], 'test-user-id')
-
-    @patch('auth_app.views.boto3.client')
-    def test_verify_cognito_token_invalid(self, mock_boto3_client):
-        """Test invalid token verification."""
-        mock_cognito = MagicMock()
-        mock_cognito.get_user.side_effect = Exception('Invalid token')
-        mock_boto3_client.return_value = mock_cognito
-
-        from auth_app.views import verify_cognito_token
-
-        with self.assertRaises(Exception):
-            verify_cognito_token('invalid-token')

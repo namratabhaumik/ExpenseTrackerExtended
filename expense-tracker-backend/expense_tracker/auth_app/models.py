@@ -42,9 +42,8 @@ class DynamoDBExpense:
 
     def get_by_user(self, user_id):
         """Get all expenses for a user."""
-        response = self.table.query(
-            IndexName='user_id-index',  # You'll need to create this GSI
-            KeyConditionExpression='user_id = :user_id',
+        response = self.table.scan(
+            FilterExpression='user_id = :user_id',
             ExpressionAttributeValues={
                 ':user_id': user_id
             }
