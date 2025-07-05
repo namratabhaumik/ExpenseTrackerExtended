@@ -57,6 +57,8 @@ jobs:
         run: |
           cd expense-tracker-backend/expense_tracker
           python manage.py check
+        env:
+          DJANGO_SECRET_KEY: test-secret-key
 
       - name: Run backend tests
         run: |
@@ -198,4 +200,3 @@ jobs:
           channelId: live
           projectId: expense-tracker-frontend-1a909
           entryPoint: expense-tracker-frontend
-#test commit
