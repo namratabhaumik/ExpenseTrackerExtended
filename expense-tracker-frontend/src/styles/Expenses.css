@@ -1,0 +1,175 @@
+.expenses-container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: #f9fafb;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(75, 85, 99, 0.08),
+    0 1.5px 4px rgba(75, 85, 99, 0.06);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  color: #4b5563;
+}
+
+.expenses-container h2 {
+  color: #4b5563;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.expenses-container h3 {
+  color: #2563eb;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.expenses-logout-btn {
+  background: #4b5563;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: background 0.2s;
+}
+.expenses-logout-btn:hover {
+  background: #9ca3af;
+  color: #4b5563;
+}
+
+.expenses-form,
+.expenses-receipt-form {
+  display: flex;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.expenses-form input,
+.expenses-receipt-form input {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #9ca3af;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
+  color: #4b5563;
+  flex: 1 1 120px;
+}
+
+.expenses-form input:focus,
+.expenses-receipt-form input:focus {
+  border: 1.5px solid #2563eb;
+  outline: none;
+}
+
+.expenses-form button,
+.expenses-receipt-form button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.expenses-form button:hover,
+.expenses-receipt-form button:hover {
+  background: #4b5563;
+}
+
+.expenses-status {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.expenses-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(75, 85, 99, 0.04);
+}
+
+.expenses-table th,
+.expenses-table td {
+  text-align: center;
+}
+
+.expenses-table th {
+  background: #9ca3af;
+  color: #4b5563;
+  font-weight: 700;
+  padding: 0.8rem 0.5rem;
+}
+
+.expenses-table td {
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.expenses-table tr:last-child td {
+  border-bottom: none;
+}
+
+.expenses-empty,
+.expenses-error {
+  color: #ef4444;
+  background: #fee2e2;
+  border-radius: 4px;
+  padding: 0.7rem 1rem;
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.expenses-success {
+  color: #10b981;
+  background: #d1fae5;
+  border-radius: 4px;
+  padding: 0.7rem 1rem;
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .expenses-container {
+    max-width: 99vw;
+    padding: 1rem 0.5rem;
+  }
+  .expenses-form,
+  .expenses-receipt-form {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .expenses-form input,
+  .expenses-receipt-form input {
+    width: 100%;
+    min-width: 0;
+  }
+  .expenses-table th,
+  .expenses-table td {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .expenses-table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+  }
+}

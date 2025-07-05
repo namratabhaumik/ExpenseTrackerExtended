@@ -21,62 +21,21 @@
 
 - [ ] **Modern UI/UX Design**
 
-  - Implement responsive design for mobile/desktop
-  - Add loading states and error handling
-  - Create intuitive navigation
-  - Add dark/light theme toggle
-  - Improve visual design and branding
+  - (Planned) Implement advanced responsive design, branding, and visual polish
+  - (Planned) Add loading states, error handling, and intuitive navigation
+  - (Planned) Add dark/light theme toggle
 
 - [ ] **Interactive Features**
-  - Real-time expense tracking dashboard
-  - Expense categorization with icons
-  - Search and filter functionality
-  - Export expenses to CSV/PDF
-  - Drag-and-drop receipt upload
+  - (Planned) Real-time expense dashboard, search/filter, export, and drag-and-drop receipt upload
 
 ### 2. Advanced Functionality
 
 - [ ] **Enhanced Expense Management**
-  - Bulk expense operations
-  - Expense templates for recurring items
-  - Advanced filtering and sorting
-  - Expense approval workflows
-  - Multi-currency support
+  - (Planned) Bulk operations, templates, advanced filtering, approval workflows, multi-currency
 
 ## 🎨 UI/UX Improvements
 
-### Design System
-
-- [ ] **Component Library**
-  - Create reusable React components
-  - Implement consistent styling with CSS-in-JS or styled-components
-  - Add accessibility features (ARIA labels, keyboard navigation)
-  - Create design tokens for colors, typography, spacing
-
-### User Interface
-
-- [ ] **Dashboard**
-
-  - Monthly/yearly expense overview
-  - Category-wise spending breakdown
-  - Budget tracking and alerts
-  - Recent transactions list
-  - Spending trends visualization
-
-- [ ] **Forms & Inputs**
-
-  - Auto-complete for categories
-  - Date picker for expense dates
-  - Currency formatting
-  - Form validation with helpful error messages
-  - Receipt scanning with OCR
-
-- [ ] **Data Visualization**
-  - Charts and graphs for spending patterns
-  - Pie charts for category distribution
-  - Line charts for spending trends
-  - Interactive filters and drill-downs
-  - Real-time data updates
+- The current UI is a minimal, clean foundation. All advanced UI/UX improvements are planned for future sprints.
 
 ## 🔧 Technical Enhancements
 

@@ -427,3 +427,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - GCP Cloud Run for backend hosting
 - Firebase for frontend hosting
 - GitHub Actions for CI/CD
+
+## 🖥️ Frontend UI Status
+
+- The React frontend is intentionally minimal, clean, and responsive.
+- Uses the "Minimal Neutrals" color palette:
+  - **Primary:** #4B5563 (Slate Gray)
+  - **Secondary:** #9CA3AF (Light Gray)
+  - **Accent:** #2563EB (Blue)
+  - **Background:** #F9FAFB (Lightest Gray)
+  - **Success:** #10B981 (Emerald Green)
+  - **Error:** #EF4444 (Red)
+- All CSS files are organized under `src/styles/` for maintainability.
+- The UI is fully responsive and works well on mobile, tablet, and desktop.
+- **Advanced UI/UX features are planned for future iterations.**
+
+## [Chore] Frontend Structure & Documentation
+
+- All frontend CSS files are now organized under `src/styles/` for better maintainability and separation of concerns.
+- The redundant frontend `README.md` has been removed; this is now the single source of project documentation.
