@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import './styles/Login.css';
 
 function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -38,9 +39,9 @@ function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div>
+    <div className="login-container">
       <h2>Login</h2>
-      <form onSubmit={handleLogin}>
+      <form className="login-form" onSubmit={handleLogin}>
         <div>
           <label htmlFor="email">Email:</label>
           <input
@@ -63,7 +64,7 @@ function Login({ onLoginSuccess }) {
         </div>
         <button type="submit">Login</button>
       </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="login-error">{error}</p>}
     </div>
   );
 }

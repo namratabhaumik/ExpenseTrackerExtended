@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Login from './Login';
 import Expenses from './Expenses';
+import './styles/App.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,8 +19,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Expense Tracker</h1>
-
+      {!isAuthenticated && <h1>Expense Tracker</h1>}
       {!isAuthenticated ? (
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (

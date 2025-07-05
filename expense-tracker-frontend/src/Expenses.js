@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import './styles/Expenses.css';
 
 function Expenses({ onLogout, accessToken }) {
   const [expenses, setExpenses] = useState([]);
@@ -142,11 +143,13 @@ function Expenses({ onLogout, accessToken }) {
   };
 
   return (
-    <div>
+    <div className="expenses-container">
       <h2>Expenses</h2>
-      <button onClick={onLogout}>Logout</button>
+      <button className="expenses-logout-btn" onClick={onLogout}>
+        Logout
+      </button>
       <h3>Add Expense</h3>
-      <form onSubmit={handleAddExpense}>
+      <form className="expenses-form" onSubmit={handleAddExpense}>
         <input
           type="number"
           name="amount"
@@ -172,10 +175,10 @@ function Expenses({ onLogout, accessToken }) {
         />
         <button type="submit">Add</button>
       </form>
-      {addError && <p style={{ color: 'red' }}>{addError}</p>}
-      {addSuccess && <p style={{ color: 'green' }}>{addSuccess}</p>}
+      {addError && <p className="expenses-error">{addError}</p>}
+      {addSuccess && <p className="expenses-success">{addSuccess}</p>}
       <h3>Upload Receipt</h3>
-      <form onSubmit={handleReceiptUpload}>
+      <form className="expenses-receipt-form" onSubmit={handleReceiptUpload}>
         <input
           type="file"
           accept="image/*,.pdf"
@@ -197,7 +200,11 @@ function Expenses({ onLogout, accessToken }) {
       </form>
       {receiptStatus && (
         <p
-          style={{ color: receiptStatus.includes('success') ? 'green' : 'red' }}
+          className={
+            receiptStatus.includes('success')
+              ? 'expenses-success'
+              : 'expenses-error'
+          }
         >
           {receiptStatus}
         </p>
@@ -206,11 +213,11 @@ function Expenses({ onLogout, accessToken }) {
       {loading ? (
         <p>Loading...</p>
       ) : error ? (
-        <p style={{ color: 'red' }}>{error}</p>
+        <p className="expenses-error">{error}</p>
       ) : expenses.length === 0 ? (
-        <p>No expenses found.</p>
+        <p className="expenses-empty">No expenses found.</p>
       ) : (
-        <table style={{ margin: '0 auto' }}>
+        <table className="expenses-table">
           <thead>
             <tr>
               <th>Amount</th>
