@@ -57,6 +57,8 @@ jobs:
         run: |
           cd expense-tracker-backend/expense_tracker
           python manage.py check
+        env:
+          DJANGO_SECRET_KEY: test-secret-key
 
       - name: Run backend tests
         run: |
