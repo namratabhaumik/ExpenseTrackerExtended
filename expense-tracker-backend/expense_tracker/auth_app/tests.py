@@ -318,3 +318,108 @@ class ReceiptUploadTest(AuthAppTestCase):
         data = json.loads(response.content)
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
+
+
+class SignupViewTest(AuthAppTestCase):
+    """Test cases for signup endpoint."""
+
+    @patch('auth_app.views.cognito_client')
+    def test_signup_success(self, mock_cognito_client):
+        mock_cognito_client.sign_up.return_value = {'UserConfirmed': False}
+        response = self.client.post(
+            reverse('signup'),
+            data=json.dumps(self.test_user_data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    @patch('auth_app.views.cognito_client')
+    def test_signup_user_exists(self, mock_cognito_client):
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'UsernameExistsException', 'Message': 'User exists'}}
+        mock_cognito_client.sign_up.side_effect = ClientError(
+            error_response, 'SignUp')
+        response = self.client.post(
+            reverse('signup'),
+            data=json.dumps(self.test_user_data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 409)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.cognito_client')
+    def test_signup_invalid_password(self, mock_cognito_client):
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'InvalidPasswordException', 'Message': 'Invalid password'}}
+        mock_cognito_client.sign_up.side_effect = ClientError(
+            error_response, 'SignUp')
+        response = self.client.post(
+            reverse('signup'),
+            data=json.dumps(self.test_user_data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+
+class ConfirmSignupViewTest(AuthAppTestCase):
+    """Test cases for confirm-signup endpoint."""
+
+    @patch('auth_app.views.cognito_client')
+    def test_confirm_signup_success(self, mock_cognito_client):
+        mock_cognito_client.confirm_sign_up.return_value = {}
+        response = self.client.post(
+            reverse('confirm_signup'),
+            data=json.dumps(
+                {'email': self.test_user_data['email'], 'code': '123456'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    @patch('auth_app.views.cognito_client')
+    def test_confirm_signup_invalid_code(self, mock_cognito_client):
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'CodeMismatchException', 'Message': 'Invalid code'}}
+        mock_cognito_client.confirm_sign_up.side_effect = ClientError(
+            error_response, 'ConfirmSignUp')
+        response = self.client.post(
+            reverse('confirm_signup'),
+            data=json.dumps(
+                {'email': self.test_user_data['email'], 'code': 'wrongcode'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.cognito_client')
+    def test_confirm_signup_already_confirmed(self, mock_cognito_client):
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'NotAuthorizedException', 'Message': 'Already confirmed'}}
+        mock_cognito_client.confirm_sign_up.side_effect = ClientError(
+            error_response, 'ConfirmSignUp')
+        response = self.client.post(
+            reverse('confirm_signup'),
+            data=json.dumps(
+                {'email': self.test_user_data['email'], 'code': '123456'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
