@@ -37,6 +37,7 @@ module.exports = {
     quotes: ["error", "single"],
     indent: ["error", 2],
     "max-len": ["warn", { code: 100 }],
+    "testing-library/no-unnecessary-act": "off", // Disable false positive warnings
   },
   settings: {
     react: {

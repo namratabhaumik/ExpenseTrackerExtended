@@ -274,61 +274,47 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 }
 ```
 
-## API Endpoints
+## Password Reset Flow (Frontend)
 
-### POST /api/signup/
+The password reset modal now uses a three-step process:
 
-Register a new user. This endpoint creates a user in AWS Cognito and sends a verification email.
+1. **Enter Email:** User enters their email to request a reset code.
+2. **Enter Code:** User enters the code sent to their email. The code is verified before proceeding.
+3. **Enter New Password:** If the code is valid, the user can set a new password (with real-time validation and requirements).
 
-**Request Body:**
+Only one message (error or success) is shown at a time for clarity.
 
-```
-{
-  "email": "user@example.com",
-  "password": "yourPassword123"
-}
-```
+## API Endpoints (Backend)
 
-**Responses:**
+### Authentication
 
-- 201 Created: `{ "message": "Sign up successful! Please check your email to verify your account.", "status": "success" }`
-- 400 Bad Request: `{ "error": "Missing required fields: email and password", "status": "error" }`
-- 409 Conflict: `{ "error": "User already exists", "status": "error" }`
-- 400 Bad Request: `{ "error": "Password does not meet requirements", "status": "error" }`
-- 400 Bad Request: `{ "error": "Invalid parameter", "status": "error" }`
-- 500 Internal Server Error: `{ "error": "An unexpected error occurred", "status": "error" }`
+The following endpoints do **NOT** require authentication (no Authorization header needed):
 
-**Notes:**
+- `POST /api/login/`
+- `POST /api/signup/`
+- `POST /api/confirm-signup/`
+- `POST /api/forgot-password/`
+- `POST /api/verify-reset-code/`
+- `POST /api/confirm-forgot-password/`
+- `GET /api/healthz/`
 
-- Uses AWS Cognito for user creation and email verification.
-- On success, user must verify their email before logging in.
+All other endpoints require a valid JWT token in the Authorization header: `Authorization: Bearer <token>`
 
-### POST /api/confirm-signup/
+### POST `/api/forgot-password/`
 
-Confirm a new user's registration using the code sent to their email.
+- **Request:** `{ "email": "user@example.com" }`
+- **Response:** `{ "message": "Password reset code sent to your email.", "status": "success" }`
 
-**Request Body:**
+### POST `/api/verify-reset-code/`
 
-```
-{
-  "email": "user@example.com",
-  "code": "123456"
-}
-```
+- **Request:** `{ "email": "user@example.com", "code": "123456" }`
+- **Response (success):** `{ "message": "Reset code is valid.", "status": "success" }`
+- **Response (error):** `{ "error": "Invalid reset code", "status": "error" }`
 
-**Responses:**
+### POST `/api/confirm-forgot-password/`
 
-- 200 OK: `{ "message": "Account confirmed! You can now log in.", "status": "success" }`
-- 400 Bad Request: `{ "error": "Invalid confirmation code", "status": "error" }`
-- 400 Bad Request: `{ "error": "Confirmation code expired", "status": "error" }`
-- 404 Not Found: `{ "error": "User not found", "status": "error" }`
-- 400 Bad Request: `{ "error": "User already confirmed", "status": "error" }`
-- 500 Internal Server Error: `{ "error": "An unexpected error occurred", "status": "error" }`
-
-**Notes:**
-
-- Uses AWS Cognito to confirm user registration.
-- On success, user can log in immediately.
+- **Request:** `{ "email": "user@example.com", "code": "123456", "new_password": "NewPassword123!" }`
+- **Response:** `{ "message": "Password reset successful! You can now log in with your new password.", "status": "success" }`
 
 ## 🚀 Deployment
 
@@ -498,12 +484,35 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - The UI is fully responsive and works well on mobile, tablet, and desktop.
 - **Advanced UI/UX features are planned for future iterations.**
 
+### Authentication Features
+
+- **Tabbed Login/Signup**: Clean tab interface for switching between login and signup forms
+- **Real-time Validation**: Email format and password strength validation with visual feedback
+- **Password Visibility Toggle**: Eye icon to show/hide passwords for better UX
+- **Account Confirmation**: Modal for entering verification codes sent via email
+- **Password Reset**: Two-step modal process for forgotten passwords:
+  1. Enter email to receive reset code
+  2. Enter code and new password with confirmation
+- **Error Handling**: Comprehensive error messages and loading states
+- **Accessibility**: Full keyboard navigation and screen reader support
+
 ## [Chore] Frontend Structure & Documentation
 
 - All frontend CSS files are now organized under `src/styles/` for better maintainability and separation of concerns.
 - The redundant frontend `README.md` has been removed; this is now the single source of project documentation.
 
 ## Changelog
+
+### Latest Updates
+
+- **Password Reset Feature**: Added complete password reset functionality:
+
+  - Backend endpoints: `/api/forgot-password/` and `/api/confirm-forgot-password/`
+  - Frontend modal with two-step process (email → code + new password)
+  - Integration with AWS Cognito's forgot password flow
+  - Comprehensive error handling and validation
+  - Full test coverage for both backend and frontend
+  - Updated middleware to exclude password reset endpoints from auth checks
 
 - Updated frontend tests (`App.test.js`) to:
   - Fix React act() warnings by wrapping assertions after state changes in `waitFor`.

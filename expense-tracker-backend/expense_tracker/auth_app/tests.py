@@ -423,3 +423,171 @@ class ConfirmSignupViewTest(AuthAppTestCase):
         data = json.loads(response.content)
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
+
+
+class ForgotPasswordViewTest(AuthAppTestCase):
+    """Test cases for forgot-password endpoint."""
+
+    @patch('auth_app.views.cognito_client')
+    def test_forgot_password_success(self, mock_cognito_client):
+        """Test successful password reset initiation."""
+        mock_cognito_client.forgot_password.return_value = {}
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({'email': self.test_user_data['email']}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+        self.assertIn('message', data)
+
+    @patch('auth_app.views.cognito_client')
+    def test_forgot_password_user_not_found(self, mock_cognito_client):
+        """Test password reset for non-existent user."""
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'UserNotFoundException', 'Message': 'User not found'}}
+        mock_cognito_client.forgot_password.side_effect = ClientError(
+            error_response, 'ForgotPassword')
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({'email': 'nonexistent@example.com'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 404)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.cognito_client')
+    def test_forgot_password_limit_exceeded(self, mock_cognito_client):
+        """Test password reset when limit is exceeded."""
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'LimitExceededException', 'Message': 'Limit exceeded'}}
+        mock_cognito_client.forgot_password.side_effect = ClientError(
+            error_response, 'ForgotPassword')
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({'email': self.test_user_data['email']}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 429)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    def test_forgot_password_missing_email(self):
+        """Test password reset with missing email."""
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+
+class ConfirmForgotPasswordViewTest(AuthAppTestCase):
+    """Test cases for confirm-forgot-password endpoint."""
+
+    @patch('auth_app.views.cognito_client')
+    def test_confirm_forgot_password_success(self, mock_cognito_client):
+        """Test successful password reset confirmation."""
+        mock_cognito_client.confirm_forgot_password.return_value = {}
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': self.test_user_data['email'],
+                'code': '123456',
+                'new_password': 'NewPassword123!'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+        self.assertIn('message', data)
+
+    @patch('auth_app.views.cognito_client')
+    def test_confirm_forgot_password_invalid_code(self, mock_cognito_client):
+        """Test password reset confirmation with invalid code."""
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'CodeMismatchException', 'Message': 'Invalid code'}}
+        mock_cognito_client.confirm_forgot_password.side_effect = ClientError(
+            error_response, 'ConfirmForgotPassword')
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': self.test_user_data['email'],
+                'code': 'wrongcode',
+                'new_password': 'NewPassword123!'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.cognito_client')
+    def test_confirm_forgot_password_expired_code(self, mock_cognito_client):
+        """Test password reset confirmation with expired code."""
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'ExpiredCodeException', 'Message': 'Code expired'}}
+        mock_cognito_client.confirm_forgot_password.side_effect = ClientError(
+            error_response, 'ConfirmForgotPassword')
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': self.test_user_data['email'],
+                'code': '123456',
+                'new_password': 'NewPassword123!'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.cognito_client')
+    def test_confirm_forgot_password_invalid_password(self, mock_cognito_client):
+        """Test password reset confirmation with invalid new password."""
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'InvalidPasswordException', 'Message': 'Invalid password'}}
+        mock_cognito_client.confirm_forgot_password.side_effect = ClientError(
+            error_response, 'ConfirmForgotPassword')
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': self.test_user_data['email'],
+                'code': '123456',
+                'new_password': 'weak'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    def test_confirm_forgot_password_missing_fields(self):
+        """Test password reset confirmation with missing fields."""
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({'email': self.test_user_data['email']}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')

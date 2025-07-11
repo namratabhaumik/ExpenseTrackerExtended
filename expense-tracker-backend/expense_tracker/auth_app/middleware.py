@@ -18,10 +18,13 @@ class JWTAuthenticationMiddleware:
             'cognito-idp', region_name=settings.AWS_REGION)
 
     def __call__(self, request):
-        # Skip authentication for login, signup, confirm-signup, and health check endpoints
+        # Skip authentication for login, signup, confirm-signup, password reset, and health check endpoints
         if (request.path == '/api/login/' and request.method == 'POST') or \
            (request.path == '/api/signup/' and request.method == 'POST') or \
            (request.path == '/api/confirm-signup/' and request.method == 'POST') or \
+           (request.path == '/api/forgot-password/' and request.method == 'POST') or \
+           (request.path == '/api/confirm-forgot-password/' and request.method == 'POST') or \
+           (request.path == '/api/verify-reset-code/' and request.method == 'POST') or \
            (request.path == '/api/healthz/'):
             return self.get_response(request)
 
