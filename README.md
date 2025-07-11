@@ -274,6 +274,62 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 }
 ```
 
+## API Endpoints
+
+### POST /api/signup/
+
+Register a new user. This endpoint creates a user in AWS Cognito and sends a verification email.
+
+**Request Body:**
+
+```
+{
+  "email": "user@example.com",
+  "password": "yourPassword123"
+}
+```
+
+**Responses:**
+
+- 201 Created: `{ "message": "Sign up successful! Please check your email to verify your account.", "status": "success" }`
+- 400 Bad Request: `{ "error": "Missing required fields: email and password", "status": "error" }`
+- 409 Conflict: `{ "error": "User already exists", "status": "error" }`
+- 400 Bad Request: `{ "error": "Password does not meet requirements", "status": "error" }`
+- 400 Bad Request: `{ "error": "Invalid parameter", "status": "error" }`
+- 500 Internal Server Error: `{ "error": "An unexpected error occurred", "status": "error" }`
+
+**Notes:**
+
+- Uses AWS Cognito for user creation and email verification.
+- On success, user must verify their email before logging in.
+
+### POST /api/confirm-signup/
+
+Confirm a new user's registration using the code sent to their email.
+
+**Request Body:**
+
+```
+{
+  "email": "user@example.com",
+  "code": "123456"
+}
+```
+
+**Responses:**
+
+- 200 OK: `{ "message": "Account confirmed! You can now log in.", "status": "success" }`
+- 400 Bad Request: `{ "error": "Invalid confirmation code", "status": "error" }`
+- 400 Bad Request: `{ "error": "Confirmation code expired", "status": "error" }`
+- 404 Not Found: `{ "error": "User not found", "status": "error" }`
+- 400 Bad Request: `{ "error": "User already confirmed", "status": "error" }`
+- 500 Internal Server Error: `{ "error": "An unexpected error occurred", "status": "error" }`
+
+**Notes:**
+
+- Uses AWS Cognito to confirm user registration.
+- On success, user can log in immediately.
+
 ## 🚀 Deployment
 
 ### Backend (GCP Cloud Run)

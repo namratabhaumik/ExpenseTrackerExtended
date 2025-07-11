@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Login from './Login';
+import AuthForm from './Login';
 import Expenses from './Expenses';
 import './styles/App.css';
 
@@ -21,7 +21,7 @@ function App() {
     <div className="App">
       {!isAuthenticated && <h1>Expense Tracker</h1>}
       {!isAuthenticated ? (
-        <Login onLoginSuccess={handleLoginSuccess} />
+        <AuthForm onLoginSuccess={handleLoginSuccess} />
       ) : (
         <Expenses onLogout={handleLogout} accessToken={accessToken} />
       )}

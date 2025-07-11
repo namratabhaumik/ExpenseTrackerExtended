@@ -126,6 +126,179 @@ def login_view(request):
     }, status=405)
 
 
+@csrf_exempt
+def signup_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            password = data.get('password')
+
+            # Validate required fields
+            if not email or not password:
+                logger.warning(
+                    f"Signup attempt with missing credentials: email={bool(email)}")
+                return JsonResponse({
+                    'error': 'Missing required fields: email and password',
+                    'status': 'error'
+                }, status=400)
+
+            # Calculate the secret hash
+            secret_hash = calculate_secret_hash(email)
+
+            # Register user with Cognito
+            response = cognito_client.sign_up(
+                ClientId=COGNITO_CLIENT_ID,
+                SecretHash=secret_hash,
+                Username=email,
+                Password=password,
+                UserAttributes=[
+                    {'Name': 'email', 'Value': email},
+                ]
+            )
+
+            logger.info(f"User signup successful: {email}")
+            return JsonResponse({
+                'message': 'Sign up successful! Please check your email to verify your account.',
+                'status': 'success'
+            }, status=201)
+
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'UsernameExistsException':
+                logger.warning(f"Signup failed: user already exists: {email}")
+                return JsonResponse({
+                    'error': 'User already exists',
+                    'status': 'error'
+                }, status=409)
+            elif error_code == 'InvalidPasswordException':
+                logger.warning(
+                    f"Signup failed: invalid password for user: {email}")
+                return JsonResponse({
+                    'error': 'Password does not meet requirements',
+                    'status': 'error'
+                }, status=400)
+            elif error_code == 'InvalidParameterException':
+                logger.warning(
+                    f"Signup failed: invalid parameter for user: {email}")
+                return JsonResponse({
+                    'error': 'Invalid parameter',
+                    'status': 'error'
+                }, status=400)
+            else:
+                logger.error(
+                    f"Unexpected Cognito error during signup: {str(e)}")
+                return JsonResponse({
+                    'error': 'An unexpected error occurred',
+                    'status': 'error'
+                }, status=500)
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in signup request")
+            return JsonResponse({
+                'error': 'Invalid JSON format',
+                'status': 'error'
+            }, status=400)
+        except Exception as e:
+            logger.error(
+                f"Unexpected error during signup: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'An unexpected error occurred',
+                'status': 'error'
+            }, status=500)
+
+    logger.warning(f"Invalid method {request.method} for signup endpoint")
+    return JsonResponse({
+        'error': 'Method not allowed',
+        'status': 'error'
+    }, status=405)
+
+
+@csrf_exempt
+def confirm_signup_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            code = data.get('code')
+
+            if not email or not code:
+                logger.warning(
+                    f"Confirm signup attempt with missing fields: email={bool(email)}, code={bool(code)}")
+                return JsonResponse({
+                    'error': 'Missing required fields: email and code',
+                    'status': 'error'
+                }, status=400)
+
+            secret_hash = calculate_secret_hash(email)
+
+            cognito_client.confirm_sign_up(
+                ClientId=COGNITO_CLIENT_ID,
+                SecretHash=secret_hash,
+                Username=email,
+                ConfirmationCode=code
+            )
+
+            logger.info(f"User confirmed successfully: {email}")
+            return JsonResponse({
+                'message': 'Account confirmed! You can now log in.',
+                'status': 'success'
+            }, status=200)
+
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'CodeMismatchException':
+                logger.warning(f"Invalid confirmation code for user: {email}")
+                return JsonResponse({
+                    'error': 'Invalid confirmation code',
+                    'status': 'error'
+                }, status=400)
+            elif error_code == 'ExpiredCodeException':
+                logger.warning(f"Expired confirmation code for user: {email}")
+                return JsonResponse({
+                    'error': 'Confirmation code expired',
+                    'status': 'error'
+                }, status=400)
+            elif error_code == 'UserNotFoundException':
+                logger.warning(f"User not found during confirmation: {email}")
+                return JsonResponse({
+                    'error': 'User not found',
+                    'status': 'error'
+                }, status=404)
+            elif error_code == 'NotAuthorizedException':
+                logger.warning(f"User already confirmed: {email}")
+                return JsonResponse({
+                    'error': 'User already confirmed',
+                    'status': 'error'
+                }, status=400)
+            else:
+                logger.error(
+                    f"Unexpected Cognito error during confirmation: {str(e)}")
+                return JsonResponse({
+                    'error': 'An unexpected error occurred',
+                    'status': 'error'
+                }, status=500)
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in confirm signup request")
+            return JsonResponse({
+                'error': 'Invalid JSON format',
+                'status': 'error'
+            }, status=400)
+        except Exception as e:
+            logger.error(
+                f"Unexpected error during confirm signup: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'An unexpected error occurred',
+                'status': 'error'
+            }, status=500)
+
+    logger.warning(
+        f"Invalid method {request.method} for confirm-signup endpoint")
+    return JsonResponse({
+        'error': 'Method not allowed',
+        'status': 'error'
+    }, status=405)
+
+
 @require_auth
 def add_expense(request):
     """Add a new expense."""
