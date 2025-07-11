@@ -502,3 +502,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - All frontend CSS files are now organized under `src/styles/` for better maintainability and separation of concerns.
 - The redundant frontend `README.md` has been removed; this is now the single source of project documentation.
+
+## Changelog
+
+- Updated frontend tests (`App.test.js`) to:
+  - Fix React act() warnings by wrapping assertions after state changes in `waitFor`.
+  - Use more specific queries (e.g., `getByRole('heading', { name: /^Login$/ })`) to avoid ambiguous matches for elements with the text "Login".
+  - This improves test reliability and robustness for the authentication UI.

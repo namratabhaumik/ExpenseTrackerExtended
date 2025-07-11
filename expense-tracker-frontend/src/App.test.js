@@ -55,37 +55,85 @@ describe('App Component', () => {
 
   test('renders login and sign up tabs', () => {
     render(<App />);
-    expect(screen.getByText(/Login/i)).toBeInTheDocument();
-    expect(screen.getByText(/Sign Up/i)).toBeInTheDocument();
+    // Use getAllByRole for tabs and check their className
+    const loginTab = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    expect(loginTab).toBeInTheDocument();
+    expect(signUpTab).toBeInTheDocument();
   });
 
   test('toggles to sign up form', () => {
     render(<App />);
-    fireEvent.click(screen.getByText(/Sign Up/i));
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
     expect(screen.getByText(/Create Account/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Sign Up/i }),
-    ).toBeInTheDocument();
+    // The submit button for sign up is the last one
+    const signUpSubmit = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .slice(-1)[0];
+    expect(signUpSubmit).toBeInTheDocument();
   });
 
-  test('toggles back to login form', () => {
+  test('toggles back to login form', async () => {
     render(<App />);
-    fireEvent.click(screen.getByText(/Sign Up/i));
-    fireEvent.click(screen.getByText(/Login/i));
-    expect(screen.getByText(/Login/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Login/i })).toBeInTheDocument();
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
+    const loginTab = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(loginTab);
+    const loginSubmit = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .slice(-1)[0];
+    await waitFor(() => {
+      expect(loginSubmit).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /^Login$/ }),
+      ).toBeInTheDocument();
+    });
   });
 
   test('shows error message for failed login', async () => {
+    // Mock fetch to return error for /api/login/
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/login/')) {
+        return Promise.resolve({
+          ok: false,
+          json: () =>
+            Promise.resolve({
+              message: 'An error occurred. Please try again later.',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
     render(<App />);
-    fireEvent.change(screen.getByLabelText(/Email:/i), {
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/Password:/i), {
-      target: { value: 'wrongpassword' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-    // The actual error message in your component is "An error occurred. Please try again later."
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'wrongpassword' },
+      },
+    );
+    const loginSubmit = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .slice(-1)[0];
+    fireEvent.click(loginSubmit);
     await waitFor(() => {
       expect(screen.getByText(/An error occurred/i)).toBeInTheDocument();
     });
@@ -93,31 +141,47 @@ describe('App Component', () => {
 
   test('shows loading state during login', async () => {
     render(<App />);
-    fireEvent.change(screen.getByLabelText(/Email/i), {
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/Password/i), {
-      target: { value: 'password123' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-    // The UI does not show a 'Logging in' button, so just check the button is disabled or still present
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'password123' },
+      },
+    );
+    const loginSubmit = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .slice(-1)[0];
+    fireEvent.click(loginSubmit);
+    expect(loginSubmit).toBeInTheDocument();
   });
 
   test('shows confirm account modal after successful sign up', async () => {
     render(<App />);
-    fireEvent.click(screen.getByText(/Sign Up/i));
-    fireEvent.change(screen.getByLabelText(/Email:/i), {
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('Password:'), {
-      target: { value: 'Password1!' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password:'), {
-      target: { value: 'Password1!' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
-    // Modal should appear
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    fireEvent.change(
+      screen.getByLabelText('Confirm Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    const signUpSubmit = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .slice(-1)[0];
+    fireEvent.click(signUpSubmit);
     await waitFor(() => {
       expect(screen.getByText(/Confirm Your Account/i)).toBeInTheDocument();
     });
@@ -128,29 +192,43 @@ describe('App Component', () => {
 
   test('closes confirm account modal and returns to login', async () => {
     render(<App />);
-    fireEvent.click(screen.getByText(/Sign Up/i));
-    fireEvent.change(screen.getByLabelText(/Email:/i), {
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('Password:'), {
-      target: { value: 'Password1!' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password:'), {
-      target: { value: 'Password1!' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    fireEvent.change(
+      screen.getByLabelText('Confirm Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    const signUpSubmit = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .slice(-1)[0];
+    fireEvent.click(signUpSubmit);
     await waitFor(() => {
       expect(screen.getByText(/Confirm Your Account/i)).toBeInTheDocument();
     });
     // Click the X icon to close
     fireEvent.click(screen.getByLabelText(/Close modal/i));
-    // Should return to login form
     await waitFor(() => {
-      expect(screen.getByText(/Login/i)).toBeInTheDocument();
+      const loginSubmit = screen
+        .getAllByRole('button', { name: /^Login$/ })
+        .slice(-1)[0];
+      expect(loginSubmit).toBeInTheDocument();
     });
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /Login/i }),
+        screen.getByRole('heading', { name: /^Login$/ }),
       ).toBeInTheDocument();
     });
   });
