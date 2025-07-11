@@ -8,4 +8,5 @@ urlpatterns = [
     path('expenses/', views.add_expense, name='add_expense'),
     path('expenses/list/', views.get_expenses, name='get_expenses'),
     path('receipts/upload/', views.upload_receipt, name='upload_receipt'),
+    path('healthz/', views.healthz, name='healthz'),
 ]
