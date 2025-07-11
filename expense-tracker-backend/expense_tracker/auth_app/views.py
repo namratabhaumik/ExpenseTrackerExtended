@@ -531,3 +531,7 @@ def upload_receipt(request):
         'error': 'Method not allowed',
         'status': 'error'
     }, status=405)
+
+
+def healthz(request):
+    return JsonResponse({"status": "ok"})
