@@ -18,8 +18,10 @@ class JWTAuthenticationMiddleware:
             'cognito-idp', region_name=settings.AWS_REGION)
 
     def __call__(self, request):
-        # Skip authentication for login endpoint
-        if request.path == '/api/login/' and request.method == 'POST':
+        # Skip authentication for login, signup, and confirm-signup endpoints
+        if (request.path == '/api/login/' and request.method == 'POST') or \
+           (request.path == '/api/signup/' and request.method == 'POST') or \
+           (request.path == '/api/confirm-signup/' and request.method == 'POST'):
             return self.get_response(request)
 
         # Check for Authorization header

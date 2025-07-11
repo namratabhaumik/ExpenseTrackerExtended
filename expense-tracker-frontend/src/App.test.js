@@ -29,12 +29,27 @@ describe('App Component', () => {
     global.fetch.mockRestore();
   });
 
-  test('renders login form when not authenticated', () => {
+  test('renders login and sign up tabs', () => {
     render(<App />);
-    expect(screen.getByText(/Expense Tracker/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Email:/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password:/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByText(/Login/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sign Up/i)).toBeInTheDocument();
+  });
+
+  test('toggles to sign up form', () => {
+    render(<App />);
+    fireEvent.click(screen.getByText(/Sign Up/i));
+    expect(screen.getByText(/Create Account/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Sign Up/i }),
+    ).toBeInTheDocument();
+  });
+
+  test('toggles back to login form', () => {
+    render(<App />);
+    fireEvent.click(screen.getByText(/Sign Up/i));
+    fireEvent.click(screen.getByText(/Login/i));
+    expect(screen.getByText(/Login/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Login/i })).toBeInTheDocument();
   });
 
   test('shows error message for failed login', async () => {
