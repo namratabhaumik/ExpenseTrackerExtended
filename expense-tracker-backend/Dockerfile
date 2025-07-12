@@ -14,5 +14,5 @@ COPY . /app/
 # Switch to project root
 WORKDIR /app/expense_tracker
 
-# Run using Gunicorn with optimized settings for Cloud Run
-CMD ["gunicorn", "expense_tracker.wsgi:application", "--bind", "0.0.0.0:8000", "--workers=1", "--timeout=90"]
+# Try uvicorn instead of gunicorn
+CMD ["uvicorn", "expense_tracker.asgi:application", "--host", "0.0.0.0", "--port", "8000"]

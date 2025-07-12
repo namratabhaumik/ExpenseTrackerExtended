@@ -122,7 +122,7 @@ jobs:
             --region=us-central1 \
             --allow-unauthenticated \
             --port=8000 \
-            --memory=512Mi \
+            --memory=1Gi \
             --set-env-vars="CLOUD_RUN=true,DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }},COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }},COGNITO_CLIENT_SECRET=${{ secrets.COGNITO_CLIENT_SECRET }},AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }},AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}"
 
       - name: Get Cloud Run URL
