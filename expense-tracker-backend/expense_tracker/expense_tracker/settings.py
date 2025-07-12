@@ -26,7 +26,7 @@ if not SECRET_KEY:
     raise Exception("DJANGO_SECRET_KEY environment variable is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'false').lower() == 'true'
 
 
 ALLOWED_HOSTS = ['*']
