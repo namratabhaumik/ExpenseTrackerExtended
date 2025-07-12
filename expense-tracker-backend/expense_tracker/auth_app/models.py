@@ -8,19 +8,31 @@ from django.conf import settings
 
 # Create your models here.
 
+# Lazy-load DynamoDB resource
+_dynamodb_resource = None
+_dynamodb_table = None
 
-class DynamoDBExpense:
-    """DynamoDB model for expenses."""
 
-    def __init__(self):
-        self.dynamodb = boto3.resource(
+def get_dynamodb_table():
+    global _dynamodb_resource, _dynamodb_table
+    if _dynamodb_table is None:
+        _dynamodb_resource = boto3.resource(
             'dynamodb',
             region_name=settings.AWS_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             endpoint_url=settings.DYNAMODB_ENDPOINT_URL
         )
-        self.table = self.dynamodb.Table(settings.DYNAMODB_TABLE_NAME)
+        _dynamodb_table = _dynamodb_resource.Table(
+            settings.DYNAMODB_TABLE_NAME)
+    return _dynamodb_table
+
+
+class DynamoDBExpense:
+    """DynamoDB model for expenses."""
+
+    def __init__(self):
+        self.table = get_dynamodb_table()
 
     def create(self, user_id, amount, category, description=''):
         """Create a new expense."""
