@@ -27,8 +27,16 @@ COGNITO_REGION = os.environ.get('COGNITO_REGION', 'us-east-1')
 COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
 COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
 
-# Initialize Cognito client
-cognito_client = boto3.client('cognito-idp', region_name=COGNITO_REGION)
+# Lazy-load Cognito client
+_cognito_client = None
+
+
+def get_cognito_client():
+    global _cognito_client
+    if _cognito_client is None:
+        _cognito_client = boto3.client(
+            'cognito-idp', region_name=COGNITO_REGION)
+    return _cognito_client
 
 
 def calculate_secret_hash(username):
@@ -61,6 +69,7 @@ def login_view(request):
             secret_hash = calculate_secret_hash(email)
 
             # Authenticate user with Cognito
+            cognito_client = get_cognito_client()
             response = cognito_client.initiate_auth(
                 AuthFlow='USER_PASSWORD_AUTH',
                 ClientId=COGNITO_CLIENT_ID,
@@ -147,6 +156,7 @@ def signup_view(request):
             secret_hash = calculate_secret_hash(email)
 
             # Register user with Cognito
+            cognito_client = get_cognito_client()
             response = cognito_client.sign_up(
                 ClientId=COGNITO_CLIENT_ID,
                 SecretHash=secret_hash,
@@ -231,6 +241,7 @@ def confirm_signup_view(request):
 
             secret_hash = calculate_secret_hash(email)
 
+            cognito_client = get_cognito_client()
             cognito_client.confirm_sign_up(
                 ClientId=COGNITO_CLIENT_ID,
                 SecretHash=secret_hash,
@@ -317,6 +328,7 @@ def forgot_password_view(request):
             secret_hash = calculate_secret_hash(email)
 
             # Initiate forgot password flow with Cognito
+            cognito_client = get_cognito_client()
             cognito_client.forgot_password(
                 ClientId=COGNITO_CLIENT_ID,
                 SecretHash=secret_hash,
@@ -395,6 +407,7 @@ def confirm_forgot_password_view(request):
             secret_hash = calculate_secret_hash(email)
 
             # Confirm forgot password with Cognito
+            cognito_client = get_cognito_client()
             cognito_client.confirm_forgot_password(
                 ClientId=COGNITO_CLIENT_ID,
                 SecretHash=secret_hash,
@@ -490,6 +503,7 @@ def verify_reset_code_view(request):
             invalid_password = 'ab'  # 2 chars, no uppercase, no number, no special char
 
             try:
+                cognito_client = get_cognito_client()
                 cognito_client.confirm_forgot_password(
                     ClientId=COGNITO_CLIENT_ID,
                     SecretHash=secret_hash,

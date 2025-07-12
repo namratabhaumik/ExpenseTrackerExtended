@@ -8,14 +8,23 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
+# Lazy-load Cognito client
+_cognito_client = None
+
+
+def get_cognito_client():
+    global _cognito_client
+    if _cognito_client is None:
+        _cognito_client = boto3.client(
+            'cognito-idp', region_name=settings.AWS_REGION)
+    return _cognito_client
+
 
 class JWTAuthenticationMiddleware:
     """Middleware to validate JWT tokens from AWS Cognito."""
 
     def __init__(self, get_response):
         self.get_response = get_response
-        self.cognito_client = boto3.client(
-            'cognito-idp', region_name=settings.AWS_REGION)
 
     def __call__(self, request):
         # Skip authentication for login, signup, confirm-signup, password reset, and health check endpoints
@@ -40,7 +49,8 @@ class JWTAuthenticationMiddleware:
 
         try:
             # Validate token with Cognito
-            response = self.cognito_client.get_user(
+            cognito_client = get_cognito_client()
+            response = cognito_client.get_user(
                 AccessToken=token
             )
 
