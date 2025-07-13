@@ -1,5 +1,7 @@
 # Next Steps & Future Enhancements
 
+> **Note:** The immediate focus is on the 'Quick Wins' and 'Immediate Next Steps' below, to make the app presentable and user-friendly as fast as possible. These priorities align with external expert (Gemini) recommendations for minimum viable improvements.
+
 ## 🎯 Current Status
 
 ✅ **Completed Features:**

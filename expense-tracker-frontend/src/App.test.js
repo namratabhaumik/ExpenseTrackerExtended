@@ -17,36 +17,123 @@ jest.mock('axios', () => ({
 }));
 
 describe('App Component', () => {
-  beforeAll(() => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
+  beforeEach(() => {
+    global.fetch = jest.fn((url, options) => {
+      // Mock /api/signup/ POST
+      if (url && url.includes('/api/signup/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message:
+                'Sign up successful! Please check your email to verify your account.',
+              status: 'success',
+            }),
+        });
+      }
+      // Mock /api/confirm-signup/ POST
+      if (url && url.includes('/api/confirm-signup/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message: 'Account confirmed! You can now log in.',
+              status: 'success',
+            }),
+        });
+      }
+      // Default: mock expenses fetch
+      return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ expenses: [] }),
-      }),
-    );
+      });
+    });
   });
-  afterAll(() => {
+  afterEach(() => {
     global.fetch.mockRestore();
   });
 
-  test('renders login form when not authenticated', () => {
+  test('renders login and sign up tabs', () => {
     render(<App />);
-    expect(screen.getByText(/Expense Tracker/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Email:/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password:/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    // Use getAllByRole for tabs and check their className
+    const loginTab = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    expect(loginTab).toBeInTheDocument();
+    expect(signUpTab).toBeInTheDocument();
+  });
+
+  test('toggles to sign up form', () => {
+    render(<App />);
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
+    expect(screen.getByText(/Create Account/i)).toBeInTheDocument();
+    // The submit button for sign up is the last one
+    const signUpSubmit = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .slice(-1)[0];
+    expect(signUpSubmit).toBeInTheDocument();
+  });
+
+  test('toggles back to login form', async () => {
+    render(<App />);
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
+    const loginTab = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(loginTab);
+    const loginSubmit = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .slice(-1)[0];
+    await waitFor(() => {
+      expect(loginSubmit).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /^Login$/ }),
+      ).toBeInTheDocument();
+    });
   });
 
   test('shows error message for failed login', async () => {
+    // Mock fetch to return error for /api/login/
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/login/')) {
+        return Promise.resolve({
+          ok: false,
+          json: () =>
+            Promise.resolve({
+              message: 'An error occurred. Please try again later.',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
     render(<App />);
-    fireEvent.change(screen.getByLabelText(/Email:/i), {
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/Password:/i), {
-      target: { value: 'wrongpassword' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-    // The actual error message in your component is "An error occurred. Please try again later."
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'wrongpassword' },
+      },
+    );
+    const loginSubmit = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .slice(-1)[0];
+    fireEvent.click(loginSubmit);
     await waitFor(() => {
       expect(screen.getByText(/An error occurred/i)).toBeInTheDocument();
     });
@@ -54,15 +141,433 @@ describe('App Component', () => {
 
   test('shows loading state during login', async () => {
     render(<App />);
-    fireEvent.change(screen.getByLabelText(/Email/i), {
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/Password/i), {
-      target: { value: 'password123' },
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'password123' },
+      },
+    );
+    const loginSubmit = screen
+      .getAllByRole('button', { name: /^Login$/ })
+      .slice(-1)[0];
+    fireEvent.click(loginSubmit);
+    expect(loginSubmit).toBeInTheDocument();
+  });
+
+  test('shows confirm account modal after successful sign up', async () => {
+    render(<App />);
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
+      target: { value: 'test@example.com' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-    // The UI does not show a 'Logging in' button, so just check the button is disabled or still present
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    fireEvent.change(
+      screen.getByLabelText('Confirm Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    const signUpSubmit = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .slice(-1)[0];
+    fireEvent.click(signUpSubmit);
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm Your Account/i)).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/Enter the code sent to/i)).toBeInTheDocument();
+    });
+  });
+
+  test('closes confirm account modal and returns to login', async () => {
+    render(<App />);
+    const signUpTab = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .find((btn) => btn.className.includes('auth-tab'));
+    fireEvent.click(signUpTab);
+    fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
+      target: { value: 'test@example.com' },
+    });
+    fireEvent.change(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    fireEvent.change(
+      screen.getByLabelText('Confirm Password:', { selector: 'input' }),
+      {
+        target: { value: 'Password1!' },
+      },
+    );
+    const signUpSubmit = screen
+      .getAllByRole('button', { name: /^Sign Up$/ })
+      .slice(-1)[0];
+    fireEvent.click(signUpSubmit);
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm Your Account/i)).toBeInTheDocument();
+    });
+    // Click the X icon to close
+    fireEvent.click(screen.getByLabelText(/Close modal/i));
+    await waitFor(() => {
+      const loginSubmit = screen
+        .getAllByRole('button', { name: /^Login$/ })
+        .slice(-1)[0];
+      expect(loginSubmit).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /^Login$/ }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('opens password reset modal when forgot password is clicked', () => {
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+    expect(screen.getByText(/Reset Password/i)).toBeInTheDocument();
+    expect(screen.getByText(/Enter your email address/i)).toBeInTheDocument();
+  });
+
+  test('submits email for password reset', async () => {
+    // Mock fetch to return success for /api/forgot-password/
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/forgot-password/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message: 'Password reset code sent to your email.',
+              status: 'success',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
+
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+
+    fireEvent.change(screen.getByPlaceholderText('Email address'), {
+      target: { value: 'test@example.com' },
+    });
+
+    const sendButton = screen.getByRole('button', { name: /Send Reset Code/i });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Password reset code sent/i)).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/Enter the code sent to/i)).toBeInTheDocument();
+    });
+  });
+
+  test('shows error for password reset with non-existent email', async () => {
+    // Mock fetch to return error for /api/forgot-password/
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/forgot-password/')) {
+        return Promise.resolve({
+          ok: false,
+          json: () =>
+            Promise.resolve({
+              error: 'User not found',
+              status: 'error',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
+
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+
+    fireEvent.change(screen.getByPlaceholderText('Email address'), {
+      target: { value: 'nonexistent@example.com' },
+    });
+
+    const sendButton = screen.getByRole('button', { name: /Send Reset Code/i });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/User not found/i)).toBeInTheDocument();
+    });
+  });
+
+  test('completes password reset with valid code and new password', async () => {
+    // Mock fetch for both password reset endpoints
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/forgot-password/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message: 'Password reset code sent to your email.',
+              status: 'success',
+            }),
+        });
+      }
+      if (url.includes('/api/confirm-forgot-password/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message:
+                'Password reset successful! You can now log in with your new password.',
+              status: 'success',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
+
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+
+    // Step 1: Enter email
+    fireEvent.change(screen.getByPlaceholderText('Email address'), {
+      target: { value: 'test@example.com' },
+    });
+
+    const sendButton = screen.getByRole('button', { name: /Send Reset Code/i });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Enter the code sent to/i)).toBeInTheDocument();
+    });
+
+    // Step 2: Enter code and new password
+    fireEvent.change(screen.getByPlaceholderText('Reset code'), {
+      target: { value: '123456' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('New password'), {
+      target: { value: 'NewPassword123!' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Confirm new password'), {
+      target: { value: 'NewPassword123!' },
+    });
+
+    const resetButton = screen.getByRole('button', { name: /Reset Password/i });
+    fireEvent.click(resetButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Password reset successful/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('shows error for password mismatch in reset form', async () => {
+    // Mock fetch for forgot password endpoint
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/forgot-password/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message: 'Password reset code sent to your email.',
+              status: 'success',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
+
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+
+    // Step 1: Enter email
+    fireEvent.change(screen.getByPlaceholderText('Email address'), {
+      target: { value: 'test@example.com' },
+    });
+
+    const sendButton = screen.getByRole('button', { name: /Send Reset Code/i });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Enter the code sent to/i)).toBeInTheDocument();
+    });
+
+    // Step 2: Enter mismatched passwords
+    fireEvent.change(screen.getByPlaceholderText('Reset code'), {
+      target: { value: '123456' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('New password'), {
+      target: { value: 'NewPassword123!' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Confirm new password'), {
+      target: { value: 'DifferentPassword123!' },
+    });
+
+    const resetButton = screen.getByRole('button', { name: /Reset Password/i });
+    fireEvent.click(resetButton);
+
+    await waitFor(() => {
+      // Only match the form-level error, not the inline one
+      const errorMessage = screen.getByText(/Passwords do not match/i, {
+        selector: 'p.login-error',
+      });
+      expect(errorMessage).toBeInTheDocument();
+    });
+  });
+
+  test('shows password requirements validation in reset form', async () => {
+    // Mock fetch for forgot password endpoint
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/forgot-password/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message: 'Password reset code sent to your email.',
+              status: 'success',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
+
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+
+    // Step 1: Enter email
+    fireEvent.change(screen.getByPlaceholderText('Email address'), {
+      target: { value: 'test@example.com' },
+    });
+
+    const sendButton = screen.getByRole('button', { name: /Send Reset Code/i });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Enter the code sent to/i)).toBeInTheDocument();
+    });
+
+    // Step 2: Focus on password field to show requirements
+    const passwordInput = screen.getByPlaceholderText('New password');
+    fireEvent.focus(passwordInput);
+
+    await waitFor(() => {
+      expect(screen.getByText(/At least 8 characters/i)).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByText(/At least one uppercase letter/i),
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByText(/At least one lowercase letter/i),
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/At least one number/i)).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByText(/At least one special character/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('shows error for weak password in reset form', async () => {
+    // Mock fetch for forgot password endpoint
+    global.fetch = jest.fn((url) => {
+      if (url.includes('/api/forgot-password/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              message: 'Password reset code sent to your email.',
+              status: 'success',
+            }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ expenses: [] }),
+      });
+    });
+
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+
+    // Step 1: Enter email
+    fireEvent.change(screen.getByPlaceholderText('Email address'), {
+      target: { value: 'test@example.com' },
+    });
+
+    const sendButton = screen.getByRole('button', { name: /Send Reset Code/i });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Enter the code sent to/i)).toBeInTheDocument();
+    });
+
+    // Step 2: Enter weak password
+    fireEvent.change(screen.getByPlaceholderText('Reset code'), {
+      target: { value: '123456' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('New password'), {
+      target: { value: 'weak' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Confirm new password'), {
+      target: { value: 'weak' },
+    });
+
+    const resetButton = screen.getByRole('button', { name: /Reset Password/i });
+    fireEvent.click(resetButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Password does not meet all requirements/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('closes password reset modal when X is clicked', () => {
+    render(<App />);
+    const forgotPasswordLink = screen.getByText('Forgot Password?');
+    fireEvent.click(forgotPasswordLink);
+
+    expect(screen.getByText(/Reset Password/i)).toBeInTheDocument();
+
+    const closeButton = screen.getByLabelText(/Close modal/i);
+    fireEvent.click(closeButton);
+
+    expect(screen.queryByText(/Reset Password/i)).not.toBeInTheDocument();
   });
 
   // Remove or comment out tests for field validation and email format, as the UI does not show these messages

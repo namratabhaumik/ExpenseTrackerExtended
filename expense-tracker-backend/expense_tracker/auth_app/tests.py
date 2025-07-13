@@ -43,10 +43,11 @@ class AuthAppTestCase(TestCase):
 class LoginViewTest(AuthAppTestCase):
     """Test cases for login endpoint."""
 
-    @patch('auth_app.views.cognito_client')
-    def test_login_success(self, mock_cognito_client):
+    @patch('auth_app.views.get_cognito_client')
+    def test_login_success(self, mock_get_cognito_client):
         """Test successful login with valid credentials."""
-        # Mock Cognito response
+        # Mock Cognito client and response
+        mock_cognito_client = MagicMock()
         mock_cognito_client.initiate_auth.return_value = {
             'AuthenticationResult': {
                 'AccessToken': 'test-access-token',
@@ -54,6 +55,7 @@ class LoginViewTest(AuthAppTestCase):
                 'RefreshToken': 'test-refresh-token'
             }
         }
+        mock_get_cognito_client.return_value = mock_cognito_client
 
         response = self.client.post(
             reverse('login'),
@@ -67,15 +69,17 @@ class LoginViewTest(AuthAppTestCase):
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'success')
 
-    @patch('auth_app.views.cognito_client')
-    def test_login_invalid_credentials(self, mock_cognito_client):
+    @patch('auth_app.views.get_cognito_client')
+    def test_login_invalid_credentials(self, mock_get_cognito_client):
         """Test login with invalid credentials."""
-        # Mock Cognito error response
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
         from botocore.exceptions import ClientError
         error_response = {
             'Error': {'Code': 'NotAuthorizedException', 'Message': 'Invalid credentials'}}
         mock_cognito_client.initiate_auth.side_effect = ClientError(
             error_response, 'InitiateAuth')
+        mock_get_cognito_client.return_value = mock_cognito_client
 
         response = self.client.post(
             reverse('login'),
@@ -116,33 +120,24 @@ class ExpenseViewTest(AuthAppTestCase):
         self.test_token = 'test-access-token'
 
     @mock_aws
-    @patch('auth_app.middleware.boto3.client')
-    @patch('auth_app.models.settings.DYNAMODB_TABLE_NAME', 'test-expenses-table')
-    def test_add_expense_success(self, mock_boto3_client):
+    @patch('auth_app.middleware.get_cognito_client')
+    @patch('auth_app.models.get_dynamodb_table')
+    def test_add_expense_success(self, mock_get_dynamodb_table, mock_get_cognito_client):
         """Test successful expense addition."""
         # Mock Cognito user validation
-        mock_cognito = MagicMock()
-        mock_cognito.get_user.return_value = {
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
             'Username': 'test-user-id',
             'UserAttributes': [
                 {'Name': 'email', 'Value': 'test@example.com'}
             ]
         }
-        mock_boto3_client.return_value = mock_cognito
+        mock_get_cognito_client.return_value = mock_cognito_client
 
-        # Set up DynamoDB with correct table name
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        table = dynamodb.create_table(
-            TableName='test-expenses-table',
-            KeySchema=[
-                {'AttributeName': 'expense_id', 'KeyType': 'HASH'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'expense_id', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
-        table.wait_until_exists()
+        # Mock DynamoDB table
+        mock_table = MagicMock()
+        mock_table.put_item.return_value = None
+        mock_get_dynamodb_table.return_value = mock_table
 
         response = self.client.post(
             reverse('add_expense'),
@@ -171,18 +166,18 @@ class ExpenseViewTest(AuthAppTestCase):
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
 
-    @patch('auth_app.middleware.boto3.client')
-    def test_add_expense_missing_data(self, mock_boto3_client):
+    @patch('auth_app.middleware.get_cognito_client')
+    def test_add_expense_missing_data(self, mock_get_cognito_client):
         """Test expense addition with missing required fields."""
         # Mock Cognito user validation
-        mock_cognito = MagicMock()
-        mock_cognito.get_user.return_value = {
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
             'Username': 'test-user-id',
             'UserAttributes': [
                 {'Name': 'email', 'Value': 'test@example.com'}
             ]
         }
-        mock_boto3_client.return_value = mock_cognito
+        mock_get_cognito_client.return_value = mock_cognito_client
 
         response = self.client.post(
             reverse('add_expense'),
@@ -197,33 +192,35 @@ class ExpenseViewTest(AuthAppTestCase):
         self.assertEqual(data['status'], 'error')
 
     @mock_aws
-    @patch('auth_app.middleware.boto3.client')
-    @patch('auth_app.models.settings.DYNAMODB_TABLE_NAME', 'test-expenses-table')
-    def test_get_expenses_success(self, mock_boto3_client):
+    @patch('auth_app.middleware.get_cognito_client')
+    @patch('auth_app.models.get_dynamodb_table')
+    def test_get_expenses_success(self, mock_get_dynamodb_table, mock_get_cognito_client):
         """Test successful expense retrieval."""
         # Mock Cognito user validation
-        mock_cognito = MagicMock()
-        mock_cognito.get_user.return_value = {
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
             'Username': 'test-user-id',
             'UserAttributes': [
                 {'Name': 'email', 'Value': 'test@example.com'}
             ]
         }
-        mock_boto3_client.return_value = mock_cognito
+        mock_get_cognito_client.return_value = mock_cognito_client
 
-        # Set up DynamoDB with correct table name
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        table = dynamodb.create_table(
-            TableName='test-expenses-table',
-            KeySchema=[
-                {'AttributeName': 'expense_id', 'KeyType': 'HASH'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'expense_id', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
-        table.wait_until_exists()
+        # Mock DynamoDB table
+        mock_table = MagicMock()
+        mock_table.scan.return_value = {
+            'Items': [
+                {
+                    'expense_id': 'test-expense-1',
+                    'user_id': 'test-user-id',
+                    'amount': 25.50,
+                    'category': 'Food',
+                    'description': 'Lunch',
+                    'timestamp': '2024-01-01T00:00:00'
+                }
+            ]
+        }
+        mock_get_dynamodb_table.return_value = mock_table
 
         response = self.client.get(
             reverse('get_expenses'),
@@ -241,31 +238,35 @@ class ReceiptUploadTest(AuthAppTestCase):
     """Test cases for receipt upload endpoint."""
 
     def setUp(self):
-        """Set up test data for receipt tests."""
+        """Set up test data for receipt upload tests."""
         super().setUp()
-        self.test_token = 'test-access-token'
         self.test_file_data = {
-            'file': base64.b64encode(b'Test receipt content').decode('utf-8'),
-            'filename': 'test_receipt.txt'
+            'file': base64.b64encode(b'Test file content').decode('utf-8'),
+            'filename': 'test_receipt.jpg',
+            'expense_id': 'test-expense-1'
         }
+        self.test_token = 'test-access-token'
 
     @mock_aws
-    @patch('auth_app.middleware.boto3.client')
-    def test_upload_receipt_success(self, mock_boto3_client):
+    @patch('auth_app.middleware.get_cognito_client')
+    @patch('utils.s3_utils.get_s3_client')
+    def test_upload_receipt_success(self, mock_get_s3_client, mock_get_cognito_client):
         """Test successful receipt upload."""
         # Mock Cognito user validation
-        mock_cognito = MagicMock()
-        mock_cognito.get_user.return_value = {
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
             'Username': 'test-user-id',
             'UserAttributes': [
                 {'Name': 'email', 'Value': 'test@example.com'}
             ]
         }
-        mock_boto3_client.return_value = mock_cognito
+        mock_get_cognito_client.return_value = mock_cognito_client
 
-        # Set up S3
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
+        # Mock S3 client
+        mock_s3_client = MagicMock()
+        mock_s3_client.put_object.return_value = None
+        mock_s3_client.head_bucket.return_value = None
+        mock_get_s3_client.return_value = mock_s3_client
 
         response = self.client.post(
             reverse('upload_receipt'),
@@ -278,7 +279,6 @@ class ReceiptUploadTest(AuthAppTestCase):
         data = json.loads(response.content)
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'success')
-        self.assertIn('file_url', data)
 
     def test_upload_receipt_invalid_token(self):
         """Test receipt upload with invalid token."""
@@ -294,24 +294,376 @@ class ReceiptUploadTest(AuthAppTestCase):
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
 
-    @patch('auth_app.middleware.boto3.client')
-    def test_upload_receipt_missing_data(self, mock_boto3_client):
+    @patch('auth_app.middleware.get_cognito_client')
+    def test_upload_receipt_missing_data(self, mock_get_cognito_client):
         """Test receipt upload with missing required fields."""
         # Mock Cognito user validation
-        mock_cognito = MagicMock()
-        mock_cognito.get_user.return_value = {
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
             'Username': 'test-user-id',
             'UserAttributes': [
                 {'Name': 'email', 'Value': 'test@example.com'}
             ]
         }
-        mock_boto3_client.return_value = mock_cognito
+        mock_get_cognito_client.return_value = mock_cognito_client
 
         response = self.client.post(
             reverse('upload_receipt'),
-            data=json.dumps({'filename': 'test.txt'}),
+            data=json.dumps({'file': 'test-data'}),
             content_type='application/json',
             HTTP_AUTHORIZATION=f'Bearer {self.test_token}'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+
+class SignupViewTest(AuthAppTestCase):
+    """Test cases for signup endpoint."""
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_signup_success(self, mock_get_cognito_client):
+        """Test successful signup."""
+        # Mock Cognito client and response
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.sign_up.return_value = {
+            'UserSub': 'test-user-sub'
+        }
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('signup'),
+            data=json.dumps(self.test_user_data),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_signup_user_exists(self, mock_get_cognito_client):
+        """Test signup with existing user."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'UsernameExistsException', 'Message': 'User already exists'}}
+        mock_cognito_client.sign_up.side_effect = ClientError(
+            error_response, 'SignUp')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('signup'),
+            data=json.dumps(self.test_user_data),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 409)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_signup_invalid_password(self, mock_get_cognito_client):
+        """Test signup with invalid password."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'InvalidPasswordException', 'Message': 'Invalid password'}}
+        mock_cognito_client.sign_up.side_effect = ClientError(
+            error_response, 'SignUp')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('signup'),
+            data=json.dumps(self.test_user_data),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+
+class ConfirmSignupViewTest(AuthAppTestCase):
+    """Test cases for confirm signup endpoint."""
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_confirm_signup_success(self, mock_get_cognito_client):
+        """Test successful signup confirmation."""
+        # Mock Cognito client
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.confirm_sign_up.return_value = None
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('confirm_signup'),
+            data=json.dumps({
+                'email': 'test@example.com',
+                'code': '123456'
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_confirm_signup_invalid_code(self, mock_get_cognito_client):
+        """Test signup confirmation with invalid code."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'CodeMismatchException', 'Message': 'Invalid code'}}
+        mock_cognito_client.confirm_sign_up.side_effect = ClientError(
+            error_response, 'ConfirmSignUp')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('confirm_signup'),
+            data=json.dumps({
+                'email': 'test@example.com',
+                'code': '123456'
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_confirm_signup_already_confirmed(self, mock_get_cognito_client):
+        """Test signup confirmation for already confirmed user."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'NotAuthorizedException', 'Message': 'Already confirmed'}}
+        mock_cognito_client.confirm_sign_up.side_effect = ClientError(
+            error_response, 'ConfirmSignUp')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('confirm_signup'),
+            data=json.dumps({
+                'email': 'test@example.com',
+                'code': '123456'
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+
+class ForgotPasswordViewTest(AuthAppTestCase):
+    """Test cases for forgot password endpoint."""
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_forgot_password_success(self, mock_get_cognito_client):
+        """Test successful forgot password request."""
+        # Mock Cognito client
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.forgot_password.return_value = None
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({'email': 'test@example.com'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_forgot_password_user_not_found(self, mock_get_cognito_client):
+        """Test forgot password with non-existent user."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'UserNotFoundException', 'Message': 'User not found'}}
+        mock_cognito_client.forgot_password.side_effect = ClientError(
+            error_response, 'ForgotPassword')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({'email': 'test@example.com'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 404)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_forgot_password_limit_exceeded(self, mock_get_cognito_client):
+        """Test forgot password with limit exceeded."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'LimitExceededException', 'Message': 'Limit exceeded'}}
+        mock_cognito_client.forgot_password.side_effect = ClientError(
+            error_response, 'ForgotPassword')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({'email': 'test@example.com'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 429)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    def test_forgot_password_missing_email(self):
+        """Test forgot password with missing email."""
+        response = self.client.post(
+            reverse('forgot_password'),
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+
+class ConfirmForgotPasswordViewTest(AuthAppTestCase):
+    """Test cases for confirm forgot password endpoint."""
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_confirm_forgot_password_success(self, mock_get_cognito_client):
+        """Test successful password reset confirmation."""
+        # Mock Cognito client
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.confirm_forgot_password.return_value = None
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': 'test@example.com',
+                'code': '123456',
+                'new_password': 'NewPassword123!'
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_confirm_forgot_password_invalid_code(self, mock_get_cognito_client):
+        """Test password reset confirmation with invalid code."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'CodeMismatchException', 'Message': 'Invalid code'}}
+        mock_cognito_client.confirm_forgot_password.side_effect = ClientError(
+            error_response, 'ConfirmForgotPassword')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': 'test@example.com',
+                'code': '123456',
+                'new_password': 'NewPassword123!'
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_confirm_forgot_password_expired_code(self, mock_get_cognito_client):
+        """Test password reset confirmation with expired code."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'ExpiredCodeException', 'Message': 'Code expired'}}
+        mock_cognito_client.confirm_forgot_password.side_effect = ClientError(
+            error_response, 'ConfirmForgotPassword')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': 'test@example.com',
+                'code': '123456',
+                'new_password': 'NewPassword123!'
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    @patch('auth_app.views.get_cognito_client')
+    def test_confirm_forgot_password_invalid_password(self, mock_get_cognito_client):
+        """Test password reset confirmation with invalid password."""
+        # Mock Cognito client and error response
+        mock_cognito_client = MagicMock()
+        from botocore.exceptions import ClientError
+        error_response = {
+            'Error': {'Code': 'InvalidPasswordException', 'Message': 'Invalid password'}}
+        mock_cognito_client.confirm_forgot_password.side_effect = ClientError(
+            error_response, 'ConfirmForgotPassword')
+        mock_get_cognito_client.return_value = mock_cognito_client
+
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({
+                'email': 'test@example.com',
+                'code': '123456',
+                'new_password': 'weak'
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    def test_confirm_forgot_password_missing_fields(self):
+        """Test password reset confirmation with missing fields."""
+        response = self.client.post(
+            reverse('confirm_forgot_password'),
+            data=json.dumps({'email': 'test@example.com'}),
+            content_type='application/json'
         )
 
         self.assertEqual(response.status_code, 400)

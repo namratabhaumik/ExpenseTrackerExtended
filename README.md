@@ -274,6 +274,48 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 }
 ```
 
+## Password Reset Flow (Frontend)
+
+The password reset modal now uses a three-step process:
+
+1. **Enter Email:** User enters their email to request a reset code.
+2. **Enter Code:** User enters the code sent to their email. The code is verified before proceeding.
+3. **Enter New Password:** If the code is valid, the user can set a new password (with real-time validation and requirements).
+
+Only one message (error or success) is shown at a time for clarity.
+
+## API Endpoints (Backend)
+
+### Authentication
+
+The following endpoints do **NOT** require authentication (no Authorization header needed):
+
+- `POST /api/login/`
+- `POST /api/signup/`
+- `POST /api/confirm-signup/`
+- `POST /api/forgot-password/`
+- `POST /api/verify-reset-code/`
+- `POST /api/confirm-forgot-password/`
+- `GET /api/healthz/`
+
+All other endpoints require a valid JWT token in the Authorization header: `Authorization: Bearer <token>`
+
+### POST `/api/forgot-password/`
+
+- **Request:** `{ "email": "user@example.com" }`
+- **Response:** `{ "message": "Password reset code sent to your email.", "status": "success" }`
+
+### POST `/api/verify-reset-code/`
+
+- **Request:** `{ "email": "user@example.com", "code": "123456" }`
+- **Response (success):** `{ "message": "Reset code is valid.", "status": "success" }`
+- **Response (error):** `{ "error": "Invalid reset code", "status": "error" }`
+
+### POST `/api/confirm-forgot-password/`
+
+- **Request:** `{ "email": "user@example.com", "code": "123456", "new_password": "NewPassword123!" }`
+- **Response:** `{ "message": "Password reset successful! You can now log in with your new password.", "status": "success" }`
+
 ## 🚀 Deployment
 
 ### Backend (GCP Cloud Run)
@@ -442,7 +484,66 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - The UI is fully responsive and works well on mobile, tablet, and desktop.
 - **Advanced UI/UX features are planned for future iterations.**
 
+### Authentication Features
+
+- **Tabbed Login/Signup**: Clean tab interface for switching between login and signup forms
+- **Real-time Validation**: Email format and password strength validation with visual feedback
+- **Password Visibility Toggle**: Eye icon to show/hide passwords for better UX
+- **Account Confirmation**: Modal for entering verification codes sent via email
+- **Password Reset**: Two-step modal process for forgotten passwords:
+  1. Enter email to receive reset code
+  2. Enter code and new password with confirmation
+- **Error Handling**: Comprehensive error messages and loading states
+- **Accessibility**: Full keyboard navigation and screen reader support
+
 ## [Chore] Frontend Structure & Documentation
 
 - All frontend CSS files are now organized under `src/styles/` for better maintainability and separation of concerns.
 - The redundant frontend `README.md` has been removed; this is now the single source of project documentation.
+
+## Changelog
+
+### Latest Updates
+
+- **Password Reset Feature**: Added complete password reset functionality:
+
+  - Backend endpoints: `/api/forgot-password/` and `/api/confirm-forgot-password/`
+  - Frontend modal with two-step process (email → code + new password)
+  - Integration with AWS Cognito's forgot password flow
+  - Comprehensive error handling and validation
+  - Full test coverage for both backend and frontend
+  - Updated middleware to exclude password reset endpoints from auth checks
+
+- Updated frontend tests (`App.test.js`) to:
+  - Fix React act() warnings by wrapping assertions after state changes in `waitFor`.
+  - Use more specific queries (e.g., `getByRole('heading', { name: /^Login$/ })`) to avoid ambiguous matches for elements with the text "Login".
+  - This improves test reliability and robustness for the authentication UI.
+
+## Known Gaps & Quick Wins
+
+The following features are planned as immediate improvements to make the app more presentable and user-friendly:
+
+- **Header/Navigation Bar:** Persistent app title, navigation links, and user dropdown (with logout).
+- **Dashboard Summary:** Show total expenses and basic stats after login.
+- **Sort/Filter Expenses:** Ability to sort and filter the expense list by date, category, or amount.
+- **Profile/Settings Stub:** Basic page to view user info and link to password change.
+- **Toast Notifications:** For success/error feedback on actions.
+- **Improved Error/Loading States:** More granular feedback, loading spinners, and friendlier empty states.
+
+### Current Feature Status
+
+| Feature Area        | Status     | Notes                                     |
+| ------------------- | ---------- | ----------------------------------------- |
+| Add Expense         | ✅ Present | Amount, category (free-text), description |
+| List Expenses       | ✅ Present | Table view, no sort/filter yet            |
+| Edit/Delete Expense | ❌ Missing | Not yet supported                         |
+| Category Management | ❌ Missing | Category is free-text only                |
+| Filtering/Sorting   | ❌ Missing | Planned as quick win                      |
+| Dashboard           | ❌ Missing | Planned as quick win                      |
+| Profile/Settings    | ❌ Missing | Planned as quick win                      |
+| Logout              | ✅ Present | Basic button only                         |
+| Receipt Upload      | ✅ Present | Via form                                  |
+| Budgeting/Analytics | ❌ Missing | Not present                               |
+| Responsive Layout   | ✅ Basic   | Present, can improve                      |
+
+See [next_steps.md](next_steps.md) for the full roadmap and future enhancements.

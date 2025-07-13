@@ -8,17 +8,27 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Lazy-load S3 client
+_s3_client = None
 
-class S3Handler:
-    """Handle S3 operations for receipt uploads."""
 
-    def __init__(self):
-        self.s3_client = boto3.client(
+def get_s3_client():
+    global _s3_client
+    if _s3_client is None:
+        _s3_client = boto3.client(
             's3',
             region_name=settings.S3_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
         )
+    return _s3_client
+
+
+class S3Handler:
+    """Handle S3 operations for receipt uploads."""
+
+    def __init__(self):
+        self.s3_client = get_s3_client()
         self.bucket_name = settings.S3_BUCKET_NAME
 
     def upload_file(self, file_data, file_name, user_id):
