@@ -518,3 +518,32 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   - Fix React act() warnings by wrapping assertions after state changes in `waitFor`.
   - Use more specific queries (e.g., `getByRole('heading', { name: /^Login$/ })`) to avoid ambiguous matches for elements with the text "Login".
   - This improves test reliability and robustness for the authentication UI.
+
+## Known Gaps & Quick Wins
+
+The following features are planned as immediate improvements to make the app more presentable and user-friendly:
+
+- **Header/Navigation Bar:** Persistent app title, navigation links, and user dropdown (with logout).
+- **Dashboard Summary:** Show total expenses and basic stats after login.
+- **Sort/Filter Expenses:** Ability to sort and filter the expense list by date, category, or amount.
+- **Profile/Settings Stub:** Basic page to view user info and link to password change.
+- **Toast Notifications:** For success/error feedback on actions.
+- **Improved Error/Loading States:** More granular feedback, loading spinners, and friendlier empty states.
+
+### Current Feature Status
+
+| Feature Area        | Status     | Notes                                     |
+| ------------------- | ---------- | ----------------------------------------- |
+| Add Expense         | ✅ Present | Amount, category (free-text), description |
+| List Expenses       | ✅ Present | Table view, no sort/filter yet            |
+| Edit/Delete Expense | ❌ Missing | Not yet supported                         |
+| Category Management | ❌ Missing | Category is free-text only                |
+| Filtering/Sorting   | ❌ Missing | Planned as quick win                      |
+| Dashboard           | ❌ Missing | Planned as quick win                      |
+| Profile/Settings    | ❌ Missing | Planned as quick win                      |
+| Logout              | ✅ Present | Basic button only                         |
+| Receipt Upload      | ✅ Present | Via form                                  |
+| Budgeting/Analytics | ❌ Missing | Not present                               |
+| Responsive Layout   | ✅ Basic   | Present, can improve                      |
+
+See [next_steps.md](next_steps.md) for the full roadmap and future enhancements.
