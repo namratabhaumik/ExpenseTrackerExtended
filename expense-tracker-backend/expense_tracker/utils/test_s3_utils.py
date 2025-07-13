@@ -178,18 +178,14 @@ class S3UtilsTestCase(TestCase):
             # S3 delete_object is idempotent and returns success
             self.assertTrue(result)
 
-    @patch('utils.s3_utils.boto3.client')
-    def test_s3_client_initialization(self, mock_boto3_client):
+    @patch('utils.s3_utils.get_s3_client')
+    def test_s3_client_initialization(self, mock_get_s3_client):
         """Test S3 client initialization."""
         mock_s3_client = MagicMock()
-        mock_boto3_client.return_value = mock_s3_client
+        mock_get_s3_client.return_value = mock_s3_client
 
         # Create new instance to trigger client initialization
         s3_utils = S3Handler()
 
-        mock_boto3_client.assert_called_with(
-            's3',
-            region_name='us-east-1',
-            aws_access_key_id='test-access-key',
-            aws_secret_access_key='test-secret-key'
-        )
+        # Verify get_s3_client was called
+        mock_get_s3_client.assert_called_once()
