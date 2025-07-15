@@ -1,0 +1,215 @@
+import React, { useEffect, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
+import './styles/Dashboard.css';
+
+// Dummy data for fallback - moved outside component to prevent recreation
+const DUMMY_EXPENSES = [
+  {
+    id: 1,
+    amount: 50.0,
+    category: 'Food',
+    description: 'Lunch',
+    timestamp: '2025-01-12T10:30:00Z',
+  },
+  {
+    id: 2,
+    amount: 25.0,
+    category: 'Transport',
+    description: 'Bus fare',
+    timestamp: '2025-01-11T08:15:00Z',
+  },
+  {
+    id: 3,
+    amount: 120.0,
+    category: 'Shopping',
+    description: 'Groceries',
+    timestamp: '2025-01-10T16:45:00Z',
+  },
+  {
+    id: 4,
+    amount: 35.0,
+    category: 'Entertainment',
+    description: 'Movie ticket',
+    timestamp: '2025-01-09T19:20:00Z',
+  },
+  {
+    id: 5,
+    amount: 80.0,
+    category: 'Food',
+    description: 'Dinner',
+    timestamp: '2025-01-08T20:00:00Z',
+  },
+];
+
+function Dashboard({ accessToken, refreshFlag }) {
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef(null);
+
+  // Fetch expenses on mount
+  useEffect(() => {
+    if (!accessToken) return;
+
+    setLoading(true);
+    setError('');
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: 'include',
+    })
+      .then((resp) => {
+        if (!resp.ok)
+          return resp.json().then((err) => {
+            throw new Error(err.error || 'Failed to fetch expenses');
+          });
+        return resp.json();
+      })
+      .then((data) => {
+        const normalized = (data.expenses || []).map((exp) => ({
+          id: exp.id || exp.expense_id,
+          amount: exp.amount,
+          category: exp.category,
+          description: exp.description,
+          timestamp: exp.timestamp,
+        }));
+        setExpenses(normalized);
+      })
+      .catch((e) => {
+        setError(e.message || 'An error occurred while fetching expenses.');
+        setExpenses([]);
+      })
+      .finally(() => setLoading(false));
+  }, [accessToken, refreshFlag]);
+
+  // Add this effect ONCE to handle unmount:
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Calculate total expenses
+  const totalExpenses = expenses.reduce(
+    (sum, exp) => sum + Number(exp.amount),
+    0,
+  );
+
+  // Get 5 most recent expenses
+  const recentExpenses = expenses
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, 5);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      {/* Summary Card */}
+      <div className="bg-white dark:bg-[#23272F] rounded-xl shadow-md p-8 border border-[#E5E7EB] dark:border-[#4B5563]">
+        <h2 className="text-3xl font-bold text-[#4B5563] dark:text-[#F3F4F6] mb-6">
+          Dashboard Summary
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#F9FAFB] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
+            <div className="text-[#9CA3AF] text-sm font-medium mb-2">
+              Total Expenses
+            </div>
+            <div className="text-3xl font-bold text-[#10B981]">
+              ${totalExpenses.toFixed(2)}
+            </div>
+          </div>
+          <div className="bg-[#F9FAFB] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
+            <div className="text-[#9CA3AF] text-sm font-medium mb-2">
+              Total Transactions
+            </div>
+            <div className="text-3xl font-bold text-[#4B5563] dark:text-[#F3F4F6]">
+              {expenses.length}
+            </div>
+          </div>
+          <div className="bg-[#F9FAFB] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
+            <div className="text-[#9CA3AF] text-sm font-medium mb-2">
+              Average per Transaction
+            </div>
+            <div className="text-3xl font-bold text-[#4B5563] dark:text-[#F3F4F6]">
+              $
+              {expenses.length > 0
+                ? (totalExpenses / expenses.length).toFixed(2)
+                : '0.00'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Expenses Table */}
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold text-[#10B981] mb-4">
+          Recent Expenses
+        </h3>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-[#9CA3AF] text-lg">
+              Loading recent expenses...
+            </div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-3 text-lg">{error}</div>
+            <div className="text-[#9CA3AF] text-sm">Showing sample data</div>
+          </div>
+        ) : recentExpenses.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-[#9CA3AF] text-lg">No expenses found.</div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border border-[#E5E7EB] rounded-lg overflow-hidden">
+              <thead className="bg-[#F9FAFB]">
+                <tr>
+                  <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
+                    Amount
+                  </th>
+                  <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
+                    Category
+                  </th>
+                  <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
+                    Description
+                  </th>
+                  <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentExpenses.map((expense, idx) => (
+                  <tr
+                    key={expense.id}
+                    className={`border-b border-[#E5E7EB] hover:bg-[#E0F7F4] transition-colors duration-150 ${
+                      idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'
+                    }`}
+                  >
+                    <td className="py-3 px-4 text-[#10B981] font-semibold">
+                      ${Number(expense.amount).toFixed(2)}
+                    </td>
+                    <td className="py-3 px-4 text-[#4B5563]">
+                      {expense.category}
+                    </td>
+                    <td className="py-3 px-4 text-[#4B5563]">
+                      {expense.description}
+                    </td>
+                    <td className="py-3 px-4 text-[#9CA3AF] text-sm">
+                      {new Date(expense.timestamp).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+Dashboard.propTypes = {
+  accessToken: PropTypes.string.isRequired,
+};
+
+export default Dashboard;

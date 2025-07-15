@@ -1,5 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
 
@@ -573,4 +579,37 @@ describe('App Component', () => {
   // Remove or comment out tests for field validation and email format, as the UI does not show these messages
   // test("validates required fields", async () => { ... });
   // test("validates email format", async () => { ... });
+});
+
+describe('Theme Toggle Placement', () => {
+  test('shows global theme toggle button on login/signup page', () => {
+    render(<App />);
+    const themeToggle = screen.getByRole('button', { name: /switch to/i });
+    expect(themeToggle).toBeInTheDocument();
+    // Should have global-theme-toggle-btn class
+    expect(themeToggle.className).toMatch(/global-theme-toggle-btn/);
+  });
+
+  test('theme toggle is not inside the form box', () => {
+    render(<App />);
+    const themeToggle = screen.getByRole('button', { name: /switch to/i });
+    expect(themeToggle).toBeInTheDocument();
+
+    // Use only Testing Library queries, not direct DOM access
+    const loginContainer = screen.queryByTestId('login-container');
+    expect(loginContainer).toBeTruthy();
+    const toggleInside = within(loginContainer).queryByRole('button', {
+      name: /switch to/i,
+    });
+    expect(toggleInside).toBeNull();
+  });
+
+  test('theme toggle button switches icon and aria-label', () => {
+    render(<App />);
+    const themeToggle = screen.getByRole('button', { name: /switch to/i });
+    const initialLabel = themeToggle.getAttribute('aria-label');
+    fireEvent.click(themeToggle);
+    const newLabel = themeToggle.getAttribute('aria-label');
+    expect(initialLabel).not.toBe(newLabel);
+  });
 });
