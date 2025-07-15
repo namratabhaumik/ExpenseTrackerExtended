@@ -1,8 +1,10 @@
+// Theme toggle is now global and handled by App.js. Do not add theme toggle UI here. See App.js for details.
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FaTimes } from 'react-icons/fa';
 import './styles/Login.css';
+import { ClipLoader } from 'react-spinners';
 
 function ConfirmAccountModal({ open, email, onClose }) {
   const [code, setCode] = useState('');
@@ -350,7 +352,7 @@ PasswordResetModal.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
-function AuthForm({ onLoginSuccess }) {
+function AuthForm({ onLoginSuccess, theme }) {
   const [activeTab, setActiveTab] = useState('login');
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -485,253 +487,297 @@ function AuthForm({ onLoginSuccess }) {
 
   const allPasswordRequirementsMet = validatePassword(signupPassword);
 
+  // Theme toggle handler
+  // Removed theme toggle handler
+  // Apply theme to body
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.body.classList.toggle('dark', theme === 'dark');
+    }
+  }, [theme]);
+
   return (
-    <div className="login-container">
-      <div className="auth-tabs">
-        <button
-          className={activeTab === 'login' ? 'auth-tab active' : 'auth-tab'}
-          onClick={() => setActiveTab('login')}
-          type="button"
-        >
-          Login
-        </button>
-        <button
-          className={activeTab === 'signup' ? 'auth-tab active' : 'auth-tab'}
-          onClick={() => setActiveTab('signup')}
-          type="button"
-        >
-          Sign Up
-        </button>
-      </div>
-      {activeTab === 'login' ? (
-        <>
-          <h2>Login</h2>
-          <form className="login-form" onSubmit={handleLogin} autoComplete="on">
-            <div>
-              <label htmlFor="login-email">Email:</label>
-              <div className="password-input-wrapper">
-                <input
-                  id="login-email"
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  autoComplete="username"
-                  placeholder="john.doe@example.com"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="login-password">Password:</label>
-              <div className="password-input-wrapper">
-                <input
-                  id="login-password"
-                  type={showLoginPassword ? 'text' : 'password'}
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  placeholder="password"
-                  style={{ paddingRight: '2.2rem' }}
-                />
-                <span
-                  className="password-eye-icon"
-                  onClick={() => setShowLoginPassword((v) => !v)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={
-                    showLoginPassword ? 'Hide password' : 'Show password'
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ')
-                      setShowLoginPassword((v) => !v);
-                  }}
-                >
-                  {showLoginPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-            </div>
-            <button type="submit" disabled={loginLoading}>
-              {loginLoading ? 'Logging in...' : 'Login'}
-            </button>
-          </form>
-          <div className="auth-links center-auth-link">
-            <span
-              className="auth-link"
-              onClick={() => setActiveTab('signup')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setActiveTab('signup');
-              }}
-            >
-              Don&apos;t have an account? Sign Up
-            </span>
-            <span
-              className="auth-link forgot-password"
-              onClick={() => setShowPasswordResetModal(true)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ')
-                  setShowPasswordResetModal(true);
-              }}
-            >
-              Forgot Password?
-            </span>
-          </div>
-          {loginError && <p className="login-error">{loginError}</p>}
-        </>
-      ) : (
-        <>
-          <h2>Create Account</h2>
-          <form
-            className="login-form"
-            onSubmit={handleSignup}
-            autoComplete="on"
+    <div>
+      {/* Removed theme-toggle-container and button */}
+      <div className={`login-container ${theme === 'dark' ? 'dark' : ''}`}>
+        <div className="auth-tabs">
+          <button
+            className={activeTab === 'login' ? 'auth-tab active' : 'auth-tab'}
+            onClick={() => setActiveTab('login')}
+            type="button"
+            tabIndex={0}
           >
-            <div>
-              <label htmlFor="signup-email">Email:</label>
-              <div className="password-input-wrapper">
-                <input
-                  id="signup-email"
-                  type="email"
-                  value={signupEmail}
-                  onChange={(e) => setSignupEmail(e.target.value)}
-                  required
-                  autoComplete="username"
-                  placeholder="john.doe@example.com"
-                />
-              </div>
-              {signupEmail && !validateEmail(signupEmail) && (
-                <span className="input-error">Invalid email format.</span>
-              )}
-            </div>
-            <div>
-              <label htmlFor="signup-password">Password:</label>
-              <div className="password-input-wrapper">
-                <input
-                  id="signup-password"
-                  type={showSignupPassword ? 'text' : 'password'}
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  required
-                  autoComplete="new-password"
-                  placeholder="password"
-                  style={{ paddingRight: '2.2rem' }}
-                />
-                <span
-                  className="password-eye-icon"
-                  onClick={() => setShowSignupPassword((v) => !v)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={
-                    showSignupPassword ? 'Hide password' : 'Show password'
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ')
-                      setShowSignupPassword((v) => !v);
-                  }}
-                >
-                  {showSignupPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-              {(passwordFocused || signupPassword) &&
-                !allPasswordRequirementsMet && (
-                <ul className="password-requirements-list">
-                  {passwordRules.map((rule) => {
-                    const passed = rule.test(signupPassword);
-                    return (
-                      <li
-                        key={rule.message}
-                        className={
-                          passed ? 'requirement-met' : 'requirement-unmet'
-                        }
-                      >
-                        <span className="requirement-icon">
-                          {passed ? '✓' : '✗'}
-                        </span>
-                        {rule.message}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-            <div>
-              <label htmlFor="signup-confirm">Confirm Password:</label>
-              <div className="password-input-wrapper">
-                <input
-                  id="signup-confirm"
-                  type={showSignupConfirm ? 'text' : 'password'}
-                  value={signupConfirm}
-                  onChange={(e) => setSignupConfirm(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  placeholder="password"
-                  style={{ paddingRight: '2.2rem' }}
-                />
-                <span
-                  className="password-eye-icon"
-                  onClick={() => setShowSignupConfirm((v) => !v)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={
-                    showSignupConfirm ? 'Hide password' : 'Show password'
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ')
-                      setShowSignupConfirm((v) => !v);
-                  }}
-                >
-                  {showSignupConfirm ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-              {signupConfirm && signupPassword !== signupConfirm && (
-                <span className="input-error">Passwords do not match.</span>
-              )}
-            </div>
-            <button type="submit" disabled={signupLoading}>
-              {signupLoading ? 'Signing up...' : 'Sign Up'}
-            </button>
-          </form>
-          <div className="auth-links center-auth-link">
-            <span
-              className="auth-link"
-              onClick={() => setActiveTab('login')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setActiveTab('login');
-              }}
+            Login
+          </button>
+          <button
+            className={activeTab === 'signup' ? 'auth-tab active' : 'auth-tab'}
+            onClick={() => setActiveTab('signup')}
+            type="button"
+            tabIndex={0}
+          >
+            Sign Up
+          </button>
+        </div>
+        {activeTab === 'login' ? (
+          <>
+            <h2 className="text-center mb-6 text-2xl font-bold">Login</h2>
+            <form
+              className="login-form"
+              onSubmit={handleLogin}
+              autoComplete="on"
             >
-              Already have an account? Login
-            </span>
-          </div>
-          {signupError && <p className="login-error">{signupError}</p>}
-          {signupSuccess && <p className="signup-success">{signupSuccess}</p>}
-        </>
-      )}
-      <ConfirmAccountModal
-        open={showConfirmModal}
-        email={confirmEmail}
-        onClose={() => {
-          setShowConfirmModal(false);
-          setActiveTab('login');
-        }}
-      />
-      <PasswordResetModal
-        open={showPasswordResetModal}
-        onClose={() => setShowPasswordResetModal(false)}
-      />
+              <div>
+                <label htmlFor="login-email">Email:</label>
+                <div className="password-input-wrapper">
+                  <input
+                    id="login-email"
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                    autoComplete="username"
+                    placeholder="john.doe@example.com"
+                    className="focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB] dark:bg-[#23272F] dark:text-[#F3F4F6] dark:placeholder-[#9CA3AF]"
+                    aria-label="Email"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="login-password">Password:</label>
+                <div className="password-input-wrapper">
+                  <input
+                    id="login-password"
+                    type={showLoginPassword ? 'text' : 'password'}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    placeholder="password"
+                    style={{ paddingRight: '2.2rem' }}
+                    className="focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB] dark:bg-[#23272F] dark:text-[#F3F4F6] dark:placeholder-[#9CA3AF]"
+                    aria-label="Password"
+                  />
+                  <span
+                    className="password-eye-icon"
+                    onClick={() => setShowLoginPassword((v) => !v)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={
+                      showLoginPassword ? 'Hide password' : 'Show password'
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ')
+                        setShowLoginPassword((v) => !v);
+                    }}
+                  >
+                    {showLoginPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="flex items-center justify-center gap-2"
+              >
+                {loginLoading ? <ClipLoader size={20} color="#fff" /> : 'Login'}
+              </button>
+            </form>
+            <div className="auth-links center-auth-link">
+              <span
+                className="auth-link"
+                onClick={() => setActiveTab('signup')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ')
+                    setActiveTab('signup');
+                }}
+              >
+                Don&apos;t have an account? Sign Up
+              </span>
+              <span
+                className="auth-link forgot-password"
+                onClick={() => setShowPasswordResetModal(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ')
+                    setShowPasswordResetModal(true);
+                }}
+              >
+                Forgot Password?
+              </span>
+            </div>
+            {loginError && <p className="login-error">{loginError}</p>}
+          </>
+        ) : (
+          <>
+            <h2 className="text-center mb-6 text-2xl font-bold">
+              Create Account
+            </h2>
+            <form
+              className="login-form"
+              onSubmit={handleSignup}
+              autoComplete="on"
+            >
+              <div>
+                <label htmlFor="signup-email">Email:</label>
+                <div className="password-input-wrapper">
+                  <input
+                    id="signup-email"
+                    type="email"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                    autoComplete="username"
+                    placeholder="john.doe@example.com"
+                    className="focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB] dark:bg-[#23272F] dark:text-[#F3F4F6] dark:placeholder-[#9CA3AF]"
+                    aria-label="Email"
+                  />
+                </div>
+                {signupEmail && !validateEmail(signupEmail) && (
+                  <span className="input-error">Invalid email format.</span>
+                )}
+              </div>
+              <div>
+                <label htmlFor="signup-password">Password:</label>
+                <div className="password-input-wrapper">
+                  <input
+                    id="signup-password"
+                    type={showSignupPassword ? 'text' : 'password'}
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    onFocus={() => setPasswordFocused(true)}
+                    onBlur={() => setPasswordFocused(false)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="password"
+                    style={{ paddingRight: '2.2rem' }}
+                    className="focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB] dark:bg-[#23272F] dark:text-[#F3F4F6] dark:placeholder-[#9CA3AF]"
+                    aria-label="Password"
+                  />
+                  <span
+                    className="password-eye-icon"
+                    onClick={() => setShowSignupPassword((v) => !v)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={
+                      showSignupPassword ? 'Hide password' : 'Show password'
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ')
+                        setShowSignupPassword((v) => !v);
+                    }}
+                  >
+                    {showSignupPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+                {(passwordFocused || signupPassword) &&
+                  !allPasswordRequirementsMet && (
+                  <ul className="password-requirements-list">
+                    {passwordRules.map((rule) => {
+                      const passed = rule.test(signupPassword);
+                      return (
+                        <li
+                          key={rule.message}
+                          className={
+                            passed ? 'requirement-met' : 'requirement-unmet'
+                          }
+                        >
+                          <span className="requirement-icon">
+                            {passed ? '✓' : '✗'}
+                          </span>
+                          {rule.message}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <label htmlFor="signup-confirm">Confirm Password:</label>
+                <div className="password-input-wrapper">
+                  <input
+                    id="signup-confirm"
+                    type={showSignupConfirm ? 'text' : 'password'}
+                    value={signupConfirm}
+                    onChange={(e) => setSignupConfirm(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="password"
+                    style={{ paddingRight: '2.2rem' }}
+                    className="focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB] dark:bg-[#23272F] dark:text-[#F3F4F6] dark:placeholder-[#9CA3AF]"
+                    aria-label="Confirm Password"
+                  />
+                  <span
+                    className="password-eye-icon"
+                    onClick={() => setShowSignupConfirm((v) => !v)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={
+                      showSignupConfirm ? 'Hide password' : 'Show password'
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ')
+                        setShowSignupConfirm((v) => !v);
+                    }}
+                  >
+                    {showSignupConfirm ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+                {signupConfirm && signupPassword !== signupConfirm && (
+                  <span className="input-error">Passwords do not match.</span>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={signupLoading}
+                className="flex items-center justify-center gap-2"
+              >
+                {signupLoading ? (
+                  <ClipLoader size={20} color="#fff" />
+                ) : (
+                  'Sign Up'
+                )}
+              </button>
+            </form>
+            <div className="auth-links center-auth-link">
+              <span
+                className="auth-link"
+                onClick={() => setActiveTab('login')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') setActiveTab('login');
+                }}
+              >
+                Already have an account? Login
+              </span>
+            </div>
+            {signupError && <p className="login-error">{signupError}</p>}
+            {signupSuccess && <p className="signup-success">{signupSuccess}</p>}
+          </>
+        )}
+        <ConfirmAccountModal
+          open={showConfirmModal}
+          email={confirmEmail}
+          onClose={() => {
+            setShowConfirmModal(false);
+            setActiveTab('login');
+          }}
+        />
+        <PasswordResetModal
+          open={showPasswordResetModal}
+          onClose={() => setShowPasswordResetModal(false)}
+        />
+      </div>
     </div>
   );
 }
 
 AuthForm.propTypes = {
   onLoginSuccess: PropTypes.func.isRequired,
+  theme: PropTypes.string.isRequired,
 };
 
 export default AuthForm;

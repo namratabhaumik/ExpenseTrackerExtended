@@ -18,7 +18,7 @@
 }
 
 .expenses-container h3 {
-  color: #2563eb;
+  color: #10b981;
   margin-top: 2rem;
   margin-bottom: 1rem;
   font-size: 1.3rem;
@@ -63,13 +63,13 @@
 
 .expenses-form input:focus,
 .expenses-receipt-form input:focus {
-  border: 1.5px solid #2563eb;
+  border: 1.5px solid #14b8a6;
   outline: none;
 }
 
 .expenses-form button,
 .expenses-receipt-form button {
-  background: #2563eb;
+  background: #10b981;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -81,7 +81,7 @@
 }
 .expenses-form button:hover,
 .expenses-receipt-form button:hover {
-  background: #4b5563;
+  background: #14b8a6;
 }
 
 .expenses-status {

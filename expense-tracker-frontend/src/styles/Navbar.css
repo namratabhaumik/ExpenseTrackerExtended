@@ -1,0 +1,176 @@
+/* Navbar Animation Styles */
+
+/* Mobile menu slide-in animation */
+.mobile-menu-overlay {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Nav link hover effects */
+.nav-link {
+  position: relative;
+  transform-origin: center;
+}
+
+.nav-link:hover {
+  transform: scale(1.05);
+}
+
+.nav-link:focus {
+  outline: none;
+}
+
+/* Mobile nav link animations */
+.mobile-nav-link {
+  transform-origin: left center;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-link:hover {
+  transform: scale(1.05) translateX(8px);
+}
+
+.mobile-nav-link:focus {
+  outline: none;
+}
+
+/* Active page underline animation */
+.nav-link span {
+  transform-origin: left;
+  transition: transform 0.2s ease;
+}
+
+/* Focus ring styles for better accessibility */
+.nav-link:focus-visible,
+.mobile-nav-link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for all interactive elements */
+button {
+  transition: all 0.2s ease;
+}
+
+/* Hamburger menu animation */
+.hamburger-line {
+  transition: all 0.2s ease;
+}
+
+/* Ensure proper z-index stacking */
+.sticky {
+  z-index: 40;
+}
+
+/* Shadow enhancement for sticky navbar */
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode toggle styles */
+.theme-toggle {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(107, 114, 128, 0.5);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle svg {
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover svg {
+  transform: rotate(15deg);
+}
+
+/* Enhanced button styling for better visual hierarchy */
+.nav-link,
+.mobile-nav-link {
+  border-radius: 0.375rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  min-width: 110px; /* Consistent button width */
+  box-shadow: 0 2px 8px rgba(75, 85, 99, 0.06); /* Subtle button shadow */
+}
+
+/* --- Emerald/Teal color palette for nav --- */
+.nav-link:hover,
+.mobile-nav-link:hover {
+  background: #5eead4;
+  color: #14b8a6;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.1);
+}
+
+.nav-link:active,
+.mobile-nav-link:active {
+  background: #5eead4;
+  color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.16);
+  transform: scale(0.97);
+}
+
+/* Improved spacing and padding for better touch targets */
+.nav-link {
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav-link {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+}
+
+/* --- Ensure nav buttons are always horizontally aligned --- */
+.navbar-horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+/* --- Increase gap between nav buttons for clarity --- */
+.flex.gap-x-4 {
+  gap: 1.5rem !important;
+}
+
+/* Smooth theme transitions */
+.theme-toggle,
+.nav-link,
+.mobile-nav-link {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- More distinct active nav item underline --- */
+.nav-link.active,
+.mobile-nav-link.active {
+  color: #10b981;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+}
+.nav-link.active span,
+.mobile-nav-link.active span {
+  height: 3px !important;
+  background: #10b981 !important;
+  border-radius: 2px;
+  bottom: -2px;
+}
