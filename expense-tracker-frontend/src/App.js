@@ -105,7 +105,7 @@ function App() {
           )}
           {activePage === 'profile' && (
             <div className="content-wrapper">
-              <Profile />
+              <Profile accessToken={accessToken} />
             </div>
           )}
         </main>

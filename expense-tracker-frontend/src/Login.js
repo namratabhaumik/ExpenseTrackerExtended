@@ -499,7 +499,10 @@ function AuthForm({ onLoginSuccess, theme }) {
   return (
     <div>
       {/* Removed theme-toggle-container and button */}
-      <div className={`login-container ${theme === 'dark' ? 'dark' : ''}`}>
+      <div
+        className={`login-container ${theme === 'dark' ? 'dark' : ''}`}
+        data-testid="login-container"
+      >
         <div className="auth-tabs">
           <button
             className={activeTab === 'login' ? 'auth-tab active' : 'auth-tab'}

@@ -8,6 +8,7 @@ import {
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
+import { act } from 'react-dom/test-utils';
 
 // Mock the AWS configuration
 jest.mock('./awsconfig', () => ({
@@ -59,8 +60,10 @@ describe('App Component', () => {
     global.fetch.mockRestore();
   });
 
-  test('renders login and sign up tabs', () => {
-    render(<App />);
+  test('renders login and sign up tabs', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     // Use getAllByRole for tabs and check their className
     const loginTab = screen
       .getAllByRole('button', { name: /^Login$/ })
@@ -72,8 +75,10 @@ describe('App Component', () => {
     expect(signUpTab).toBeInTheDocument();
   });
 
-  test('toggles to sign up form', () => {
-    render(<App />);
+  test('toggles to sign up form', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
@@ -87,7 +92,9 @@ describe('App Component', () => {
   });
 
   test('toggles back to login form', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
@@ -126,7 +133,9 @@ describe('App Component', () => {
         json: () => Promise.resolve({ expenses: [] }),
       });
     });
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
@@ -146,7 +155,9 @@ describe('App Component', () => {
   });
 
   test('shows loading state during login', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
@@ -164,7 +175,9 @@ describe('App Component', () => {
   });
 
   test('shows confirm account modal after successful sign up', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
@@ -197,7 +210,9 @@ describe('App Component', () => {
   });
 
   test('closes confirm account modal and returns to login', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
@@ -239,8 +254,10 @@ describe('App Component', () => {
     });
   });
 
-  test('opens password reset modal when forgot password is clicked', () => {
-    render(<App />);
+  test('opens password reset modal when forgot password is clicked', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
     expect(screen.getByText(/Reset Password/i)).toBeInTheDocument();
@@ -266,7 +283,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -304,7 +323,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -350,7 +371,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -406,7 +429,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -464,7 +489,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -526,7 +553,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -563,8 +592,10 @@ describe('App Component', () => {
     });
   });
 
-  test('closes password reset modal when X is clicked', () => {
-    render(<App />);
+  test('closes password reset modal when X is clicked', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
