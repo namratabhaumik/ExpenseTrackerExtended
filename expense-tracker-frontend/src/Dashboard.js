@@ -103,12 +103,12 @@ function Dashboard({ accessToken, refreshFlag }) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {/* Summary Card */}
-      <div className="bg-white dark:bg-[#23272F] rounded-xl shadow-md p-8 border border-[#E5E7EB] dark:border-[#4B5563]">
-        <h2 className="text-3xl font-bold text-[#4B5563] dark:text-[#F3F4F6] mb-6">
+      <div className="dashboard-card bg-[#f3f4f6] dark:bg-[#23272F] rounded-xl shadow-md p-8 border border-[#E5E7EB] dark:border-[#4B5563]">
+        <h2 className="text-3xl font-bold" style={{ color: '#4B5563' }}>
           Dashboard Summary
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#F9FAFB] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
+        <div className="dashboard-grid grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="stat-card bg-[#fdfdfd] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
             <div className="text-[#9CA3AF] text-sm font-medium mb-2">
               Total Expenses
             </div>
@@ -116,19 +116,19 @@ function Dashboard({ accessToken, refreshFlag }) {
               ${totalExpenses.toFixed(2)}
             </div>
           </div>
-          <div className="bg-[#F9FAFB] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
+          <div className="stat-card bg-[#fdfdfd] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
             <div className="text-[#9CA3AF] text-sm font-medium mb-2">
               Total Transactions
             </div>
-            <div className="text-3xl font-bold text-[#4B5563] dark:text-[#F3F4F6]">
+            <div className="text-3xl font-bold" style={{ color: '#4B5563' }}>
               {expenses.length}
             </div>
           </div>
-          <div className="bg-[#F9FAFB] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
+          <div className="stat-card bg-[#fdfdfd] dark:bg-[#181A20] rounded-lg p-6 border border-[#E5E7EB] dark:border-[#4B5563] hover:shadow-md transition-shadow duration-200">
             <div className="text-[#9CA3AF] text-sm font-medium mb-2">
               Average per Transaction
             </div>
-            <div className="text-3xl font-bold text-[#4B5563] dark:text-[#F3F4F6]">
+            <div className="text-3xl font-bold" style={{ color: '#4B5563' }}>
               $
               {expenses.length > 0
                 ? (totalExpenses / expenses.length).toFixed(2)

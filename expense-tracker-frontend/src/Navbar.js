@@ -84,7 +84,7 @@ export default function Navbar({
         {/* Left: Brand and Nav */}
         <div className="flex items-center gap-x-6">
           <button
-            className="text-xl font-bold tracking-tight hover:text-[#2563EB] transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-2 focus:ring-offset-[#4B5563] rounded-md"
+            className="text-xl font-bold tracking-tight brand-name hover:text-[#10b981] transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#10b981] focus:ring-offset-2 focus:ring-offset-[#4B5563] rounded-md"
             onClick={() => onNavigate('dashboard')}
             onKeyDown={(e) => handleKeyDown(e, () => onNavigate('dashboard'))}
             aria-current={activePage === 'dashboard' ? 'page' : undefined}
@@ -137,8 +137,10 @@ export default function Navbar({
           <button
             onClick={onThemeToggle}
             onKeyDown={(e) => handleKeyDown(e, onThemeToggle)}
-            className="theme-toggle p-2 rounded-md hover:bg-[#5EEAD4] transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:ring-offset-2 focus:ring-offset-[#23272F]"
+            className="theme-toggle p-2 rounded-md hover:bg-[#5EEAD4] transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:ring-offset-2 focus:ring-offset-[#23272F] relative group"
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            tabIndex={0}
+            type="button"
           >
             {theme === 'dark' ? (
               <svg className="w-5 h-5" fill="#10B981" viewBox="0 0 20 20">
@@ -153,6 +155,12 @@ export default function Navbar({
                 <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
               </svg>
             )}
+            {/* Tooltip */}
+            <span className="theme-tooltip group-hover:opacity-100 group-focus:opacity-100 opacity-0 pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1 rounded bg-[#23272F] text-[#F9FAFB] text-xs font-medium shadow-lg transition-opacity duration-200 z-50 whitespace-nowrap">
+              {theme === 'dark'
+                ? 'Switch to light mode'
+                : 'Switch to dark mode'}
+            </span>
           </button>
         </div>
         {/* Hamburger (Mobile) */}

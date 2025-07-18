@@ -46,6 +46,7 @@ This project now uses a custom, production-ready Navbar component (`src/Navbar.j
 - Responsive: Collapses into a hamburger menu on mobile (max-width: 768px).
 - Styled with Tailwind CSS for modern look and accessibility.
 - Logout button included in the Navbar.
+- The settings (theme toggle) button in the navigation bar now features an accessible tooltip for improved clarity and usability.
 
 ## Expenses Summary, Sorting, and Filtering
 
@@ -100,6 +101,7 @@ This project now uses a custom, production-ready Navbar component (`src/Navbar.j
 - **Background Gradients**: Subtle background gradients applied to the entire app (light: #F9FAFB to #E5E7EB, dark: #4B5563 to #1F2937) for depth and modern appearance.
 - **Responsive Design**: All components maintain proper spacing and layout across mobile, tablet, and desktop screens.
 - **Smooth Transitions**: Theme switching and interactive elements feature smooth 0.3s transitions for a polished user experience.
+- Increased vertical spacing between main dashboard cards for better visual separation and clarity, especially on mobile and tablet.
 
 ## Accessibility Improvements
 
@@ -116,6 +118,9 @@ This project now uses a custom, production-ready Navbar component (`src/Navbar.j
 - All navigation uses flexbox for alignment and spacing.
 
 - The Dashboard's 'Recent Expenses' section now displays a modern spinner and a friendly illustration when there are no expenses, instead of just text. This provides a more engaging and visually appealing empty state for users.
+- Dashboard summary and stat cards now use lighter backgrounds for improved contrast and visual separation, making the dashboard easier to read and more accessible in both light and dark modes.
+- Dashboard cards and tables now stack and scroll better on mobile and tablet devices, ensuring a seamless experience across all screen sizes.
+- The navigation bar is more touch-friendly and accessible, with improved spacing and scrollable mobile menu overlay for small screens.
 
 ## Bug Fixes & Improvements
 
