@@ -274,6 +274,71 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 }
 ```
 
+### 4. Profile Management
+
+All endpoints require: `Authorization: Bearer YOUR_ACCESS_TOKEN`
+
+#### Get Profile
+
+**Endpoint:** `GET /api/profile/`
+
+**Response:**
+
+```json
+{
+  "profile": {
+    "user_id": "user-id",
+    "email": "user@example.com",
+    "name": "John Doe"
+  },
+  "status": "success"
+}
+```
+
+#### Update Profile
+
+**Endpoint:** `PUT /api/profile/`
+
+**Request:**
+
+```json
+{
+  "email": "new-email@example.com",
+  "name": "New Name"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Profile updated successfully",
+  "status": "success"
+}
+```
+
+#### Change Password
+
+**Endpoint:** `POST /api/profile/change-password/`
+
+**Request:**
+
+```json
+{
+  "current_password": "oldPassword123!",
+  "new_password": "newPassword456!"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Password changed successfully",
+  "status": "success"
+}
+```
+
 ## Password Reset Flow (Frontend)
 
 The password reset modal now uses a three-step process:
