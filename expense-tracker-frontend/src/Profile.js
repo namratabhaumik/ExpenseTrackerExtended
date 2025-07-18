@@ -4,8 +4,8 @@ function Profile() {
   return (
     <div className="space-y-6">
       {/* Main Profile Card */}
-      <div className="bg-white dark:bg-[#23272F] rounded-xl shadow-md p-6 border border-[#E5E7EB] dark:border-[#4B5563]">
-        <h2 className="text-2xl font-bold text-[#4B5563] dark:text-[#F3F4F6] mb-4">
+      <div className="card mb-6">
+        <h2 className="text-3xl font-bold mb-4" style={{ color: '#4B5563' }}>
           Profile
         </h2>
         <p className="text-[#9CA3AF] mb-6">
@@ -21,9 +21,12 @@ function Profile() {
       </div>
 
       {/* Additional Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-[#23272F] rounded-xl shadow-md p-6 border border-[#E5E7EB] dark:border-[#4B5563]">
-          <h3 className="text-lg font-semibold text-[#4B5563] dark:text-[#F3F4F6] mb-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="stat-card">
+          <h3
+            className="text-xl font-semibold mb-2"
+            style={{ color: '#4B5563' }}
+          >
             Account Settings
           </h3>
           <p className="text-[#9CA3AF] text-sm">
@@ -31,8 +34,11 @@ function Profile() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#23272F] rounded-xl shadow-md p-6 border border-[#E5E7EB] dark:border-[#4B5563]">
-          <h3 className="text-lg font-semibold text-[#4B5563] dark:text-[#F3F4F6] mb-2">
+        <div className="stat-card">
+          <h3
+            className="text-xl font-semibold mb-2"
+            style={{ color: '#4B5563' }}
+          >
             Security
           </h3>
           <p className="text-[#9CA3AF] text-sm">

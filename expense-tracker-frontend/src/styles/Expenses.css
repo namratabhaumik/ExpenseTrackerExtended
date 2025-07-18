@@ -144,6 +144,64 @@
   font-weight: 500;
 }
 
+/* Light mode (default) */
+.expenses-container input,
+.expenses-container select {
+  background: #fff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+
+/* Dark mode */
+.dark .expenses-container input,
+.dark .expenses-container select {
+  background: #181a20;
+  color: #f3f4f6;
+  border: 1px solid #4b5563;
+}
+
+.dark .expenses-container input::placeholder,
+.dark .expenses-container select::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+/* Ensure select dropdown and file input placeholders/options match */
+.dark .expenses-container select,
+.dark .expenses-container select option,
+.dark .expenses-container input[type="file"]::file-selector-button {
+  color: #9ca3af;
+}
+
+/* File input field in dark mode */
+.dark .expenses-container input[type="file"] {
+  background: #181a20;
+  color: #f3f4f6;
+  border: 1px solid #4b5563;
+}
+
+/* Optional: Style the file upload button for better appearance */
+.dark .expenses-container input[type="file"]::file-selector-button {
+  background: #23272f;
+  color: #f3f4f6;
+  border: 1px solid #4b5563;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+}
+
+/* Make file input text and button lighter in dark mode */
+.dark .expenses-container input[type="file"],
+.dark .expenses-container input[type="file"]::file-selector-button {
+  color: #d1d5db;
+}
+
+/* Lighten the 'Sort by' label text in dark mode */
+.dark .expenses-container label[for="sort-by"] {
+  color: #9ca3af;
+}
+
 @media (max-width: 900px) {
   .expenses-container {
     max-width: 99vw;

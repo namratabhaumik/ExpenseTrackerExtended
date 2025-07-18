@@ -318,7 +318,7 @@ function Expenses({ onLogout, accessToken, setDashboardRefreshFlag }) {
   );
 
   return (
-    <div className="expenses-container">
+    <div className="card expenses-container">
       <ToastContainer
         position="top-right"
         autoClose={3500}
@@ -335,7 +335,7 @@ function Expenses({ onLogout, accessToken, setDashboardRefreshFlag }) {
       <h2>Expenses</h2>
       {/* Summary Card and Controls */}
       <div className="w-full flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-4 flex-1 min-w-[220px] border border-[#E5E7EB] flex flex-col items-center md:items-start">
+        <div className="stat-card flex-1 min-w-[220px] flex flex-col items-center md:items-start">
           <span className="text-[#9CA3AF] text-sm font-medium mb-1">
             Total Expenses
           </span>
@@ -470,8 +470,8 @@ function Expenses({ onLogout, accessToken, setDashboardRefreshFlag }) {
       {/* Render the expenses as a modern table */}
       {!loading && expenses.length > 0 ? (
         <div className="overflow-x-auto mt-4">
-          <table className="w-full border border-[#E5E7EB] rounded-lg overflow-hidden">
-            <thead className="bg-[#F9FAFB]">
+          <table className="dashboard-table w-full border border-[#E5E7EB] rounded-lg overflow-hidden">
+            <thead>
               <tr>
                 <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
                   Amount
@@ -491,15 +491,15 @@ function Expenses({ onLogout, accessToken, setDashboardRefreshFlag }) {
               {sortedExpenses.map((exp, idx) => (
                 <tr
                   key={exp.id}
-                  className={`border-b border-[#E5E7EB] hover:bg-[#E0F7F4] transition-colors duration-150 ${
-                    idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'
-                  }`}
+                  className={
+                    'border-b border-[#E5E7EB] hover:bg-[#E0F7F4] transition-colors duration-150'
+                  }
                 >
                   <td className="py-3 px-4 text-[#10B981] font-semibold">
                     ${Number(exp.amount).toFixed(2)}
                   </td>
-                  <td className="py-3 px-4 text-[#4B5563]">{exp.category}</td>
-                  <td className="py-3 px-4 text-[#4B5563]">
+                  <td className="py-3 px-4 text-[#9CA3AF]">{exp.category}</td>
+                  <td className="py-3 px-4 text-[#9CA3AF]">
                     {exp.description}
                   </td>
                   <td className="py-3 px-4 text-[#9CA3AF] text-sm">
