@@ -191,3 +191,20 @@
 .dashboard-grid > *:nth-child(3) {
   animation-delay: 0.3s;
 }
+
+.dashboard-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  animation: dashboard-spin 1.2s linear infinite;
+}
+
+@keyframes dashboard-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

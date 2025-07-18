@@ -160,17 +160,12 @@ button {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- More distinct active nav item underline --- */
+/* --- More distinct active nav item underline and background --- */
 .nav-link.active,
 .mobile-nav-link.active {
   color: #10b981;
-  font-weight: 600;
-  background: rgba(16, 185, 129, 0.1);
-}
-.nav-link.active span,
-.mobile-nav-link.active span {
-  height: 3px !important;
-  background: #10b981 !important;
-  border-radius: 2px;
-  bottom: -2px;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.18); /* More prominent emerald background */
+  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.1);
+  position: relative;
 }
