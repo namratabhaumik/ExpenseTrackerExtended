@@ -126,3 +126,9 @@ This project now uses a custom, production-ready Navbar component (`src/Navbar.j
 
 - Expenses page now always fetches the latest expenses from the backend after login and after adding a new expense. This ensures all past and new expenses are visible, even across devices or sessions.
 - The color palette is now fully emerald/teal; all blue accents have been removed for a consistent, modern look.
+
+## [Feature] Categories Page Visual Update (2024-06-09)
+
+- Categories page cards now use lighter backgrounds in light mode, matching Dashboard style.
+- Added `.card` and `.stat-card` classes in `src/styles/Dashboard.css` for consistent card visuals across pages (Dashboard, Categories, Profile, etc.).
+- Please use these classes for all info/summary/stat cards for visual consistency.

@@ -243,3 +243,62 @@
     transform: rotate(360deg);
   }
 }
+
+/*
+  Card and Stat Card Styles
+  Use .card for general info/summary cards and .stat-card for stat summary cards across all pages (Dashboard, Categories, Profile, etc.)
+  Ensures visual consistency in both light and dark mode.
+*/
+.card {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+}
+.dark .card {
+  background: #23272f;
+  border-color: #4b5563;
+}
+
+.stat-card {
+  background: #fdfdfd;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.5rem 1.5rem 3.5rem 1.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+.dark .stat-card {
+  background: #181a20;
+  border-color: #4b5563;
+}
+
+.dark .dashboard-table {
+  background-color: #23272f;
+  color: #f3f4f6;
+}
+
+.dark .dashboard-table th {
+  background-color: #181a20;
+  color: #f3f4f6;
+  border-bottom: 1px solid #4b5563;
+}
+
+.dark .dashboard-table td {
+  border-bottom: 1px solid #23272f;
+}
+
+.dark .dashboard-table tbody tr {
+  background-color: #23272f;
+}
+
+.dark .dashboard-table tbody tr:nth-child(even) {
+  background-color: #181a20;
+}
+
+.dark .dashboard-table tbody tr:hover {
+  background-color: #2d323c;
+}

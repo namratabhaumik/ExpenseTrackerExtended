@@ -196,8 +196,8 @@ function Dashboard({ accessToken, refreshFlag }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border border-[#E5E7EB] rounded-lg overflow-hidden">
-              <thead className="bg-[#F9FAFB]">
+            <table className="dashboard-table w-full border border-[#E5E7EB] rounded-lg overflow-hidden">
+              <thead>
                 <tr>
                   <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
                     Amount
@@ -217,17 +217,17 @@ function Dashboard({ accessToken, refreshFlag }) {
                 {recentExpenses.map((expense, idx) => (
                   <tr
                     key={expense.id}
-                    className={`border-b border-[#E5E7EB] hover:bg-[#E0F7F4] transition-colors duration-150 ${
-                      idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'
-                    }`}
+                    className={
+                      'border-b border-[#E5E7EB] hover:bg-[#E0F7F4] transition-colors duration-150'
+                    }
                   >
                     <td className="py-3 px-4 text-[#10B981] font-semibold">
                       ${Number(expense.amount).toFixed(2)}
                     </td>
-                    <td className="py-3 px-4 text-[#4B5563]">
+                    <td className="py-3 px-4 text-[#9CA3AF]">
                       {expense.category}
                     </td>
-                    <td className="py-3 px-4 text-[#4B5563]">
+                    <td className="py-3 px-4 text-[#9CA3AF]">
                       {expense.description}
                     </td>
                     <td className="py-3 px-4 text-[#9CA3AF] text-sm">
