@@ -155,8 +155,44 @@ function Dashboard({ accessToken, refreshFlag }) {
             <div className="text-[#9CA3AF] text-sm">Showing sample data</div>
           </div>
         ) : recentExpenses.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-[#9CA3AF] text-lg">No expenses found.</div>
+          <div className="text-center py-12 flex flex-col items-center justify-center gap-4">
+            {/* Spinner */}
+            <div
+              className="dashboard-spinner"
+              aria-label="No expenses illustration"
+              role="img"
+            >
+              <svg
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  stroke="#5eead4"
+                  strokeWidth="6"
+                  fill="#f9fafb"
+                />
+                <path
+                  d="M24 48c4-8 28-8 32 0"
+                  stroke="#10b981"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                <circle cx="32" cy="34" r="3" fill="#10b981" />
+                <circle cx="48" cy="34" r="3" fill="#10b981" />
+              </svg>
+            </div>
+            <div className="dashboard-empty text-[#9CA3AF] text-lg dark:text-[#6EE7B7]">
+              No expenses found.
+              <br />
+              Start tracking your spending!
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">

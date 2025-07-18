@@ -115,6 +115,8 @@ This project now uses a custom, production-ready Navbar component (`src/Navbar.j
 - A fallback Navbar is shown for unauthenticated/demo mode to ensure navigation always looks polished for testing.
 - All navigation uses flexbox for alignment and spacing.
 
+- The Dashboard's 'Recent Expenses' section now displays a modern spinner and a friendly illustration when there are no expenses, instead of just text. This provides a more engaging and visually appealing empty state for users.
+
 ## Bug Fixes & Improvements
 
 - Expenses page now always fetches the latest expenses from the backend after login and after adding a new expense. This ensures all past and new expenses are visible, even across devices or sessions.

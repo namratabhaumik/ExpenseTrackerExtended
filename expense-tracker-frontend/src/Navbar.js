@@ -105,9 +105,6 @@ export default function Navbar({
                 aria-label={`Navigate to ${link.label}`}
               >
                 {link.label}
-                {activePage === link.page && (
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2563EB] transform scale-x-100 transition-transform duration-200"></span>
-                )}
               </button>
             ))}
           </div>
@@ -126,9 +123,6 @@ export default function Navbar({
               aria-label={`Navigate to ${link.label}`}
             >
               {link.label}
-              {activePage === link.page && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2563EB] transform scale-x-100 transition-transform duration-200"></span>
-              )}
             </button>
           ))}
           <button
