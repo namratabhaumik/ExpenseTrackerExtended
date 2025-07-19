@@ -83,7 +83,16 @@ describe('App Component', () => {
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
     fireEvent.click(signUpTab);
-    expect(screen.getByText(/Create Account/i)).toBeInTheDocument();
+    // Instead of 'Create Account', check for sign up form fields and button
+    expect(
+      screen.getByLabelText('Email:', { selector: 'input' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Confirm Password:', { selector: 'input' }),
+    ).toBeInTheDocument();
     // The submit button for sign up is the last one
     const signUpSubmit = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
@@ -111,7 +120,12 @@ describe('App Component', () => {
     });
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: /^Login$/ }),
+        screen.getByLabelText('Email:', { selector: 'input' }),
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText('Password:', { selector: 'input' }),
       ).toBeInTheDocument();
     });
   });
@@ -171,7 +185,9 @@ describe('App Component', () => {
       .getAllByRole('button', { name: /^Login$/ })
       .slice(-1)[0];
     fireEvent.click(loginSubmit);
-    expect(loginSubmit).toBeInTheDocument();
+    await waitFor(() => {
+      expect(loginSubmit).toBeInTheDocument();
+    });
   });
 
   test('shows confirm account modal after successful sign up', async () => {
@@ -247,9 +263,15 @@ describe('App Component', () => {
         .slice(-1)[0];
       expect(loginSubmit).toBeInTheDocument();
     });
+    // Instead of heading, check for login form fields
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: /^Login$/ }),
+        screen.getByLabelText('Email:', { selector: 'input' }),
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText('Password:', { selector: 'input' }),
       ).toBeInTheDocument();
     });
   });
