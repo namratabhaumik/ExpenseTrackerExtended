@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Expenses from './Expenses';
 
@@ -10,40 +10,61 @@ jest.mock('axios', () => ({
 }));
 
 describe('Expenses Component', () => {
-  beforeAll(() => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('renders expense form and list', async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ expenses: [] }),
       }),
     );
-  });
-  afterAll(() => {
-    global.fetch.mockRestore();
+    render(<Expenses accessToken="dummy-token" />);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Amount')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Category')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Description')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Add Expense')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Your Expenses')).toBeInTheDocument();
+    });
   });
 
-  test('renders expense form and list', () => {
+  test('shows loading state', async () => {
+    global.fetch = jest.fn(
+      () => new Promise(() => {}), // never resolves, so loading stays true
+    );
     render(<Expenses accessToken="dummy-token" />);
-    expect(screen.getByPlaceholderText('Amount')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Category')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Description')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
-    expect(screen.getByText('Expenses')).toBeInTheDocument();
-  });
-
-  test('shows loading state', () => {
-    render(<Expenses accessToken="dummy-token" />);
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    });
   });
 
   test('shows error state', async () => {
-    // Simulate error by mocking fetchExpenses to set error
-    // You may need to mock fetch or adjust your component for testability
-    // For now, just check that the error message renders
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Failed to fetch expenses' }),
+      }),
+    );
     render(<Expenses accessToken="dummy-token" />);
-    // Simulate error state
-    // This is a placeholder; in a real test, you'd mock fetch to reject
-    // expect(screen.getByText(/An error occurred/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/Failed to fetch expenses/i).length,
+      ).toBeGreaterThan(0);
+    });
   });
 
   // Remove or comment out tests for success messages, field validation, test IDs, filter, and sort, as the UI does not show these
