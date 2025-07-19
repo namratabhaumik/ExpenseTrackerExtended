@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/Profile.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
@@ -20,6 +21,15 @@ function Profile({ accessToken, theme }) {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwFocused, setPwFocused] = useState(false);
   const [pwError, setPwError] = useState('');
+
+  // Show/hide password state
+  const [showPw, setShowPw] = useState({
+    current: false,
+    new1: false,
+    new2: false,
+  });
+  // Add aria-live region for feedback
+  const [ariaMessage, setAriaMessage] = useState('');
 
   // Password validation rules
   const passwordRules = [
@@ -201,12 +211,17 @@ function Profile({ accessToken, theme }) {
   }
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
-      <ToastContainer />
+    <div className="space-y-10 max-w-2xl mx-auto px-2 md:px-0">
+      <ToastContainer containerId="profile-toast" position="top-center" />
+      <div aria-live="polite" className="sr-only">
+        {ariaMessage}
+      </div>
       {/* Profile Info Card */}
-      <div className="card mb-6 p-6 bg-white dark:bg-[#23272F] shadow rounded-lg">
-        <h2 className="text-3xl font-bold mb-2 text-[#4B5563]">Profile</h2>
-        <p className="text-[#9CA3AF] mb-4">
+      <div className="profile-card mb-8 p-8 bg-white dark:bg-[#23272F] shadow-xl rounded-2xl flex flex-col gap-2">
+        <h2 className="text-4xl font-extrabold mb-2 text-emerald-600 dark:text-emerald-400">
+          Profile
+        </h2>
+        <p className="text-gray-400 mb-6 text-lg">
           View and edit your account settings here
         </p>
         {!editMode ? (
@@ -320,55 +335,73 @@ function Profile({ accessToken, theme }) {
       </div>
 
       {/* Password Change Card */}
-      <div className="card p-6 bg-white dark:bg-[#23272F] shadow rounded-lg">
-        <h3 className="text-xl font-semibold mb-2 text-[#4B5563]">
+      <div className="profile-card p-8 bg-white dark:bg-[#23272F] shadow-xl rounded-2xl flex flex-col gap-2">
+        <h3 className="text-2xl font-bold mb-4 text-emerald-600 dark:text-emerald-400">
           Change Password
         </h3>
-        <form className="space-y-4" onSubmit={handleChangePassword}>
-          <div>
+        <form className="space-y-6" onSubmit={handleChangePassword}>
+          {/* Current Password Field with show/hide icon */}
+          <div className="relative">
             <label
               htmlFor="pw-current"
-              className="block font-semibold mb-1 dark:text-[#F3F4F6]"
-              style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
+              className="block font-semibold mb-1 text-[#374151] dark:text-gray-200"
             >
               Current Password
             </label>
             <input
               id="pw-current"
-              type="password"
+              type={showPw.current ? 'text' : 'password'}
               name="current"
               value={pwForm.current}
               onChange={handlePwChange}
-              className="profile-input"
+              className="profile-input pr-10"
               placeholder="Enter your current password"
               autoComplete="current-password"
               required
             />
+            <button
+              type="button"
+              aria-label={showPw.current ? 'Hide password' : 'Show password'}
+              className="show-hide-btn"
+              onClick={() => setShowPw((s) => ({ ...s, current: !s.current }))}
+              tabIndex={0}
+            >
+              {showPw.current ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
-          <div>
+          {/* New Password Field with show/hide icon and helper text */}
+          <div className="relative">
             <label
               htmlFor="pw-new1"
-              className="block font-semibold mb-1 dark:text-[#F3F4F6]"
-              style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
+              className="block font-semibold mb-1 text-[#374151] dark:text-gray-200"
             >
               New Password
             </label>
             <input
               id="pw-new1"
-              type="password"
+              type={showPw.new1 ? 'text' : 'password'}
               name="new1"
               value={pwForm.new1}
               onChange={handlePwChange}
               onFocus={() => setPwFocused(true)}
               onBlur={() => setPwFocused(false)}
-              className="profile-input"
+              className="profile-input pr-10"
               placeholder="Enter your new password"
               autoComplete="new-password"
               required
+              aria-describedby="pw-reqs"
             />
-            {/* Inline password requirements */}
+            <button
+              type="button"
+              aria-label={showPw.new1 ? 'Hide password' : 'Show password'}
+              className="show-hide-btn"
+              onClick={() => setShowPw((s) => ({ ...s, new1: !s.new1 }))}
+              tabIndex={0}
+            >
+              {showPw.new1 ? <FaEyeSlash /> : <FaEye />}
+            </button>
             {(pwFocused || pwForm.new1) && (
-              <ul className="password-requirements-list mt-2">
+              <ul id="pw-reqs" className="password-requirements-list mt-2">
                 {passwordRules.map((rule) => {
                   const passed = rule.test(pwForm.new1);
                   return (
@@ -376,8 +409,8 @@ function Profile({ accessToken, theme }) {
                       key={rule.message}
                       className={
                         passed
-                          ? 'requirement-met text-green-600 flex items-center'
-                          : 'requirement-unmet text-red-500 flex items-center'
+                          ? 'requirement-met flex items-center'
+                          : 'requirement-unmet flex items-center'
                       }
                     >
                       <span className="mr-1">{passed ? '✓' : '✗'}</span>
@@ -387,7 +420,6 @@ function Profile({ accessToken, theme }) {
                 })}
               </ul>
             )}
-            {/* Inline error if new password matches current password */}
             {pwForm.current &&
               pwForm.new1 &&
               pwForm.current === pwForm.new1 && (
@@ -396,26 +428,34 @@ function Profile({ accessToken, theme }) {
               </div>
             )}
           </div>
-          <div>
+          {/* Confirm New Password Field with show/hide icon */}
+          <div className="relative">
             <label
               htmlFor="pw-new2"
-              className="block font-semibold mb-1 dark:text-[#F3F4F6]"
-              style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
+              className="block font-semibold mb-1 text-[#374151] dark:text-gray-200"
             >
               Confirm New Password
             </label>
             <input
               id="pw-new2"
-              type="password"
+              type={showPw.new2 ? 'text' : 'password'}
               name="new2"
               value={pwForm.new2}
               onChange={handlePwChange}
-              className="profile-input"
+              className="profile-input pr-10"
               placeholder="Confirm your new password"
               autoComplete="new-password"
               required
             />
-            {/* Inline match error */}
+            <button
+              type="button"
+              aria-label={showPw.new2 ? 'Hide password' : 'Show password'}
+              className="show-hide-btn"
+              onClick={() => setShowPw((s) => ({ ...s, new2: !s.new2 }))}
+              tabIndex={0}
+            >
+              {showPw.new2 ? <FaEyeSlash /> : <FaEye />}
+            </button>
             {pwForm.new2 && pwForm.new1 !== pwForm.new2 && (
               <div className="text-red-500 text-sm mt-1">
                 The passwords do not match.
@@ -425,13 +465,13 @@ function Profile({ accessToken, theme }) {
           {pwError && (
             <div className="text-red-500 text-sm mt-1">{pwError}</div>
           )}
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-col md:flex-row gap-2 mt-2">
             <button
               type="submit"
-              className="px-4 py-2 bg-[#10B981] text-white rounded hover:bg-[#059669] focus:outline-none focus:ring-2 focus:ring-[#10B981]"
+              className="w-full md:w-auto px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold flex items-center justify-center gap-2 transition"
               disabled={pwLoading}
             >
-              {pwLoading ? 'Changing...' : 'Change Password'}
+              {pwLoading ? <span className="loader"></span> : 'Change Password'}
             </button>
           </div>
         </form>
