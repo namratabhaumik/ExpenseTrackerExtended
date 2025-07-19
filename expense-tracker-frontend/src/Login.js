@@ -505,25 +505,24 @@ function AuthForm({ onLoginSuccess, theme }) {
       >
         <div className="auth-tabs">
           <button
-            className={activeTab === 'login' ? 'auth-tab active' : 'auth-tab'}
+            className={`auth-tab${activeTab === 'login' ? ' active' : ''}`}
             onClick={() => setActiveTab('login')}
-            type="button"
-            tabIndex={0}
+            aria-selected={activeTab === 'login'}
+            tabIndex={activeTab === 'login' ? 0 : -1}
           >
             Login
           </button>
           <button
-            className={activeTab === 'signup' ? 'auth-tab active' : 'auth-tab'}
+            className={`auth-tab${activeTab === 'signup' ? ' active' : ''}`}
             onClick={() => setActiveTab('signup')}
-            type="button"
-            tabIndex={0}
+            aria-selected={activeTab === 'signup'}
+            tabIndex={activeTab === 'signup' ? 0 : -1}
           >
             Sign Up
           </button>
         </div>
         {activeTab === 'login' ? (
           <>
-            <h2 className="text-center mb-6 text-2xl font-bold">Login</h2>
             <form
               className="login-form"
               onSubmit={handleLogin}
@@ -615,9 +614,6 @@ function AuthForm({ onLoginSuccess, theme }) {
           </>
         ) : (
           <>
-            <h2 className="text-center mb-6 text-2xl font-bold">
-              Create Account
-            </h2>
             <form
               className="login-form"
               onSubmit={handleSignup}

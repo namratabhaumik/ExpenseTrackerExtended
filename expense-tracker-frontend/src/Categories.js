@@ -91,7 +91,7 @@ const Categories = ({ accessToken, onNavigate }) => {
     return (
       <div className="space-y-6">
         <div className="card mb-6">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: '#4B5563' }}>
+          <h2 className="text-3xl font-bold mb-4 text-emerald-600 dark:text-emerald-400">
             Categories
           </h2>
           <p className="text-[#9CA3AF] mb-6">
@@ -109,7 +109,7 @@ const Categories = ({ accessToken, onNavigate }) => {
     return (
       <div className="space-y-6">
         <div className="card mb-6">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: '#4B5563' }}>
+          <h2 className="text-3xl font-bold mb-4 text-emerald-600 dark:text-emerald-400">
             Categories
           </h2>
           <p className="text-[#9CA3AF] mb-6">
@@ -127,7 +127,7 @@ const Categories = ({ accessToken, onNavigate }) => {
     <div className="space-y-6">
       {/* Main Categories Card */}
       <div className="card mb-6">
-        <h2 className="text-3xl font-bold mb-4" style={{ color: '#4B5563' }}>
+        <h2 className="text-3xl font-bold mb-4 text-emerald-600 dark:text-emerald-400">
           Categories
         </h2>
         <p className="text-[#9CA3AF] mb-6">
@@ -155,10 +155,7 @@ const Categories = ({ accessToken, onNavigate }) => {
                   }
                 }}
               >
-                <h3
-                  className="text-xl font-semibold mb-2"
-                  style={{ color: '#4B5563' }}
-                >
+                <h3 className="text-xl font-semibold mb-2 text-emerald-600 dark:text-emerald-400">
                   {category.name}
                 </h3>
                 <div

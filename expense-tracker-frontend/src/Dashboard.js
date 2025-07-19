@@ -104,7 +104,7 @@ function Dashboard({ accessToken, refreshFlag }) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {/* Summary Card */}
       <div className="dashboard-card bg-[#f3f4f6] dark:bg-[#23272F] rounded-xl shadow-md p-8 border border-[#E5E7EB] dark:border-[#4B5563]">
-        <h2 className="text-3xl font-bold" style={{ color: '#4B5563' }}>
+        <h2 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
           Dashboard Summary
         </h2>
         <div className="dashboard-grid grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -140,7 +140,7 @@ function Dashboard({ accessToken, refreshFlag }) {
 
       {/* Recent Expenses Table */}
       <div className="mt-8">
-        <h3 className="text-xl font-semibold text-[#10B981] mb-4">
+        <h3 className="text-xl font-semibold text-emerald-600 dark:text-emerald-400 mb-4">
           Recent Expenses
         </h3>
         {loading ? (
