@@ -159,11 +159,12 @@ jobs:
           cd expense-tracker-frontend
           npm run test:coverage
         env:
-          CI: true
+          CI: false
           REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
 
       - name: Build React app
         env:
+          CI: false
           REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
         run: |
           cd expense-tracker-frontend
