@@ -92,7 +92,6 @@ function App() {
           {activePage === 'expenses' && (
             <div className="content-wrapper">
               <Expenses
-                onLogout={handleLogout}
                 accessToken={accessToken}
                 setDashboardRefreshFlag={setDashboardRefreshFlag}
               />
@@ -105,7 +104,7 @@ function App() {
           )}
           {activePage === 'profile' && (
             <div className="content-wrapper">
-              <Profile accessToken={accessToken} />
+              <Profile accessToken={accessToken} theme={theme} />
             </div>
           )}
         </main>

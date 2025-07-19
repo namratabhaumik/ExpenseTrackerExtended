@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import './styles/Profile.css';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
-function Profile({ accessToken }) {
+function Profile({ accessToken, theme }) {
   // State for profile info
   const [profile, setProfile] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(true);
@@ -211,20 +212,37 @@ function Profile({ accessToken }) {
         {!editMode ? (
           <div className="space-y-2">
             <div>
-              <span className="font-semibold text-[#374151] dark:text-[#F3F4F6]">
+              <span
+                className="font-semibold dark:text-[#F3F4F6]"
+                style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
+              >
                 Name:
               </span>{' '}
-              <span className="text-[#4B5563] dark:text-[#D1D5DB]">
+              <span
+                className="dark:text-[#D1D5DB]"
+                style={{ color: theme === 'dark' ? '#D1D5DB' : '#1F2937' }}
+              >
                 {profile.name || (
-                  <span className="italic text-[#9CA3AF]">(not set)</span>
+                  <span
+                    className="italic dark:text-[#9CA3AF]"
+                    style={{ color: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
+                  >
+                    (not set)
+                  </span>
                 )}
               </span>
             </div>
             <div>
-              <span className="font-semibold text-[#374151] dark:text-[#F3F4F6]">
+              <span
+                className="font-semibold dark:text-[#F3F4F6]"
+                style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
+              >
                 Email:
               </span>{' '}
-              <span className="text-[#4B5563] dark:text-[#D1D5DB]">
+              <span
+                className="dark:text-[#D1D5DB]"
+                style={{ color: theme === 'dark' ? '#D1D5DB' : '#1F2937' }}
+              >
                 {profile.email}
               </span>
             </div>
@@ -253,7 +271,7 @@ function Profile({ accessToken }) {
                 name="name"
                 value={editProfile.name}
                 onChange={handleEditChange}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#10B981] dark:bg-[#23272F] dark:text-[#F3F4F6]"
+                className="profile-input"
                 placeholder="Your name"
                 autoComplete="name"
               />
@@ -271,7 +289,7 @@ function Profile({ accessToken }) {
                 name="email"
                 value={editProfile.email}
                 onChange={handleEditChange}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#10B981] dark:bg-[#23272F] dark:text-[#F3F4F6]"
+                className="profile-input"
                 placeholder="your@email.com"
                 autoComplete="email"
                 required
@@ -310,7 +328,8 @@ function Profile({ accessToken }) {
           <div>
             <label
               htmlFor="pw-current"
-              className="block font-semibold mb-1 text-[#374151] dark:text-[#F3F4F6]"
+              className="block font-semibold mb-1 dark:text-[#F3F4F6]"
+              style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
             >
               Current Password
             </label>
@@ -320,7 +339,8 @@ function Profile({ accessToken }) {
               name="current"
               value={pwForm.current}
               onChange={handlePwChange}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#10B981] dark:bg-[#23272F] dark:text-[#F3F4F6]"
+              className="profile-input"
+              placeholder="Enter your current password"
               autoComplete="current-password"
               required
             />
@@ -328,7 +348,8 @@ function Profile({ accessToken }) {
           <div>
             <label
               htmlFor="pw-new1"
-              className="block font-semibold mb-1 text-[#374151] dark:text-[#F3F4F6]"
+              className="block font-semibold mb-1 dark:text-[#F3F4F6]"
+              style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
             >
               New Password
             </label>
@@ -340,7 +361,8 @@ function Profile({ accessToken }) {
               onChange={handlePwChange}
               onFocus={() => setPwFocused(true)}
               onBlur={() => setPwFocused(false)}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#10B981] dark:bg-[#23272F] dark:text-[#F3F4F6]"
+              className="profile-input"
+              placeholder="Enter your new password"
               autoComplete="new-password"
               required
             />
@@ -377,7 +399,8 @@ function Profile({ accessToken }) {
           <div>
             <label
               htmlFor="pw-new2"
-              className="block font-semibold mb-1 text-[#374151] dark:text-[#F3F4F6]"
+              className="block font-semibold mb-1 dark:text-[#F3F4F6]"
+              style={{ color: theme === 'dark' ? '#F3F4F6' : '#000000' }}
             >
               Confirm New Password
             </label>
@@ -387,7 +410,8 @@ function Profile({ accessToken }) {
               name="new2"
               value={pwForm.new2}
               onChange={handlePwChange}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#10B981] dark:bg-[#23272F] dark:text-[#F3F4F6]"
+              className="profile-input"
+              placeholder="Confirm your new password"
               autoComplete="new-password"
               required
             />
@@ -418,6 +442,7 @@ function Profile({ accessToken }) {
 
 Profile.propTypes = {
   accessToken: PropTypes.string.isRequired,
+  theme: PropTypes.string.isRequired,
 };
 
 export default Profile;
