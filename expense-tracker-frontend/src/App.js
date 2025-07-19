@@ -99,7 +99,10 @@ function App() {
           )}
           {activePage === 'categories' && (
             <div className="content-wrapper">
-              <Categories />
+              <Categories
+                accessToken={accessToken}
+                onNavigate={setActivePage}
+              />
             </div>
           )}
           {activePage === 'profile' && (
