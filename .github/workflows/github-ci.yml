@@ -190,6 +190,7 @@ jobs:
 
       - name: Build React app
         env:
+          CI: false
           REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
         run: |
           cd expense-tracker-frontend
