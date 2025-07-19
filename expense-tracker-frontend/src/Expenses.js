@@ -15,7 +15,6 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
     description: '',
   });
   const [addError, setAddError] = useState('');
-  const [addSuccess, setAddSuccess] = useState('');
   // Receipt upload state
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptFilename, setReceiptFilename] = useState('');
@@ -28,53 +27,11 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
   const [loginLoading, setLoginLoading] = useState(false);
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [refreshFlag, setRefreshFlag] = useState(0);
+  // In Expenses.js, add support for category filtering via URL params
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   // Refs to prevent infinite loops
   const isMountedRef = useRef(true);
-  const abortControllerRef = useRef(null);
-
-  // Helper: fetch expenses from backend
-  const fetchExpenses = async () => {
-    if (!isMountedRef.current) return;
-    setLoading(true);
-    setError('');
-    try {
-      const resp = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: 'include',
-        },
-      );
-      if (!isMountedRef.current) return;
-      if (!resp.ok) {
-        const err = await resp.json();
-        setError(err.error || 'Failed to fetch expenses');
-        setExpenses([]);
-      } else {
-        const data = await resp.json();
-        // Normalize: always use 'id'
-        const normalized = (data.expenses || []).map((exp) => ({
-          id: exp.id || exp.expense_id,
-          amount: exp.amount,
-          category: exp.category,
-          description: exp.description,
-          timestamp: exp.timestamp,
-        }));
-        setExpenses(normalized);
-      }
-    } catch (e) {
-      if (e.name === 'AbortError') return;
-      if (isMountedRef.current) {
-        setError('An error occurred while fetching expenses.');
-        setExpenses([]);
-      }
-    } finally {
-      if (isMountedRef.current) setLoading(false);
-    }
-  };
 
   // Fetch expenses on mount and when accessToken changes
   useEffect(() => {
@@ -114,19 +71,55 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
+      // Clear category filter when component unmounts (user navigates away)
+      setCategoryFilter('');
+      setSelectedCategory('');
     };
   }, []);
+
+  // In Expenses.js, add support for category filtering via URL params
+  useEffect(() => {
+    // Check URL params for category filter
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryFilter = urlParams.get('category');
+
+    if (categoryFilter) {
+      // Only set filter if coming from Categories navigation (URL has category param)
+      setSelectedCategory(categoryFilter);
+      setCategoryFilter(categoryFilter); // Also set the manual filter to show the selected category
+    } else {
+      // Clear any existing filters when no URL parameter is present
+      setSelectedCategory('');
+      setCategoryFilter('');
+    }
+  }, [window.location.search]); // Re-run when URL changes
 
   // Handle form input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Handle category filter change
+  const handleCategoryFilterChange = (e) => {
+    const value = e.target.value;
+    setCategoryFilter(value);
+    setSelectedCategory(value); // Keep them in sync
+  };
+
+  // Clear category filter
+  const clearCategoryFilter = () => {
+    setCategoryFilter('');
+    setSelectedCategory('');
+    // Clear URL parameter
+    const url = new URL(window.location);
+    url.searchParams.delete('category');
+    window.history.replaceState({}, '', url);
+  };
+
   // Handle add expense
   const handleAddExpense = async (e) => {
     e.preventDefault();
     setAddError('');
-    setAddSuccess('');
     setLoginLoading(true);
     toast.dismiss(); // Clear previous toasts
     try {
@@ -156,7 +149,6 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
           progressStyle: { background: '#ef4444' },
         });
       } else {
-        setAddSuccess('Expense added successfully!');
         setForm({ amount: '', category: '', description: '' });
         setRefreshFlag((f) => f + 1); // <-- trigger refetch for Expenses
         if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1); // <-- trigger refetch for Dashboard
@@ -286,11 +278,18 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
   };
 
   // --- Derived: filtered and sorted expenses ---
-  const filteredExpenses = expenses.filter((exp) =>
-    categoryFilter.trim() === ''
-      ? true
-      : exp.category.toLowerCase().includes(categoryFilter.trim().toLowerCase()),
-  );
+  const filteredExpenses = expenses.filter((exp) => {
+    // Use either the manual filter or the selected category from URL
+    const activeFilter = selectedCategory || categoryFilter;
+
+    if (activeFilter.trim() === '') {
+      return true;
+    }
+
+    return exp.category
+      .toLowerCase()
+      .includes(activeFilter.trim().toLowerCase());
+  });
   const sortedExpenses = [...filteredExpenses].sort((a, b) => {
     if (sortBy === 'date_desc') {
       return new Date(b.timestamp) - new Date(a.timestamp);
@@ -366,9 +365,17 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
             placeholder="Filter by category"
             className="border border-[#9CA3AF] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB] text-[#4B5563] bg-white"
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={handleCategoryFilterChange}
             aria-label="Filter by category"
           />
+          {categoryFilter && (
+            <button
+              onClick={clearCategoryFilter}
+              className="text-[#4B5563] hover:text-[#2563EB] text-sm font-medium"
+            >
+              Clear Filter
+            </button>
+          )}
         </div>
       </div>
       <h3>Add Expense</h3>
@@ -458,7 +465,14 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
           {error}
         </div>
       )}
-      <h3>Your Expenses</h3>
+      <h3>
+        Your Expenses
+        {categoryFilter && (
+          <span className="text-sm font-normal text-[#9CA3AF] ml-2">
+            (Filtered by: {categoryFilter})
+          </span>
+        )}
+      </h3>
       {error && (
         <div className="expenses-error" style={{ marginBottom: 16 }}>
           {error}
