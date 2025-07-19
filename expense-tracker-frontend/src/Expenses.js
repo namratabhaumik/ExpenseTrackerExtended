@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ClipLoader } from 'react-spinners';
 
-function Expenses({ onLogout, accessToken, setDashboardRefreshFlag }) {
+function Expenses({ accessToken, setDashboardRefreshFlag }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -371,9 +371,6 @@ function Expenses({ onLogout, accessToken, setDashboardRefreshFlag }) {
           />
         </div>
       </div>
-      <button className="expenses-logout-btn" onClick={onLogout}>
-        Logout
-      </button>
       <h3>Add Expense</h3>
       <form
         className="expenses-form"
@@ -520,7 +517,6 @@ function Expenses({ onLogout, accessToken, setDashboardRefreshFlag }) {
 }
 
 Expenses.propTypes = {
-  onLogout: PropTypes.func.isRequired,
   accessToken: PropTypes.string.isRequired,
   setDashboardRefreshFlag: PropTypes.func,
 };

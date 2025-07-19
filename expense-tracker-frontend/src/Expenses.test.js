@@ -23,7 +23,7 @@ describe('Expenses Component', () => {
   });
 
   test('renders expense form and list', () => {
-    render(<Expenses onLogout={() => {}} accessToken="dummy-token" />);
+    render(<Expenses accessToken="dummy-token" />);
     expect(screen.getByPlaceholderText('Amount')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Category')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Description')).toBeInTheDocument();
@@ -32,7 +32,7 @@ describe('Expenses Component', () => {
   });
 
   test('shows loading state', () => {
-    render(<Expenses onLogout={() => {}} accessToken="dummy-token" />);
+    render(<Expenses accessToken="dummy-token" />);
     expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
   });
 
@@ -40,7 +40,7 @@ describe('Expenses Component', () => {
     // Simulate error by mocking fetchExpenses to set error
     // You may need to mock fetch or adjust your component for testability
     // For now, just check that the error message renders
-    render(<Expenses onLogout={() => {}} accessToken="dummy-token" />);
+    render(<Expenses accessToken="dummy-token" />);
     // Simulate error state
     // This is a placeholder; in a real test, you'd mock fetch to reject
     // expect(screen.getByText(/An error occurred/i)).toBeInTheDocument();
