@@ -2,15 +2,11 @@ name: Fullstack CI/CD
 
 on:
   push:
-    branches-ignore:
-      - feature/ui-fix
     paths:
       - "expense-tracker-backend/**"
       - "expense-tracker-frontend/**"
       - ".github/workflows/**"
   pull_request:
-    branches-ignore:
-      - feature/ui-fix
     paths:
       - "expense-tracker-backend/**"
       - "expense-tracker-frontend/**"
