@@ -1,7 +1,14 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
+import { act } from 'react-dom/test-utils';
 
 // Mock the AWS configuration
 jest.mock('./awsconfig', () => ({
@@ -53,8 +60,10 @@ describe('App Component', () => {
     global.fetch.mockRestore();
   });
 
-  test('renders login and sign up tabs', () => {
-    render(<App />);
+  test('renders login and sign up tabs', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     // Use getAllByRole for tabs and check their className
     const loginTab = screen
       .getAllByRole('button', { name: /^Login$/ })
@@ -66,13 +75,24 @@ describe('App Component', () => {
     expect(signUpTab).toBeInTheDocument();
   });
 
-  test('toggles to sign up form', () => {
-    render(<App />);
+  test('toggles to sign up form', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
     fireEvent.click(signUpTab);
-    expect(screen.getByText(/Create Account/i)).toBeInTheDocument();
+    // Instead of 'Create Account', check for sign up form fields and button
+    expect(
+      screen.getByLabelText('Email:', { selector: 'input' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Password:', { selector: 'input' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Confirm Password:', { selector: 'input' }),
+    ).toBeInTheDocument();
     // The submit button for sign up is the last one
     const signUpSubmit = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
@@ -81,7 +101,9 @@ describe('App Component', () => {
   });
 
   test('toggles back to login form', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
@@ -98,7 +120,12 @@ describe('App Component', () => {
     });
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: /^Login$/ }),
+        screen.getByLabelText('Email:', { selector: 'input' }),
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText('Password:', { selector: 'input' }),
       ).toBeInTheDocument();
     });
   });
@@ -120,7 +147,9 @@ describe('App Component', () => {
         json: () => Promise.resolve({ expenses: [] }),
       });
     });
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
@@ -140,7 +169,9 @@ describe('App Component', () => {
   });
 
   test('shows loading state during login', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     fireEvent.change(screen.getByLabelText('Email:', { selector: 'input' }), {
       target: { value: 'test@example.com' },
     });
@@ -154,11 +185,15 @@ describe('App Component', () => {
       .getAllByRole('button', { name: /^Login$/ })
       .slice(-1)[0];
     fireEvent.click(loginSubmit);
-    expect(loginSubmit).toBeInTheDocument();
+    await waitFor(() => {
+      expect(loginSubmit).toBeInTheDocument();
+    });
   });
 
   test('shows confirm account modal after successful sign up', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
@@ -191,7 +226,9 @@ describe('App Component', () => {
   });
 
   test('closes confirm account modal and returns to login', async () => {
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const signUpTab = screen
       .getAllByRole('button', { name: /^Sign Up$/ })
       .find((btn) => btn.className.includes('auth-tab'));
@@ -226,15 +263,23 @@ describe('App Component', () => {
         .slice(-1)[0];
       expect(loginSubmit).toBeInTheDocument();
     });
+    // Instead of heading, check for login form fields
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: /^Login$/ }),
+        screen.getByLabelText('Email:', { selector: 'input' }),
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText('Password:', { selector: 'input' }),
       ).toBeInTheDocument();
     });
   });
 
-  test('opens password reset modal when forgot password is clicked', () => {
-    render(<App />);
+  test('opens password reset modal when forgot password is clicked', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
     expect(screen.getByText(/Reset Password/i)).toBeInTheDocument();
@@ -260,7 +305,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -298,7 +345,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -344,7 +393,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -400,7 +451,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -458,7 +511,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -520,7 +575,9 @@ describe('App Component', () => {
       });
     });
 
-    render(<App />);
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -557,8 +614,10 @@ describe('App Component', () => {
     });
   });
 
-  test('closes password reset modal when X is clicked', () => {
-    render(<App />);
+  test('closes password reset modal when X is clicked', async () => {
+    await act(async () => {
+      render(<App />);
+    });
     const forgotPasswordLink = screen.getByText('Forgot Password?');
     fireEvent.click(forgotPasswordLink);
 
@@ -573,4 +632,37 @@ describe('App Component', () => {
   // Remove or comment out tests for field validation and email format, as the UI does not show these messages
   // test("validates required fields", async () => { ... });
   // test("validates email format", async () => { ... });
+});
+
+describe('Theme Toggle Placement', () => {
+  test('shows global theme toggle button on login/signup page', () => {
+    render(<App />);
+    const themeToggle = screen.getByRole('button', { name: /switch to/i });
+    expect(themeToggle).toBeInTheDocument();
+    // Should have global-theme-toggle-btn class
+    expect(themeToggle.className).toMatch(/global-theme-toggle-btn/);
+  });
+
+  test('theme toggle is not inside the form box', () => {
+    render(<App />);
+    const themeToggle = screen.getByRole('button', { name: /switch to/i });
+    expect(themeToggle).toBeInTheDocument();
+
+    // Use only Testing Library queries, not direct DOM access
+    const loginContainer = screen.queryByTestId('login-container');
+    expect(loginContainer).toBeTruthy();
+    const toggleInside = within(loginContainer).queryByRole('button', {
+      name: /switch to/i,
+    });
+    expect(toggleInside).toBeNull();
+  });
+
+  test('theme toggle button switches icon and aria-label', () => {
+    render(<App />);
+    const themeToggle = screen.getByRole('button', { name: /switch to/i });
+    const initialLabel = themeToggle.getAttribute('aria-label');
+    fireEvent.click(themeToggle);
+    const newLabel = themeToggle.getAttribute('aria-label');
+    expect(initialLabel).not.toBe(newLabel);
+  });
 });

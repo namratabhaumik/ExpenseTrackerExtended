@@ -10,6 +10,8 @@ import os
 from .middleware import require_auth
 from botocore.exceptions import ClientError
 
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
+
 # Get logger for this module
 logger = logging.getLogger(__name__)
 
@@ -820,6 +822,90 @@ def upload_receipt(request):
         'error': 'Method not allowed',
         'status': 'error'
     }, status=405)
+
+
+@require_auth
+@csrf_exempt
+def profile_view(request):
+    if request.method == 'GET':
+        try:
+            cognito_client = get_cognito_client()
+            access_token = request.headers.get(
+                'Authorization', '').split(' ')[1]
+            response = cognito_client.get_user(AccessToken=access_token)
+            user_attributes = {attr['Name']: attr['Value']
+                               for attr in response['UserAttributes']}
+            profile = {
+                'user_id': response['Username'],
+                'email': user_attributes.get('email'),
+                'name': user_attributes.get('name'),
+            }
+            return JsonResponse({'profile': profile, 'status': 'success'})
+        except ClientError as e:
+            logger.error(f"Cognito error in get_profile_view: {str(e)}")
+            return JsonResponse({'error': 'Failed to fetch profile', 'status': 'error'}, status=500)
+        except Exception as e:
+            logger.error(f"Unexpected error in get_profile_view: {str(e)}")
+            return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
+    elif request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            name = data.get('name')
+            if not email and not name:
+                return JsonResponse({'error': 'No fields to update', 'status': 'error'}, status=400)
+            cognito_client = get_cognito_client()
+            access_token = request.headers.get(
+                'Authorization', '').split(' ')[1]
+            user_attributes = []
+            if email:
+                user_attributes.append({'Name': 'email', 'Value': email})
+            if name:
+                user_attributes.append({'Name': 'name', 'Value': name})
+            cognito_client.update_user_attributes(
+                AccessToken=access_token,
+                UserAttributes=user_attributes
+            )
+            return JsonResponse({'message': 'Profile updated successfully', 'status': 'success'})
+        except ClientError as e:
+            logger.error(f"Cognito error in update_profile_view: {str(e)}")
+            return JsonResponse({'error': 'Failed to update profile', 'status': 'error'}, status=500)
+        except Exception as e:
+            logger.error(f"Unexpected error in update_profile_view: {str(e)}")
+            return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
+    else:
+        return JsonResponse({'error': 'Method not allowed', 'status': 'error'}, status=405)
+
+
+@require_auth
+@require_POST
+def change_password_view(request):
+    """Change the user's password in Cognito (requires current and new password)."""
+    try:
+        data = json.loads(request.body)
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        if not current_password or not new_password:
+            return JsonResponse({'error': 'Missing required fields: current_password and new_password', 'status': 'error'}, status=400)
+        cognito_client = get_cognito_client()
+        access_token = request.headers.get('Authorization', '').split(' ')[1]
+        cognito_client.change_password(
+            PreviousPassword=current_password,
+            ProposedPassword=new_password,
+            AccessToken=access_token
+        )
+        return JsonResponse({'message': 'Password changed successfully', 'status': 'success'})
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'NotAuthorizedException':
+            return JsonResponse({'error': 'Current password is incorrect', 'status': 'error'}, status=401)
+        elif error_code == 'InvalidPasswordException':
+            return JsonResponse({'error': 'New password does not meet requirements', 'status': 'error'}, status=400)
+        logger.error(f"Cognito error in change_password_view: {str(e)}")
+        return JsonResponse({'error': 'Failed to change password', 'status': 'error'}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error in change_password_view: {str(e)}")
+        return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
 
 
 def healthz(request):
