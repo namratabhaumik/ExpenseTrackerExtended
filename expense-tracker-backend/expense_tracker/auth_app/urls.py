@@ -7,6 +7,8 @@ from .views import (
     forgot_password_view,
     confirm_forgot_password_view,
     verify_reset_code_view,
+    profile_view,
+    change_password_view,
 )
 
 urlpatterns = [
@@ -17,6 +19,8 @@ urlpatterns = [
     path('confirm-forgot-password/', confirm_forgot_password_view,
          name='confirm_forgot_password'),
     path('verify-reset-code/', verify_reset_code_view, name='verify_reset_code'),
+    path('profile/', profile_view, name='profile'),
+    path('profile/change-password/', change_password_view, name='change_password'),
     path('expenses/', views.add_expense, name='add_expense'),
     path('expenses/list/', views.get_expenses, name='get_expenses'),
     path('receipts/upload/', views.upload_receipt, name='upload_receipt'),

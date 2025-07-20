@@ -43,14 +43,14 @@
 }
 
 .login-form input:focus {
-  border: 1.5px solid #2563eb;
+  border: 1.5px solid #14b8a6;
   outline: none;
 }
 
 .login-form button {
   width: 100%;
   padding: 0.7rem 0;
-  background: #2563eb;
+  background: #10b981;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -61,7 +61,7 @@
 }
 
 .login-form button:hover {
-  background: #4b5563;
+  background: #14b8a6;
 }
 
 .login-error {
@@ -94,8 +94,8 @@
 }
 .auth-tab.active {
   background: #fff;
-  color: #2563eb;
-  border-bottom: 2px solid #2563eb;
+  color: #10b981;
+  border-bottom: 2px solid #10b981;
 }
 .password-eye-icon {
   position: absolute;
@@ -122,14 +122,14 @@
 .show-password-btn {
   background: none;
   border: none;
-  color: #2563eb;
+  color: #14b8a6;
   font-size: 0.95rem;
   cursor: pointer;
   padding: 0 0.3rem;
   transition: color 0.2s;
 }
 .show-password-btn:hover {
-  color: #4b5563;
+  color: #10b981;
 }
 .input-error {
   color: #ef4444;
@@ -143,7 +143,7 @@
   font-size: 1rem;
 }
 .auth-link {
-  color: #2563eb;
+  color: #10b981;
   cursor: pointer;
   text-decoration: underline;
   margin-right: 1rem;
@@ -220,13 +220,13 @@
   transition: border 0.2s;
 }
 .confirm-form input:focus {
-  border: 1.5px solid #2563eb;
+  border: 1.5px solid #14b8a6;
   outline: none;
 }
 .confirm-form button {
   width: 100%;
   padding: 0.7rem 0;
-  background: #2563eb;
+  background: #10b981;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -236,7 +236,7 @@
   transition: background 0.2s;
 }
 .confirm-form button:hover {
-  background: #4b5563;
+  background: #14b8a6;
 }
 .confirm-form label {
   display: block;
@@ -351,4 +351,122 @@
   width: 1.2em;
   display: inline-block;
   text-align: center;
+}
+/* Remove theme-toggle-container and theme-toggle-btn styles */
+/* Optionally add a .global-theme-toggle-btn for global button styling */
+.global-theme-toggle-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+  background: rgba(249, 250, 251, 0.95);
+  color: #4b5563;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 8px rgba(75, 85, 99, 0.08);
+  transition: all 0.2s;
+}
+.global-theme-toggle-btn:hover,
+.global-theme-toggle-btn:focus {
+  background: #f3f4f6;
+  color: #2563eb;
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Global dark mode support */
+body.dark {
+  background: #181a20 !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark .login-container {
+  background: #181a20 !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark .login-form input,
+body.dark .confirm-form input {
+  background: #23272f !important;
+  color: #f3f4f6 !important;
+  border: 1px solid #4b5563 !important;
+}
+
+body.dark .login-form input:focus,
+body.dark .confirm-form input:focus {
+  border: 1.5px solid #14b8a6 !important;
+  background: #23272f !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark .login-form button,
+body.dark .confirm-form button {
+  background: #10b981 !important;
+  color: #fff !important;
+}
+
+body.dark .login-form button:hover,
+body.dark .confirm-form button:hover {
+  background: #14b8a6 !important;
+}
+
+body.dark .auth-tab {
+  color: #f3f4f6 !important;
+}
+
+body.dark .auth-tab.active {
+  background: #23272f !important;
+  color: #10b981 !important;
+  border-bottom: 2px solid #10b981 !important;
+}
+
+body.dark .modal-content {
+  background: #23272f !important;
+  color: #f3f4f6 !important;
+}
+
+body.dark .password-eye-icon {
+  color: #9ca3af !important;
+}
+
+body.dark .login-error {
+  background: #3b1d1d !important;
+  color: #fca5a5 !important;
+}
+
+body.dark .signup-success {
+  background: #134e4a !important;
+  color: #6ee7b7 !important;
+}
+
+body.dark .theme-toggle-btn {
+  color: #f3f4f6 !important;
+  border-color: #4b5563 !important;
+}
+
+body.dark .theme-toggle-btn:hover {
+  background: #23272f !important;
+  border-color: #9ca3af !important;
+}
+
+/* Improved focus/active states */
+.login-form input:focus,
+.confirm-form input:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+.login-form button:focus,
+.confirm-form button:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+.auth-tab:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #2563eb22;
 }
