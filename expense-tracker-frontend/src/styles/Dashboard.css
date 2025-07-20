@@ -1,0 +1,304 @@
+/* Dashboard Styles */
+
+/* Table enhancements */
+.dashboard-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .dashboard-table th {
+  background-color: #374151;
+  color: #d1d5db;
+  border-bottom-color: #4b5563;
+}
+
+.dashboard-table td {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.dark .dashboard-table td {
+  border-bottom-color: #374151;
+}
+
+.dashboard-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.dark .dashboard-table tbody tr:hover {
+  background-color: #181a20;
+}
+
+/* Card enhancements */
+.dashboard-card {
+  background: #f3f4f6;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  overflow: visible;
+  margin-bottom: 2.5rem;
+}
+
+.dark .dashboard-card {
+  background: #23272f;
+  border-color: #4b5563;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Stat card specific styles */
+.stat-card {
+  background: #fdfdfd;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.5rem 1.5rem 3.5rem 1.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.dark .stat-card {
+  background: #181a20;
+  border-color: #4b5563;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .dashboard-table {
+    font-size: 0.875rem;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  /* Stack table on very small screens */
+  @media (max-width: 640px) {
+    .dashboard-table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+  }
+}
+
+/* Loading and error states */
+.dashboard-loading,
+.dashboard-error,
+.dashboard-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+.dark .dashboard-loading,
+.dark .dashboard-error,
+.dark .dashboard-empty {
+  color: #9ca3af;
+}
+
+.dashboard-error {
+  color: #ef4444;
+}
+
+.dark .dashboard-error {
+  color: #f87171;
+}
+
+/* Typography enhancements */
+.dashboard-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: #111827;
+}
+
+.dark .dashboard-title {
+  color: #f9fafb;
+}
+
+.dashboard-subtitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 1.5rem;
+  color: #111827;
+}
+
+.dark .dashboard-subtitle {
+  color: #f9fafb;
+}
+
+/* Grid layout improvements */
+.dashboard-grid {
+  display: grid;
+  gap: 2.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  margin-top: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem;
+  }
+  .dashboard-card {
+    padding-bottom: 2.5rem !important;
+    min-height: 380px;
+  }
+  .dashboard-card,
+  .stat-card {
+    padding: 1.25rem !important;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-size: 0.95rem;
+  }
+  .dashboard-card,
+  .stat-card {
+    padding: 0.75rem !important;
+    margin-bottom: 1.25rem;
+  }
+}
+
+/* Animation for cards appearing */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-card,
+.stat-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Stagger animation for multiple cards */
+.dashboard-grid > *:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.dashboard-grid > *:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dashboard-grid > *:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.dashboard-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  animation: dashboard-spin 1.2s linear infinite;
+}
+
+@keyframes dashboard-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+  Card and Stat Card Styles
+  Use .card for general info/summary cards and .stat-card for stat summary cards across all pages (Dashboard, Categories, Profile, etc.)
+  Ensures visual consistency in both light and dark mode.
+*/
+.card {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+}
+.dark .card {
+  background: #23272f;
+  border-color: #4b5563;
+}
+
+.stat-card {
+  background: #fdfdfd;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.5rem 1.5rem 3.5rem 1.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+.dark .stat-card {
+  background: #181a20;
+  border-color: #4b5563;
+}
+
+.dark .dashboard-table {
+  background-color: #23272f;
+  color: #f3f4f6;
+}
+
+.dark .dashboard-table th {
+  background-color: #181a20;
+  color: #f3f4f6;
+  border-bottom: 1px solid #4b5563;
+}
+
+.dark .dashboard-table td {
+  border-bottom: 1px solid #23272f;
+}
+
+.dark .dashboard-table tbody tr {
+  background-color: #23272f;
+}
+
+.dark .dashboard-table tbody tr:nth-child(even) {
+  background-color: #181a20;
+}
+
+.dark .dashboard-table tbody tr:hover {
+  background-color: #2d323c;
+}

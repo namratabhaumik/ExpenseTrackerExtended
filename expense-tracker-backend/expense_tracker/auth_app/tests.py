@@ -670,3 +670,121 @@ class ConfirmForgotPasswordViewTest(AuthAppTestCase):
         data = json.loads(response.content)
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'error')
+
+
+@patch('auth_app.middleware.get_cognito_client')
+@patch('auth_app.views.get_cognito_client')
+class ProfileViewTest(AuthAppTestCase):
+    """Test cases for profile management endpoints."""
+
+    def test_get_profile_success(self, mock_views_cognito, mock_middleware_cognito):
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'},
+                {'Name': 'name', 'Value': 'Test User'}
+            ]
+        }
+        mock_views_cognito.return_value = mock_cognito_client
+        mock_middleware_cognito.return_value = mock_cognito_client
+        response = self.client.get(
+            reverse('profile'),
+            HTTP_AUTHORIZATION='Bearer test-access-token'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('profile', data)
+        self.assertEqual(data['profile']['email'], 'test@example.com')
+        self.assertEqual(data['profile']['name'], 'Test User')
+
+    def test_update_profile_success(self, mock_views_cognito, mock_middleware_cognito):
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.update_user_attributes.return_value = {}
+        mock_cognito_client.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'},
+                {'Name': 'name', 'Value': 'Test User'}
+            ]
+        }
+        mock_views_cognito.return_value = mock_cognito_client
+        mock_middleware_cognito.return_value = mock_cognito_client
+        response = self.client.put(
+            reverse('profile'),
+            data=json.dumps({'email': 'new@example.com', 'name': 'New Name'}),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer test-access-token'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    def test_change_password_success(self, mock_views_cognito, mock_middleware_cognito):
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.change_password.return_value = {}
+        mock_cognito_client.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'},
+                {'Name': 'name', 'Value': 'Test User'}
+            ]
+        }
+        mock_views_cognito.return_value = mock_cognito_client
+        mock_middleware_cognito.return_value = mock_cognito_client
+        response = self.client.post(
+            reverse('change_password'),
+            data=json.dumps({'current_password': 'oldPass123!',
+                            'new_password': 'newPass456!'}),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer test-access-token'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'success')
+
+    def test_update_profile_no_fields(self, mock_views_cognito, mock_middleware_cognito):
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'},
+                {'Name': 'name', 'Value': 'Test User'}
+            ]
+        }
+        mock_views_cognito.return_value = mock_cognito_client
+        mock_middleware_cognito.return_value = mock_cognito_client
+        response = self.client.put(
+            reverse('profile'),
+            data=json.dumps({}),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer test-access-token'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
+
+    def test_change_password_missing_fields(self, mock_views_cognito, mock_middleware_cognito):
+        mock_cognito_client = MagicMock()
+        mock_cognito_client.get_user.return_value = {
+            'Username': 'test-user-id',
+            'UserAttributes': [
+                {'Name': 'email', 'Value': 'test@example.com'},
+                {'Name': 'name', 'Value': 'Test User'}
+            ]
+        }
+        mock_views_cognito.return_value = mock_cognito_client
+        mock_middleware_cognito.return_value = mock_cognito_client
+        response = self.client.post(
+            reverse('change_password'),
+            data=json.dumps({'current_password': 'oldPass123!'}),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer test-access-token'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn('status', data)
+        self.assertEqual(data['status'], 'error')
