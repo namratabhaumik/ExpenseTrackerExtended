@@ -13,8 +13,8 @@ A fully functional, cloud-native expense tracker with:
 
 ## 🚀 Live Demo
 
-- **Frontend**: https://expense-tracker-frontend-1a909.web.app
-- **Backend API**: https://expense-tracker-backend-876160330159.us-central1.run.app
+- **Frontend**: https://expense-tracker-frontend-1a909.firebaseapp.com/
+- **Backend**: https://expense-tracker-backend-876160330159.us-central1.run.app
 
 ## 🏗️ Architecture
 
