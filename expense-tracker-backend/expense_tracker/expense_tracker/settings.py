@@ -12,21 +12,28 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from utils.gcp_secrets import get_secret
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Check if running in production (Cloud Run)
+IS_PRODUCTION = os.environ.get('CLOUD_RUN', 'false').lower() == 'true'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if IS_PRODUCTION:
+    SECRET_KEY = get_secret('DJANGO_SECRET_KEY')
+else:
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+
 if not SECRET_KEY:
     raise Exception("DJANGO_SECRET_KEY environment variable is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'false').lower() == 'true'
+DEBUG = not IS_PRODUCTION
 
 
 ALLOWED_HOSTS = ['*']
@@ -89,9 +96,14 @@ WSGI_APPLICATION = 'expense_tracker.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # AWS Configuration
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+if IS_PRODUCTION:
+    AWS_ACCESS_KEY_ID = get_secret('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = get_secret('AWS_SECRET_ACCESS_KEY')
+    AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+else:
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 
 # DynamoDB Configuration
 DYNAMODB_TABLE_NAME = os.environ.get(
