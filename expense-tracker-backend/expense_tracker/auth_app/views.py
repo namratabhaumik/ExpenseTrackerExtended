@@ -83,13 +83,22 @@ def login_view(request):
             refresh_token = response['AuthenticationResult']['RefreshToken']
 
             logger.info(f"Successful login for user: {email}")
-            return JsonResponse({
+            response = JsonResponse({
                 'message': 'Login successful',
-                'access_token': access_token,
                 'id_token': id_token,
                 'refresh_token': refresh_token,
                 'status': 'success'
             })
+            # Set access_token as HttpOnly, Secure cookie
+            response.set_cookie(
+                key='access_token',
+                value=access_token,
+                httponly=True,
+                secure=True,  # Set to False if testing locally without HTTPS
+                samesite='Lax',
+                max_age=60*60*24  # 1 day
+            )
+            return response
 
         except ClientError as e:
             error_code = e.response['Error']['Code']
@@ -827,9 +836,11 @@ def profile_view(request):
     if request.method == 'GET':
         try:
             cognito_client = get_cognito_client()
-            access_token = request.headers.get(
-                'Authorization', '').split(' ')[1]
-            response = cognito_client.get_user(AccessToken=access_token)
+            # Use user_info from middleware (already validated)
+            user_id = request.user_info['user_id']
+            email = request.user_info['email']
+            # Optionally, fetch user attributes if needed
+            response = cognito_client.get_user(AccessToken=request.COOKIES.get('access_token'))
             user_attributes = {attr['Name']: attr['Value']
                                for attr in response['UserAttributes']}
             profile = {

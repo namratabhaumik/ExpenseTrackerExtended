@@ -7,7 +7,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
-function Profile({ accessToken, theme }) {
+function Profile({ theme }) {
   // State for profile info
   const [profile, setProfile] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(true);
@@ -59,11 +59,11 @@ function Profile({ accessToken, theme }) {
 
   // Fetch profile info on mount
   useEffect(() => {
-    if (!accessToken) return;
+
     setLoading(true);
     setError('');
     fetch(`${API_BASE}/api/profile/`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: 'include',
     })
       .then(async (resp) => {
         if (!resp.ok) {
@@ -84,7 +84,7 @@ function Profile({ accessToken, theme }) {
       })
       .catch((e) => setError(e.message || 'An error occurred.'))
       .finally(() => setLoading(false));
-  }, [accessToken]);
+  }, []);
 
   // Handle profile form input
   const handleEditChange = (e) => {
@@ -104,10 +104,11 @@ function Profile({ accessToken, theme }) {
     setSaveLoading(true);
     try {
       const resp = await fetch(`${API_BASE}/api/profile/`, {
+        credentials: 'include',
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          
         },
         body: JSON.stringify({
           name: editProfile.name,
@@ -171,10 +172,11 @@ function Profile({ accessToken, theme }) {
     setPwLoading(true);
     try {
       const resp = await fetch(`${API_BASE}/api/profile/change-password/`, {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          
         },
         body: JSON.stringify({
           current_password: pwForm.current,
@@ -481,7 +483,7 @@ function Profile({ accessToken, theme }) {
 }
 
 Profile.propTypes = {
-  accessToken: PropTypes.string.isRequired,
+
   theme: PropTypes.string.isRequired,
 };
 
