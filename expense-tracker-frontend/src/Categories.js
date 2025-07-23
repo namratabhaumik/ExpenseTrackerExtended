@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { ClipLoader } from 'react-spinners';
 
-const Categories = ({ accessToken, onNavigate }) => {
+const Categories = ({ onNavigate }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -18,7 +18,6 @@ const Categories = ({ accessToken, onNavigate }) => {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
           },
           credentials: 'include',
         },
@@ -212,7 +211,7 @@ const Categories = ({ accessToken, onNavigate }) => {
 };
 
 Categories.propTypes = {
-  accessToken: PropTypes.string.isRequired,
+
   onNavigate: PropTypes.func,
 };
 

@@ -418,8 +418,8 @@ function AuthForm({ onLoginSuccess, theme }) {
         },
       );
       if (response.ok) {
-        const result = await response.json();
-        onLoginSuccess(result.access_token);
+        await response.json();
+        onLoginSuccess();
       } else {
         const errorData = await response.json();
         setLoginError(errorData.message || 'Login failed. Please try again.');

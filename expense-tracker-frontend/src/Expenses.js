@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ClipLoader } from 'react-spinners';
 
-function Expenses({ accessToken, setDashboardRefreshFlag }) {
+function Expenses({ setDashboardRefreshFlag }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -33,14 +33,14 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
   // Refs to prevent infinite loops
   const isMountedRef = useRef(true);
 
-  // Fetch expenses on mount and when accessToken changes
+  // Fetch expenses on mount and when refreshFlag changes
   useEffect(() => {
-    if (!accessToken) return;
+
 
     setLoading(true);
     setError('');
     fetch(`${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
     })
       .then((resp) => {
@@ -65,7 +65,7 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
         setExpenses([]);
       })
       .finally(() => setLoading(false));
-  }, [accessToken, refreshFlag]);
+  }, [refreshFlag]);
 
   // Add this effect ONCE to handle unmount:
   useEffect(() => {
@@ -129,7 +129,7 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
+            
           },
           credentials: 'include',
           body: JSON.stringify(form),
@@ -223,7 +223,7 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
+              
             },
             credentials: 'include',
             body: JSON.stringify(payload),
@@ -569,7 +569,7 @@ function Expenses({ accessToken, setDashboardRefreshFlag }) {
 }
 
 Expenses.propTypes = {
-  accessToken: PropTypes.string.isRequired,
+
   setDashboardRefreshFlag: PropTypes.func,
 };
 

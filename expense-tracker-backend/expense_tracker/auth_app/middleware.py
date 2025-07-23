@@ -37,15 +37,19 @@ class JWTAuthenticationMiddleware:
            (request.path == '/api/healthz/'):
             return self.get_response(request)
 
-        # Check for Authorization header
+        # Try to get token from Authorization header first
         auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return JsonResponse({
-                'error': 'Authorization header required',
-                'status': 'error'
-            }, status=401)
-
-        token = auth_header.split(' ')[1]
+        token = None
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        else:
+            # Fallback to cookie-based authentication
+            token = request.COOKIES.get('access_token')
+            if not token:
+                return JsonResponse({
+                    'error': 'Authentication token missing',
+                    'status': 'error'
+                }, status=401)
 
         try:
             # Validate token with Cognito
