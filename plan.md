@@ -19,17 +19,7 @@ This phase focuses on immediate security and cleanup tasks that are critical for
 - [x] Trigger production deployments only from the `main` branch.
 
 ### 4. Strengthen Security
-- **Task:** Remove public access from the Cloud Run service and enforce JWT authentication.
-- **Why:** The backend API should only be accessible to authenticated users.
-- **Action Items:**
-    - [ ] Remove the `--allow-unauthenticated` flag from the `gcloud run deploy` command in the `github-ci.yml` file.
-    - [ ] Verify that all API endpoints (except for login, signup, etc.) are protected by the `JWTAuthenticationMiddleware`.
-
-- **Task:** Implement rate limiting on authentication endpoints.
-- **Why:** To prevent brute-force attacks.
-- **Action Items:**
-    - [ ] Choose a rate-limiting library for Django (e.g., `django-ratelimit`).
-    - [ ] Apply rate limiting to the `login_view`, `signup_view`, and other authentication-related views.
+- [x] Implement rate limiting on authentication endpoints.
 
 - **Task:** Improve frontend token storage security.
 - **Why:** Storing the `accessToken` in `localStorage` can make it vulnerable to XSS attacks.

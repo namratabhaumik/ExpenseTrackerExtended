@@ -6,6 +6,7 @@ import base64
 import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django_ratelimit.decorators import ratelimit
 import os
 from .middleware import require_auth
 from botocore.exceptions import ClientError
@@ -43,6 +44,7 @@ def calculate_secret_hash(username):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
 def login_view(request):
     if request.method == 'POST':
         try:
@@ -131,6 +133,7 @@ def login_view(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
 def signup_view(request):
     if request.method == 'POST':
         try:
@@ -306,6 +309,7 @@ def confirm_signup_view(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='5/m', method=ratelimit.ALL, block=True)
 def forgot_password_view(request):
     if request.method == 'POST':
         try:
