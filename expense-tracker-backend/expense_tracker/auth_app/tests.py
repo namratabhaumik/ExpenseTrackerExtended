@@ -65,7 +65,11 @@ class LoginViewTest(AuthAppTestCase):
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertIn('access_token', data)
+        # Check that access_token is set as a cookie, not in the JSON body
+        self.assertIn('access_token', response.cookies)
+        cookie = response.cookies['access_token']
+        self.assertTrue(cookie.value)
+        self.assertTrue(cookie['httponly'])
         self.assertIn('status', data)
         self.assertEqual(data['status'], 'success')
 

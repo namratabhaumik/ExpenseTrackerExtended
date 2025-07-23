@@ -9,7 +9,6 @@ import Navbar from './Navbar';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [accessToken, setAccessToken] = useState('');
   const [activePage, setActivePage] = useState('dashboard');
   const [theme, setTheme] = useState(() => {
     // Get theme from localStorage or default to light
@@ -28,15 +27,13 @@ function App() {
     }
   }, [theme]);
 
-  const handleLoginSuccess = (token) => {
+  const handleLoginSuccess = () => {
     setIsAuthenticated(true);
-    setAccessToken(token);
     setActivePage('dashboard');
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setAccessToken('');
     setActivePage('dashboard');
   };
 
@@ -84,30 +81,23 @@ function App() {
       ) : (
         <main className="app-container">
           {activePage === 'dashboard' && (
-            <Dashboard
-              accessToken={accessToken}
-              refreshFlag={dashboardRefreshFlag}
-            />
+            <div className="content-wrapper">
+              <Dashboard refreshFlag={dashboardRefreshFlag} />
+            </div>
           )}
           {activePage === 'expenses' && (
             <div className="content-wrapper">
-              <Expenses
-                accessToken={accessToken}
-                setDashboardRefreshFlag={setDashboardRefreshFlag}
-              />
+              <Expenses setDashboardRefreshFlag={setDashboardRefreshFlag} />
             </div>
           )}
           {activePage === 'categories' && (
             <div className="content-wrapper">
-              <Categories
-                accessToken={accessToken}
-                onNavigate={setActivePage}
-              />
+              <Categories onNavigate={setActivePage} />
             </div>
           )}
           {activePage === 'profile' && (
             <div className="content-wrapper">
-              <Profile accessToken={accessToken} theme={theme} />
+              <Profile theme={theme} />
             </div>
           )}
         </main>

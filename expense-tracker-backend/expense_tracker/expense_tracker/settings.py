@@ -12,21 +12,28 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from utils.gcp_secrets import get_secret
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Check if running in production (Cloud Run)
+IS_PRODUCTION = os.environ.get('CLOUD_RUN', 'false').lower() == 'true'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if IS_PRODUCTION:
+    SECRET_KEY = get_secret('DJANGO_SECRET_KEY')
+else:
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+
 if not SECRET_KEY:
     raise Exception("DJANGO_SECRET_KEY environment variable is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'false').lower() == 'true'
+DEBUG = not IS_PRODUCTION
 
 
 ALLOWED_HOSTS = ['*']
@@ -51,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'auth_app',
     'corsheaders',
+    'django_ratelimit',
 ]
 
 MIDDLEWARE = [
@@ -89,9 +97,14 @@ WSGI_APPLICATION = 'expense_tracker.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # AWS Configuration
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+if IS_PRODUCTION:
+    AWS_ACCESS_KEY_ID = get_secret('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = get_secret('AWS_SECRET_ACCESS_KEY')
+    AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+else:
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 
 # DynamoDB Configuration
 DYNAMODB_TABLE_NAME = os.environ.get(
@@ -113,6 +126,21 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Redis cache backend for django-redis
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# Optionally, set up session engine to use cache (recommended for shared cache)
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
 
 
 # Password validation
