@@ -2,15 +2,11 @@ name: Fullstack CI/CD
 
 on:
   push:
-    paths:
-      - "expense-tracker-backend/**"
-      - "expense-tracker-frontend/**"
-      - ".github/workflows/**"
+    branches:
+      - master
   pull_request:
-    paths:
-      - "expense-tracker-backend/**"
-      - "expense-tracker-frontend/**"
-      - ".github/workflows/**"
+    branches:
+      - master
 
 permissions:
   contents: "read"

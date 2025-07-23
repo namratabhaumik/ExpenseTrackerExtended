@@ -12,22 +12,15 @@ from botocore.exceptions import ClientError
 
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
+from django.conf import settings
+
 # Get logger for this module
 logger = logging.getLogger(__name__)
 
-# Load .env file for environment variables
-try:
-    from dotenv import load_dotenv
-    env_file_path = os.path.join(os.path.dirname(
-        os.path.dirname(os.path.dirname(__file__))), '.env')
-    load_dotenv(env_file_path)
-except ImportError:
-    pass  # dotenv not available, continue without it
-
 # Cognito configuration
-COGNITO_REGION = os.environ.get('COGNITO_REGION', 'us-east-1')
-COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
-COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
+COGNITO_REGION = settings.AWS_REGION
+COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID') # This will be fetched from settings now
+COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET') # This will be fetched from settings now
 
 # Lazy-load Cognito client
 _cognito_client = None
