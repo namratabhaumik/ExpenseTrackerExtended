@@ -17,6 +17,11 @@ permissions:
 jobs:
   build-and-test-backend:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
     env:
       # These variables are injected from GitHub Actions repository variables.
       # For production, set REACT_APP_BACKEND_URL to your Cloud Run backend URL.
