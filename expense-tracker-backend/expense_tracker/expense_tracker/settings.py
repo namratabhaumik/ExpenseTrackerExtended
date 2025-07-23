@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'auth_app',
     'corsheaders',
+    'django_ratelimit',
 ]
 
 MIDDLEWARE = [
