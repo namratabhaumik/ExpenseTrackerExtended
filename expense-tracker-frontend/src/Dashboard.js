@@ -41,7 +41,7 @@ const DUMMY_EXPENSES = [
   },
 ];
 
-function Dashboard({ accessToken, refreshFlag }) {
+function Dashboard({ refreshFlag }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -50,12 +50,9 @@ function Dashboard({ accessToken, refreshFlag }) {
 
   // Fetch expenses on mount
   useEffect(() => {
-    if (!accessToken) return;
-
     setLoading(true);
     setError('');
     fetch(`${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
       credentials: 'include',
     })
       .then((resp) => {
@@ -80,7 +77,7 @@ function Dashboard({ accessToken, refreshFlag }) {
         setExpenses([]);
       })
       .finally(() => setLoading(false));
-  }, [accessToken, refreshFlag]);
+  }, [refreshFlag]);
 
   // Add this effect ONCE to handle unmount:
   useEffect(() => {
@@ -244,8 +241,6 @@ function Dashboard({ accessToken, refreshFlag }) {
   );
 }
 
-Dashboard.propTypes = {
-  accessToken: PropTypes.string.isRequired,
-};
+Dashboard.propTypes = {};
 
 export default Dashboard;

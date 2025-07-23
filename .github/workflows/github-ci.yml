@@ -2,15 +2,11 @@ name: Fullstack CI/CD
 
 on:
   push:
-    paths:
-      - "expense-tracker-backend/**"
-      - "expense-tracker-frontend/**"
-      - ".github/workflows/**"
+    branches:
+      - master
   pull_request:
-    paths:
-      - "expense-tracker-backend/**"
-      - "expense-tracker-frontend/**"
-      - ".github/workflows/**"
+    branches:
+      - master
 
 permissions:
   contents: "read"
@@ -21,6 +17,11 @@ permissions:
 jobs:
   build-and-test-backend:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
     env:
       # These variables are injected from GitHub Actions repository variables.
       # For production, set REACT_APP_BACKEND_URL to your Cloud Run backend URL.
@@ -116,14 +117,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy expense-tracker-backend \
-            --image=us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} \
-            --platform=managed \
-            --region=us-central1 \
-            --allow-unauthenticated \
-            --port=8000 \
-            --memory=1Gi \
-            --set-env-vars="CLOUD_RUN=true,DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }},COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }},COGNITO_CLIENT_SECRET=${{ secrets.COGNITO_CLIENT_SECRET }},AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }},AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}"
+          gcloud run deploy expense-tracker-backend             --image=us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }}             --platform=managed             --region=us-central1             --allow-unauthenticated             --port=8000             --memory=1Gi             --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}"
 
       - name: Get Cloud Run URL
         id: get-url

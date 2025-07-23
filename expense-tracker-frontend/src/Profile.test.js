@@ -13,7 +13,6 @@ jest.mock('react-toastify', () => ({
   ToastContainer: () => <div />,
 }));
 
-const FAKE_TOKEN = 'fake-access-token';
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 const TEST_THEME = 'light';
 
@@ -34,16 +33,15 @@ describe('Profile component', () => {
         profile: { name: 'Test User', email: 'test@example.com' },
       }),
     });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
-    expect(screen.getByText(/loading profile/i)).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledWith(
-      `${API_BASE}/api/profile/`,
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: `Bearer ${FAKE_TOKEN}`,
-        }),
-      }),
-    );
+
+    render(<Profile theme={TEST_THEME} />);
+
+    // Check that fetch was called correctly for cookie-based auth
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE}/api/profile/`, {
+      credentials: 'include',
+    });
+
+    // Wait for the user's name to appear, which confirms the fetch and state update are complete
     expect(await screen.findByText('Test User')).toBeInTheDocument();
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
   });
@@ -63,7 +61,7 @@ describe('Profile component', () => {
           status: 'success',
         }),
       });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
+    render(<Profile theme={TEST_THEME} />);
     await screen.findByText('Test User');
     fireEvent.click(screen.getByText(/edit profile/i));
     fireEvent.change(screen.getByLabelText(/name/i), {
@@ -94,7 +92,7 @@ describe('Profile component', () => {
         profile: { name: 'Test User', email: 'test@example.com' },
       }),
     });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
+    render(<Profile theme={TEST_THEME} />);
     await screen.findByText('Test User');
     fireEvent.click(screen.getByText(/edit profile/i));
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -115,7 +113,7 @@ describe('Profile component', () => {
       ok: false,
       json: async () => ({ error: 'Failed to fetch profile' }),
     });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
+    render(<Profile theme={TEST_THEME} />);
     expect(
       await screen.findByText(/failed to fetch profile/i),
     ).toBeInTheDocument();
@@ -136,7 +134,7 @@ describe('Profile component', () => {
           status: 'success',
         }),
       });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
+    render(<Profile theme={TEST_THEME} />);
     await screen.findByText('Test User');
     fireEvent.change(screen.getByLabelText(/current password/i), {
       target: { value: 'oldPass123!' },
@@ -172,7 +170,7 @@ describe('Profile component', () => {
         profile: { name: 'Test User', email: 'test@example.com' },
       }),
     });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
+    render(<Profile theme={TEST_THEME} />);
     await screen.findByText('Test User');
     fireEvent.change(screen.getByLabelText(/current password/i), {
       target: { value: 'oldPass123!' },
@@ -197,7 +195,7 @@ describe('Profile component', () => {
         profile: { name: 'Test User', email: 'test@example.com' },
       }),
     });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
+    render(<Profile theme={TEST_THEME} />);
     await screen.findByText('Test User');
     fireEvent.change(screen.getByLabelText(/current password/i), {
       target: { value: 'oldPass123!' },
@@ -229,7 +227,7 @@ describe('Profile component', () => {
         ok: false,
         json: async () => ({ error: 'Failed to change password' }),
       });
-    render(<Profile accessToken={FAKE_TOKEN} theme={TEST_THEME} />);
+    render(<Profile theme={TEST_THEME} />);
     await screen.findByText('Test User');
     fireEvent.change(screen.getByLabelText(/current password/i), {
       target: { value: 'oldPass123!' },

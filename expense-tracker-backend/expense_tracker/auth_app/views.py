@@ -6,28 +6,22 @@ import base64
 import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django_ratelimit.decorators import ratelimit
 import os
 from .middleware import require_auth
 from botocore.exceptions import ClientError
 
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
+from django.conf import settings
+
 # Get logger for this module
 logger = logging.getLogger(__name__)
 
-# Load .env file for environment variables
-try:
-    from dotenv import load_dotenv
-    env_file_path = os.path.join(os.path.dirname(
-        os.path.dirname(os.path.dirname(__file__))), '.env')
-    load_dotenv(env_file_path)
-except ImportError:
-    pass  # dotenv not available, continue without it
-
 # Cognito configuration
-COGNITO_REGION = os.environ.get('COGNITO_REGION', 'us-east-1')
-COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
-COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
+COGNITO_REGION = settings.AWS_REGION
+COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID') # This will be fetched from settings now
+COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET') # This will be fetched from settings now
 
 # Lazy-load Cognito client
 _cognito_client = None
@@ -50,6 +44,7 @@ def calculate_secret_hash(username):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
 def login_view(request):
     if request.method == 'POST':
         try:
@@ -88,13 +83,22 @@ def login_view(request):
             refresh_token = response['AuthenticationResult']['RefreshToken']
 
             logger.info(f"Successful login for user: {email}")
-            return JsonResponse({
+            response = JsonResponse({
                 'message': 'Login successful',
-                'access_token': access_token,
                 'id_token': id_token,
                 'refresh_token': refresh_token,
                 'status': 'success'
             })
+            # Set access_token as HttpOnly, Secure cookie
+            response.set_cookie(
+                key='access_token',
+                value=access_token,
+                httponly=True,
+                secure=True,  # Set to False if testing locally without HTTPS
+                samesite='Lax',
+                max_age=60*60*24  # 1 day
+            )
+            return response
 
         except ClientError as e:
             error_code = e.response['Error']['Code']
@@ -138,6 +142,7 @@ def login_view(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
 def signup_view(request):
     if request.method == 'POST':
         try:
@@ -313,6 +318,7 @@ def confirm_signup_view(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='5/m', method=ratelimit.ALL, block=True)
 def forgot_password_view(request):
     if request.method == 'POST':
         try:
@@ -830,9 +836,11 @@ def profile_view(request):
     if request.method == 'GET':
         try:
             cognito_client = get_cognito_client()
-            access_token = request.headers.get(
-                'Authorization', '').split(' ')[1]
-            response = cognito_client.get_user(AccessToken=access_token)
+            # Use user_info from middleware (already validated)
+            user_id = request.user_info['user_id']
+            email = request.user_info['email']
+            # Optionally, fetch user attributes if needed
+            response = cognito_client.get_user(AccessToken=request.COOKIES.get('access_token'))
             user_attributes = {attr['Name']: attr['Value']
                                for attr in response['UserAttributes']}
             profile = {
