@@ -14,6 +14,9 @@ COPY . /app/
 # Switch to project root
 WORKDIR /app/expense_tracker
 
+# Create log directory to prevent errors during build
+RUN mkdir -p /app/logs
+
 # Create the cache table for database-backed caching
 # A dummy secret key is provided here just for the build process
 RUN DJANGO_SECRET_KEY=dummy-for-build-only python manage.py createcachetable
