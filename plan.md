@@ -12,10 +12,12 @@ This phase focuses on immediate security and cleanup tasks that are critical for
 - [x] Delete the `cloudformation` directory.
 - [x] Update the `README.md` to remove references to Kubernetes and CloudFormation.
 
-### 2. Secure Secrets Management
+### 2. Secure Database and Caching
 
-- [x] Move all backend secrets to Google Secret Manager.
-- [x] Configure backend to use a database cache in production (to avoid Redis costs) and Redis locally.
+- [x] Migrate from SQLite to Supabase (PostgreSQL) for production database
+- [x] Configure Django to use database-backed cache in production
+- [x] Set up environment variables for database connection
+- [x] Update deployment pipeline to handle database migrations
 
 ### 3. Control Deployments
 
@@ -24,12 +26,18 @@ This phase focuses on immediate security and cleanup tasks that are critical for
 ### 4. Strengthen Security
 
 - [x] Implement rate limiting on authentication endpoints.
+- [x] Migrate to secure database connection with Supabase (SSL required)
+- [x] Store database credentials in Cloud Run environment variables
+- [x] Ensure all sensitive data is properly encrypted in transit and at rest
+
+### 5. Frontend Security
 
 - **Task:** Improve frontend token storage security.
 - **Why:** Storing the `accessToken` in `localStorage` can make it vulnerable to XSS attacks.
 - **Action Items:**
-  - [x] Refactor the frontend to store the `accessToken` in an HttpOnly cookie. This will require changes to the backend to set the cookie upon login and the frontend to send the cookie with each request.
-  - Verified: accessToken is not present in localStorage/sessionStorage or accessible via JS, and is only sent via HttpOnly cookie in requests.
+  - [x] Refactor the frontend to store the `accessToken` in an HttpOnly cookie.
+  - [x] Update backend to set secure, HttpOnly cookies for authentication.
+  - [x] Verify: accessToken is not present in localStorage/sessionStorage and is only sent via HttpOnly cookie.
 
 ## Phase 2: Improve and Harden (Should-Haves)
 
