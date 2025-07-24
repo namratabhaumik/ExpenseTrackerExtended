@@ -15,7 +15,8 @@ COPY . /app/
 WORKDIR /app/expense_tracker
 
 # Create the cache table for database-backed caching
-RUN python manage.py createcachetable
+# A dummy secret key is provided here just for the build process
+RUN DJANGO_SECRET_KEY=dummy-for-build-only python manage.py createcachetable
 
 # Try uvicorn instead of gunicorn
 CMD ["uvicorn", "expense_tracker.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
