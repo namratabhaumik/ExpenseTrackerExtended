@@ -14,5 +14,8 @@ COPY . /app/
 # Switch to project root
 WORKDIR /app/expense_tracker
 
+# Create the cache table for database-backed caching
+RUN python manage.py createcachetable
+
 # Try uvicorn instead of gunicorn
 CMD ["uvicorn", "expense_tracker.asgi:application", "--host", "0.0.0.0", "--port", "8000"]

@@ -127,20 +127,30 @@ DATABASES = {
     }
 }
 
-# Redis cache backend for django-redis
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+if IS_PRODUCTION:
+    # Use database-backed cache for production to avoid needing a Redis instance
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'django_cache_table',
         }
     }
-}
-
-# Optionally, set up session engine to use cache (recommended for shared cache)
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+    # Use database-backed sessions in production
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+else:
+    # Use Redis for local development
+    REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 
 
 # Password validation
