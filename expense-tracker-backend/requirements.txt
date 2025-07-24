@@ -18,6 +18,8 @@ urllib3==2.3.0
 google-cloud-secret-manager==2.20.0
 django-ratelimit==4.1.0
 django-redis==6.0.0
+psycopg2-binary==2.9.9  # For PostgreSQL connection
+dj-database-url==2.1.0  # For parsing database URLs
 
 # Testing and linting dependencies
 flake8==7.0.0
