@@ -15,6 +15,7 @@ This phase focuses on immediate security and cleanup tasks that are critical for
 ### 2. Secure Secrets Management
 
 - [x] Move all backend secrets to Google Secret Manager.
+- [x] Configure backend to use a database cache in production (to avoid Redis costs) and Redis locally.
 
 ### 3. Control Deployments
 

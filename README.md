@@ -4,7 +4,7 @@
 
 A fully functional, cloud-native expense tracker with:
 
-- **Backend**: Django API deployed on GCP Cloud Run
+- **Backend**: Django API deployed on GCP Cloud Run (uses a database-backed cache to stay on the free tier)
 - **Frontend**: React app deployed on Firebase Hosting
 - **Authentication**: AWS Cognito for secure user management
 - **Database**: AWS DynamoDB for expense storage
