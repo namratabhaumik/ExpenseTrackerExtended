@@ -130,7 +130,8 @@ jobs:
             --allow-unauthenticated \
             --port=8000 \
             --memory=1Gi \
-            --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}"
+            --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}" \
+            --set-secrets="DATABASE_URL=DATABASE_URL:latest,DJANGO_SECRET_KEY=DJANGO_SECRET_KEY:latest"
 
       - name: Get Cloud Run URL
         id: get-url
