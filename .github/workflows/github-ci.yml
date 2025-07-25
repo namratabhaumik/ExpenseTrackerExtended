@@ -115,6 +115,13 @@ jobs:
           docker build -t us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} .
           docker push us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }}
 
+      - name: Clear command override on Cloud Run service
+        run: |
+          gcloud run services update expense-tracker-backend \
+            --region=us-central1 \
+            --clear-command \
+            --clear-args
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy expense-tracker-backend \
@@ -124,8 +131,7 @@ jobs:
             --allow-unauthenticated \
             --port=8000 \
             --memory=1Gi \
-            --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}" \
-            --clear-command
+            --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}"
 
       - name: Get Cloud Run URL
         id: get-url
