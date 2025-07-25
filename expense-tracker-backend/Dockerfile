@@ -29,4 +29,4 @@ RUN chmod +x /app/expense_tracker/entrypoint.sh
 ENTRYPOINT ["/app/expense_tracker/entrypoint.sh"]
 
 # Default command (can be overridden)
-CMD ["gunicorn", "expense_tracker.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["uvicorn", "expense_tracker.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
