@@ -158,6 +158,12 @@ if IS_PRODUCTION:
             "LOCATION": "unique-expense-tracker"
         }
     }
+    # Silence django-ratelimit warnings/errors about non-shared cache.
+    # Using LocMemCache is acceptable because Cloud Run free tier usually runs a single instance.
+    SILENCED_SYSTEM_CHECKS = [
+        "django_ratelimit.E003",
+        "django_ratelimit.W001",
+    ]
 else:
     # Local development and CI: use Redis if available for shared cache supporting atomic incr
     REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1")
