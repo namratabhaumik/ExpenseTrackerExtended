@@ -115,18 +115,15 @@ jobs:
           docker build -t us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} .
           docker push us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }}
 
-      - name: Reset Cloud Run command to use Dockerfile ENTRYPOINT
+      - name: Update gcloud components
+        run: gcloud components update
+
+      - name: Clear command override on Cloud Run service
         run: |
-          # Fetch the current service configuration
-          gcloud run services describe expense-tracker-backend --region=us-central1 --format=yaml > service.yaml
-
-          # Use sed to remove the 'command' and 'args' sections. This is a robust way to clear the override.
-          # It works by finding the line with 'command:' or 'args:' and deleting it and all subsequent lines that are more indented.
-          sed -i -e '/^    command:/,/^    [^[:space:]]/!d' -e '/^    command:/d' service.yaml
-          sed -i -e '/^    args:/,/^    [^[:space:]]/!d' -e '/^    args:/d' service.yaml
-
-          # Replace the service with the modified configuration
-          gcloud run services replace service.yaml
+          gcloud run services update expense-tracker-backend \
+            --region=us-central1 \
+            --clear-command \
+            --clear-args
 
       - name: Deploy to Cloud Run
         run: |
