@@ -28,5 +28,7 @@ RUN chmod +x /app/expense_tracker/entrypoint.sh
 # Use the entrypoint script
 ENTRYPOINT ["/app/expense_tracker/entrypoint.sh"]
 
-# Default command (can be overridden)
-CMD ["uvicorn", "expense_tracker.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+# Default command to run the application
+CMD ["uvicorn", "expense_tracker.asgi:application", "--host", "0.0.0.0", "--port", "$PORT"]
+
+#Test commit
