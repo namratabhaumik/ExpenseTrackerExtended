@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import dj_database_url
 from pathlib import Path
 import os
+import re
 from utils.gcp_secrets import get_secret
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -40,13 +41,28 @@ DEBUG = not IS_PRODUCTION
 ALLOWED_HOSTS = ['*']
 
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    "https://expense-tracker-frontend-1a909.web.app",
-    "https://expense-tracker-frontend-1a909.firebaseapp.com",
-    # Add your deployed frontend URL here if needed
-]
+# Production-specific settings for cross-domain cookies
+if IS_PRODUCTION:
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SECURE = True
+    # Trust the frontend origin for CSRF
+    CSRF_TRUSTED_ORIGINS = [
+        'https://expense-tracker-frontend-1a909.web.app',
+        'https://expense-tracker-frontend-1a909.firebaseapp.com',
+    ]
+
+# CORS (Cross-Origin Resource Sharing) settings
 CORS_ALLOW_CREDENTIALS = True
+
+# Use regex to allow the frontend domain and its subdomains
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.web\.app$",
+    r"^https://.*\.firebaseapp\.com$",
+    r"^http://localhost:3000$",
+    r"http://127.0.0.1:3000",
+]
 
 # Application definition
 
