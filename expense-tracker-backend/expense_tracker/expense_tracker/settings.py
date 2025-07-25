@@ -149,31 +149,26 @@ else:
         }
     }
 
+# Caching configuration
 if IS_PRODUCTION:
-    # Use database-backed cache for production to avoid needing a Redis instance
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-            'LOCATION': 'django_cache_table',
-        }
-    }
-    # Use database-backed sessions in production
-    SESSION_ENGINE = "django.contrib.sessions.backends.db"
-else:
-    # Use Redis for local development
-    REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
+    # Use in-memory cache in Cloud Run. This supports atomic increment required by django-ratelimit
     CACHES = {
         "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": REDIS_URL,
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            }
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-expense-tracker"
         }
     }
-    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-    SESSION_CACHE_ALIAS = "default"
+else:
+    # Local dev can keep default (in-memory) settings or be overridden via env vars
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-expense-tracker-dev"
+        }
+    }
 
+# django-ratelimit should use the configured default cache
+RATELIMIT_USE_CACHE = "default"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
