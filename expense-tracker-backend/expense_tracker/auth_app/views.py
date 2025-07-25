@@ -20,8 +20,10 @@ logger = logging.getLogger(__name__)
 
 # Cognito configuration
 COGNITO_REGION = settings.AWS_REGION
-COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID') # This will be fetched from settings now
-COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET') # This will be fetched from settings now
+# This will be fetched from settings now
+COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
+# This will be fetched from settings now
+COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
 
 # Lazy-load Cognito client
 _cognito_client = None
@@ -94,8 +96,8 @@ def login_view(request):
                 key='access_token',
                 value=access_token,
                 httponly=True,
-                secure=True,  # Set to False if testing locally without HTTPS
-                samesite='Lax',
+                secure=True,  # Must be True for SameSite='None'
+                samesite='None',  # Required for cross-domain cookies
                 max_age=60*60*24  # 1 day
             )
             return response
@@ -831,27 +833,12 @@ def upload_receipt(request):
 
 
 @require_auth
-@csrf_exempt
+@require_http_methods(["GET", "PUT"])
 def profile_view(request):
     if request.method == 'GET':
         try:
-            cognito_client = get_cognito_client()
-            # Use user_info from middleware (already validated)
-            user_id = request.user_info['user_id']
-            email = request.user_info['email']
-            # Optionally, fetch user attributes if needed
-            response = cognito_client.get_user(AccessToken=request.COOKIES.get('access_token'))
-            user_attributes = {attr['Name']: attr['Value']
-                               for attr in response['UserAttributes']}
-            profile = {
-                'user_id': response['Username'],
-                'email': user_attributes.get('email'),
-                'name': user_attributes.get('name'),
-            }
-            return JsonResponse({'profile': profile, 'status': 'success'})
-        except ClientError as e:
-            logger.error(f"Cognito error in get_profile_view: {str(e)}")
-            return JsonResponse({'error': 'Failed to fetch profile', 'status': 'error'}, status=500)
+            # The user_info is attached by the JWTAuthenticationMiddleware
+            return JsonResponse({'profile': request.user_info, 'status': 'success'})
         except Exception as e:
             logger.error(f"Unexpected error in get_profile_view: {str(e)}")
             return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
@@ -863,8 +850,10 @@ def profile_view(request):
             if not email and not name:
                 return JsonResponse({'error': 'No fields to update', 'status': 'error'}, status=400)
             cognito_client = get_cognito_client()
-            access_token = request.headers.get(
-                'Authorization', '').split(' ')[1]
+            access_token = request.COOKIES.get('access_token')
+            if not access_token:
+                return JsonResponse({'error': 'Authentication token missing', 'status': 'error'}, status=401)
+
             user_attributes = []
             if email:
                 user_attributes.append({'Name': 'email', 'Value': email})
@@ -881,8 +870,6 @@ def profile_view(request):
         except Exception as e:
             logger.error(f"Unexpected error in update_profile_view: {str(e)}")
             return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
-    else:
-        return JsonResponse({'error': 'Method not allowed', 'status': 'error'}, status=405)
 
 
 @require_auth
@@ -896,7 +883,10 @@ def change_password_view(request):
         if not current_password or not new_password:
             return JsonResponse({'error': 'Missing required fields: current_password and new_password', 'status': 'error'}, status=400)
         cognito_client = get_cognito_client()
-        access_token = request.headers.get('Authorization', '').split(' ')[1]
+        access_token = request.COOKIES.get('access_token')
+        if not access_token:
+            return JsonResponse({'error': 'Authentication token missing', 'status': 'error'}, status=401)
+
         cognito_client.change_password(
             PreviousPassword=current_password,
             ProposedPassword=new_password,
