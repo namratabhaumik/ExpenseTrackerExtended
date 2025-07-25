@@ -21,5 +21,12 @@ RUN mkdir -p /app/logs
 # A dummy secret key is provided here just for the build process
 RUN DJANGO_SECRET_KEY=dummy-for-build-only python manage.py createcachetable
 
-# Try uvicorn instead of gunicorn
-CMD ["uvicorn", "expense_tracker.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+# Copy the entrypoint script and make it executable
+COPY entrypoint.sh /app/expense_tracker/
+RUN chmod +x /app/expense_tracker/entrypoint.sh
+
+# Use the entrypoint script
+ENTRYPOINT ["/app/expense_tracker/entrypoint.sh"]
+
+# Default command (can be overridden)
+CMD ["gunicorn", "expense_tracker.wsgi:application", "--bind", "0.0.0.0:8000"]

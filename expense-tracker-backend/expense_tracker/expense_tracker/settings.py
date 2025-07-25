@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import dj_database_url
 from pathlib import Path
 import os
 from utils.gcp_secrets import get_secret
@@ -120,19 +121,27 @@ S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'expense-tracker-receipts')
 S3_REGION = os.environ.get('S3_REGION', AWS_REGION)
 
 # Database Configuration
-if IS_PRODUCTION:
-    # Parse database URL from environment variable (provided by Supabase)
-    import dj_database_url
+# Priority: DATABASE_URL > IS_PRODUCTION > local SQLite
+
+if 'DATABASE_URL' in os.environ:
+    # Use the database defined by DATABASE_URL (for Supabase, Heroku, etc.)
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
             conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True  # Required for Supabase
+            ssl_require=True
         )
     }
+elif IS_PRODUCTION:
+    # This block is kept for legacy or other non-DATABASE_URL prod environments.
+    # In our case, Cloud Run will have DATABASE_URL set.
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',  # Fallback for production
+            'NAME': 'postgres',
+        }
+    }
 else:
-    # Local SQLite configuration
+    # Local development without DATABASE_URL uses SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
