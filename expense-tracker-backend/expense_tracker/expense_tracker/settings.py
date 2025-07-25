@@ -116,6 +116,16 @@ DYNAMODB_TABLE_NAME = os.environ.get(
 # Leave it as None to use AWS DynamoDB directly
 DYNAMODB_ENDPOINT_URL = os.environ.get('DYNAMODB_ENDPOINT_URL', None)
 
+# Cognito Configuration
+if IS_PRODUCTION:
+    COGNITO_USER_POOL_ID = get_secret('COGNITO_USER_POOL_ID')
+    COGNITO_CLIENT_ID = get_secret('COGNITO_CLIENT_ID')
+    COGNITO_CLIENT_SECRET = get_secret('COGNITO_CLIENT_SECRET')
+else:
+    COGNITO_USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID')
+    COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
+    COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
+
 # S3 Configuration
 S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'expense-tracker-receipts')
 S3_REGION = os.environ.get('S3_REGION', AWS_REGION)

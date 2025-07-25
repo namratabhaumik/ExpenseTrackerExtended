@@ -131,7 +131,7 @@ jobs:
             --port=8000 \
             --memory=1Gi \
             --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}" \
-            --set-secrets="DATABASE_URL=DATABASE_URL:latest,DJANGO_SECRET_KEY=DJANGO_SECRET_KEY:latest"
+            --set-secrets="DATABASE_URL=DATABASE_URL:latest,DJANGO_SECRET_KEY=DJANGO_SECRET_KEY:latest,COGNITO_USER_POOL_ID=COGNITO_USER_POOL_ID:latest,COGNITO_CLIENT_ID=COGNITO_CLIENT_ID:latest,COGNITO_CLIENT_SECRET=COGNITO_CLIENT_SECRET:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest"
 
       - name: Get Cloud Run URL
         id: get-url
@@ -141,7 +141,7 @@ jobs:
 
       - name: Show deployment URL
         run: |
-          echo "🚀 Backend deployed to: ${{ steps.get-url.outputs.url }}"
+          echo " Backend deployed to: ${{ steps.get-url.outputs.url }}"
           echo " Test your API with: curl -X POST ${{ steps.get-url.outputs.url }}/api/login/"
 
   build-and-test-frontend:
