@@ -37,6 +37,7 @@ class JWTAuthenticationMiddleware:
            (request.path == '/api/healthz/'):
             return self.get_response(request)
 
+
         # Try to get token from Authorization header first
         auth_header = request.headers.get('Authorization')
         token = None
@@ -59,9 +60,11 @@ class JWTAuthenticationMiddleware:
             )
 
             # Add user info to request
+            user_attributes = response['UserAttributes']
             request.user_info = {
                 'user_id': response['Username'],
-                'email': next((attr['Value'] for attr in response['UserAttributes'] if attr['Name'] == 'email'), None)
+                'email': next((attr['Value'] for attr in user_attributes if attr['Name'] == 'email'), None),
+                'name': next((attr['Value'] for attr in user_attributes if attr['Name'] == 'name'), None)
             }
 
             return self.get_response(request)
