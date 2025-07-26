@@ -37,6 +37,10 @@ class JWTAuthenticationMiddleware:
            (request.path == '/api/healthz/'):
             return self.get_response(request)
 
+        # Debug: Log all cookies received by the backend
+        logger.info(
+            f"Cookies received for path {request.path}: {request.COOKIES}")
+
         # Try to get token from Authorization header first
         auth_header = request.headers.get('Authorization')
         token = None
@@ -46,6 +50,8 @@ class JWTAuthenticationMiddleware:
             # Fallback to cookie-based authentication
             token = request.COOKIES.get('access_token')
             if not token:
+                logger.warning(
+                    f"Authentication token missing in cookies for path {request.path}.")
                 return JsonResponse({
                     'error': 'Authentication token missing',
                     'status': 'error'
