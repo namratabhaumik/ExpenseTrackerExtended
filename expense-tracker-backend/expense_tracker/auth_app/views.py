@@ -98,6 +98,7 @@ def login_view(request):
                 httponly=True,
                 secure=True,  # Must be True for SameSite='None'
                 samesite='None',  # Required for cross-domain cookies
+                path='/',
                 max_age=60*60*24  # 1 day
             )
             return response
