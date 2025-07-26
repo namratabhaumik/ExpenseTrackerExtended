@@ -12,9 +12,12 @@ This phase focuses on immediate security and cleanup tasks that are critical for
 - [x] Delete the `cloudformation` directory.
 - [x] Update the `README.md` to remove references to Kubernetes and CloudFormation.
 
-### 2. Secure Secrets Management
+### 2. Secure Database and Caching
 
-- [x] Move all backend secrets to Google Secret Manager.
+- [x] Migrate from SQLite to Supabase (PostgreSQL) for production database
+- [x] Configure Django to use database-backed cache in production
+- [x] Set up environment variables for database connection
+- [x] Update deployment pipeline to handle database migrations
 
 ### 3. Control Deployments
 
@@ -23,12 +26,18 @@ This phase focuses on immediate security and cleanup tasks that are critical for
 ### 4. Strengthen Security
 
 - [x] Implement rate limiting on authentication endpoints.
+- [x] Migrate to secure database connection with Supabase (SSL required)
+- [x] Store database credentials in Cloud Run environment variables
+- [x] Ensure all sensitive data is properly encrypted in transit and at rest
+
+### 5. Frontend Security
 
 - **Task:** Improve frontend token storage security.
 - **Why:** Storing the `accessToken` in `localStorage` can make it vulnerable to XSS attacks.
 - **Action Items:**
-  - [x] Refactor the frontend to store the `accessToken` in an HttpOnly cookie. This will require changes to the backend to set the cookie upon login and the frontend to send the cookie with each request.
-  - Verified: accessToken is not present in localStorage/sessionStorage or accessible via JS, and is only sent via HttpOnly cookie in requests.
+  - [x] Refactor the frontend to store the `accessToken` in an HttpOnly cookie.
+  - [x] Update backend to set secure, HttpOnly cookies for authentication.
+  - [x] **Verified:** `accessToken` is no longer stored in `localStorage` and is now handled by a secure, HttpOnly cookie set by the backend with the correct `path` attribute, resolving cross-domain authentication issues.
 
 ## Phase 2: Improve and Harden (Should-Haves)
 

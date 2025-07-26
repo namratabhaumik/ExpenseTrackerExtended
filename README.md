@@ -5,9 +5,9 @@
 A fully functional, cloud-native expense tracker with:
 
 - **Backend**: Django API deployed on GCP Cloud Run
+- **Database**: Supabase (PostgreSQL) for persistent data storage
 - **Frontend**: React app deployed on Firebase Hosting
 - **Authentication**: AWS Cognito for secure user management
-- **Database**: AWS DynamoDB for expense storage
 - **File Storage**: AWS S3 for receipt uploads
 - **CI/CD**: GitHub Actions with automated testing and deployment
 
@@ -21,11 +21,10 @@ A fully functional, cloud-native expense tracker with:
 ## 🏗️ Architecture
 
 ```
-┌──────────────┐    ┌──────────────┐    ┌──────────────────┐
-│   React App  │<──>│  Django API  │<──>│   AWS Services   │
-│  (Firebase)  │    │ (Cloud Run)  │    │ (Cognito, S3,    │
-│              │    │              │    │    DynamoDB)     │
-└──────────────┘    └──────────────┘    └──────────────────┘
+┌──────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌───────────────┐
+│   React App  │<──>│  Django API  │<──>│   AWS Services   │<──>│  Supabase DB  │
+│  (Firebase)  │    │ (Cloud Run)  │    │ (Cognito, S3)    │    │  (PostgreSQL) │
+└──────────────┘    └──────────────┘    └──────────────────┘    └───────────────┘
 ```
 
 ## 🖥️ Frontend Features & UI/UX
@@ -40,6 +39,52 @@ A fully functional, cloud-native expense tracker with:
 - **Dark Mode**: Persistent, global toggle with smooth transitions and full support across all screens.
 - **Visual Polish**: Centered layout, max-width containers, modern color palette, smooth transitions, sticky navbar, and improved table/card design.
 - **Bug Fixes & Improvements**: Always fetches latest expenses, consistent color palette, improved dashboard/card/table stacking on mobile, and more.
+
+## 📦 Backend Configuration
+
+### Database Setup
+
+- **Development**: SQLite (default)
+- **Production**: Supabase (PostgreSQL) - automatically used when `CLOUD_RUN` environment variable is set
+
+### Environment Variables
+
+Create a `.env` file in the `expense-tracker-backend` directory with the following variables:
+
+```bash
+# Django Settings
+SECRET_KEY=your-secret-key
+DEBUG=False
+ALLOWED_HOSTS=.run.app
+
+# AWS Configuration
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_REGION=us-east-1
+DYNAMODB_TABLE_NAME=expenses-table
+S3_BUCKET_NAME=my-finance-tracker-receipts
+S3_REGION=us-east-1
+
+# Supabase Database (for production)
+DATABASE_URL=postgresql://postgres:your-password@db.your-project-ref.supabase.co:5432/postgres
+```
+
+## 🚀 Deployment
+
+### Prerequisites
+
+- Google Cloud Account with Cloud Run enabled
+- Supabase account with a new project created
+- AWS Account with Cognito, S3, and DynamoDB configured
+
+### Backend Deployment
+
+1. Push your code to the `main` branch
+2. GitHub Actions will automatically build and deploy to Cloud Run
+3. Set up the required environment variables in Cloud Run:
+   - `DATABASE_URL`: Your Supabase connection string
+   - `DJANGO_SECRET_KEY`: A secure secret key for Django
+   - AWS credentials and other required variables
 
 ## 📝 Feature Status
 
@@ -200,7 +245,6 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 ```json
 {
   "message": "Login successful",
-  "access_token": "eyJ...",
   "id_token": "eyJ...",
   "refresh_token": "eyJ...",
   "status": "success"
@@ -211,7 +255,7 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 
 **Endpoint:** `POST /api/expenses/`
 
-**Headers:** `Authorization: Bearer YOUR_ACCESS_TOKEN`
+**Authentication:** Uses a secure, HttpOnly cookie set during login.
 
 **Request:**
 
@@ -245,7 +289,7 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 
 **Endpoint:** `GET /api/expenses/list/`
 
-**Headers:** `Authorization: Bearer YOUR_ACCESS_TOKEN`
+**Authentication:** Uses a secure, HttpOnly cookie set during login.
 
 **Response:**
 

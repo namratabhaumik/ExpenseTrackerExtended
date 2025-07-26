@@ -415,6 +415,7 @@ function AuthForm({ onLoginSuccess, theme }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+          credentials: 'include',
         },
       );
       if (response.ok) {
