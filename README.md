@@ -245,7 +245,6 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 ```json
 {
   "message": "Login successful",
-  "access_token": "eyJ...",
   "id_token": "eyJ...",
   "refresh_token": "eyJ...",
   "status": "success"
@@ -256,7 +255,7 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 
 **Endpoint:** `POST /api/expenses/`
 
-**Headers:** `Authorization: Bearer YOUR_ACCESS_TOKEN`
+**Authentication:** Uses a secure, HttpOnly cookie set during login.
 
 **Request:**
 
@@ -290,7 +289,7 @@ All protected endpoints require a Bearer token from AWS Cognito login.
 
 **Endpoint:** `GET /api/expenses/list/`
 
-**Headers:** `Authorization: Bearer YOUR_ACCESS_TOKEN`
+**Authentication:** Uses a secure, HttpOnly cookie set during login.
 
 **Response:**
 

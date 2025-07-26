@@ -37,7 +37,7 @@ This phase focuses on immediate security and cleanup tasks that are critical for
 - **Action Items:**
   - [x] Refactor the frontend to store the `accessToken` in an HttpOnly cookie.
   - [x] Update backend to set secure, HttpOnly cookies for authentication.
-  - [x] Verify: accessToken is not present in localStorage/sessionStorage and is only sent via HttpOnly cookie.
+  - [x] **Verified:** `accessToken` is no longer stored in `localStorage` and is now handled by a secure, HttpOnly cookie set by the backend with the correct `path` attribute, resolving cross-domain authentication issues.
 
 ## Phase 2: Improve and Harden (Should-Haves)
 
