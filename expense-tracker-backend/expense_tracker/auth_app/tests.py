@@ -692,9 +692,9 @@ class ProfileViewTest(AuthAppTestCase):
         }
         mock_views_cognito.return_value = mock_cognito_client
         mock_middleware_cognito.return_value = mock_cognito_client
+        self.client.cookies['access_token'] = 'fake-test-token'
         response = self.client.get(
-            reverse('profile'),
-            HTTP_AUTHORIZATION='Bearer test-access-token'
+            reverse('profile')
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -714,11 +714,11 @@ class ProfileViewTest(AuthAppTestCase):
         }
         mock_views_cognito.return_value = mock_cognito_client
         mock_middleware_cognito.return_value = mock_cognito_client
+        self.client.cookies['access_token'] = 'fake-test-token'
         response = self.client.put(
             reverse('profile'),
             data=json.dumps({'email': 'new@example.com', 'name': 'New Name'}),
-            content_type='application/json',
-            HTTP_AUTHORIZATION='Bearer test-access-token'
+            content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -737,12 +737,12 @@ class ProfileViewTest(AuthAppTestCase):
         }
         mock_views_cognito.return_value = mock_cognito_client
         mock_middleware_cognito.return_value = mock_cognito_client
+        self.client.cookies['access_token'] = 'fake-test-token'
         response = self.client.post(
             reverse('change_password'),
             data=json.dumps({'current_password': 'oldPass123!',
                             'new_password': 'newPass456!'}),
-            content_type='application/json',
-            HTTP_AUTHORIZATION='Bearer test-access-token'
+            content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -760,11 +760,11 @@ class ProfileViewTest(AuthAppTestCase):
         }
         mock_views_cognito.return_value = mock_cognito_client
         mock_middleware_cognito.return_value = mock_cognito_client
+        self.client.cookies['access_token'] = 'fake-test-token'
         response = self.client.put(
             reverse('profile'),
             data=json.dumps({}),
-            content_type='application/json',
-            HTTP_AUTHORIZATION='Bearer test-access-token'
+            content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
@@ -782,11 +782,11 @@ class ProfileViewTest(AuthAppTestCase):
         }
         mock_views_cognito.return_value = mock_cognito_client
         mock_middleware_cognito.return_value = mock_cognito_client
+        self.client.cookies['access_token'] = 'fake-test-token'
         response = self.client.post(
             reverse('change_password'),
             data=json.dumps({'current_password': 'oldPass123!'}),
-            content_type='application/json',
-            HTTP_AUTHORIZATION='Bearer test-access-token'
+            content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
