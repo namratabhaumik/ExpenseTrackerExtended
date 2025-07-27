@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import AddExpenseForm from './AddExpenseForm';
 import UploadReceiptForm from './UploadReceiptForm';
 import ExpensesTable from './ExpensesTable';
+import axios from 'axios';
 
 function Expenses({ setDashboardRefreshFlag }) {
   const [expenses, setExpenses] = useState([]);
@@ -41,18 +42,12 @@ function Expenses({ setDashboardRefreshFlag }) {
 
     setLoading(true);
     setError('');
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`, {
+    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`, {
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      withCredentials: true,
     })
       .then((resp) => {
-        if (!resp.ok)
-          return resp.json().then((err) => {
-            throw new Error(err.error || 'Failed to fetch expenses');
-          });
-        return resp.json();
-      })
-      .then((data) => {
+        const data = resp.data;
         const normalized = (data.expenses || []).map((exp) => ({
           id: exp.id || exp.expense_id,
           amount: exp.amount,
@@ -63,7 +58,11 @@ function Expenses({ setDashboardRefreshFlag }) {
         setExpenses(normalized);
       })
       .catch((e) => {
-        setError(e.message || 'An error occurred while fetching expenses.');
+        setError(
+          (e.response && (e.response.data?.error || e.response.data?.message)) ||
+            e.message ||
+            'An error occurred while fetching expenses.',
+        );
         setExpenses([]);
       })
       .finally(() => setLoading(false));
@@ -125,49 +124,31 @@ function Expenses({ setDashboardRefreshFlag }) {
     setLoginLoading(true);
     toast.dismiss(); // Clear previous toasts
     try {
-      const resp = await fetch(
+      const resp = await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/expenses/`,
+        form,
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            
-          },
-          credentials: 'include',
-          body: JSON.stringify(form),
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: true,
         },
       );
-      if (!resp.ok) {
-        const err = await resp.json();
-        setAddError(err.error || 'Failed to add expense');
-        toast.error(err.error || 'Failed to add expense', {
-          position: 'top-right',
-          style: {
-            background: '#fee2e2',
-            color: '#4B5563',
-            borderRadius: 8,
-            fontWeight: 500,
-          },
-          progressStyle: { background: '#ef4444' },
-        });
-      } else {
-        setForm({ amount: '', category: '', description: '' });
-        setRefreshFlag((f) => f + 1); // <-- trigger refetch for Expenses
-        if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1); // <-- trigger refetch for Dashboard
-        toast.success('Expense added successfully!', {
-          position: 'top-right',
-          style: {
-            background: '#d1fae5',
-            color: '#10B981', // emerald
-            borderRadius: 8,
-            fontWeight: 500,
-          },
-          progressStyle: { background: '#14B8A6' }, // teal
-        });
-      }
+      setForm({ amount: '', category: '', description: '' });
+      setRefreshFlag((f) => f + 1); // <-- trigger refetch for Expenses
+      if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1); // <-- trigger refetch for Dashboard
+      toast.success('Expense added successfully!', {
+        position: 'top-right',
+        style: {
+          background: '#d1fae5',
+          color: '#2563EB',
+          borderRadius: 8,
+          fontWeight: 500,
+        },
+        progressStyle: { background: '#10b981' },
+      });
     } catch (e) {
-      setAddError('An error occurred while adding expense.');
-      toast.error('An error occurred while adding expense.', {
+      const err = (e.response && (e.response.data?.error || e.response.data?.message)) || e.message || 'Failed to add expense';
+      setAddError(err);
+      toast.error(err, {
         position: 'top-right',
         style: {
           background: '#fee2e2',
@@ -219,50 +200,32 @@ function Expenses({ setDashboardRefreshFlag }) {
       };
       if (receiptExpenseId) payload.expense_id = receiptExpenseId;
       try {
-        const resp = await fetch(
+        const resp = await axios.post(
           `${process.env.REACT_APP_BACKEND_URL}/api/receipts/upload/`,
+          payload,
           {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              
-            },
-            credentials: 'include',
-            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
           },
         );
-        const data = await resp.json();
-        if (!resp.ok) {
-          setReceiptStatus(data.error || 'Failed to upload receipt');
-          toast.error(data.error || 'Failed to upload receipt', {
-            position: 'top-right',
-            style: {
-              background: '#fee2e2',
-              color: '#4B5563',
-              borderRadius: 8,
-              fontWeight: 500,
-            },
-            progressStyle: { background: '#ef4444' },
-          });
-        } else {
-          setReceiptStatus('Receipt uploaded successfully!');
-          setReceiptFile(null);
-          setReceiptFilename('');
-          setReceiptExpenseId('');
-          toast.success('Receipt uploaded successfully!', {
-            position: 'top-right',
-            style: {
-              background: '#d1fae5',
-              color: '#2563EB',
-              borderRadius: 8,
-              fontWeight: 500,
-            },
-            progressStyle: { background: '#10b981' },
-          });
-        }
+        setReceiptStatus('Receipt uploaded successfully!');
+        setReceiptFile(null);
+        setReceiptFilename('');
+        setReceiptExpenseId('');
+        toast.success('Receipt uploaded successfully!', {
+          position: 'top-right',
+          style: {
+            background: '#d1fae5',
+            color: '#2563EB',
+            borderRadius: 8,
+            fontWeight: 500,
+          },
+          progressStyle: { background: '#10b981' },
+        });
       } catch (e) {
-        setReceiptStatus('An error occurred while uploading receipt.');
-        toast.error('An error occurred while uploading receipt.', {
+        const errMsg = (e.response && (e.response.data?.error || e.response.data?.message)) || 'An error occurred while uploading receipt.';
+        setReceiptStatus(errMsg);
+        toast.error(errMsg, {
           position: 'top-right',
           style: {
             background: '#fee2e2',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { ClipLoader } from 'react-spinners';
+import axios from 'axios';
 
 const Categories = ({ onNavigate }) => {
   const [categories, setCategories] = useState([]);
@@ -13,48 +14,52 @@ const Categories = ({ onNavigate }) => {
       setLoading(true);
       setError('');
 
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`,
+          {
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
           },
-          credentials: 'include',
-        },
-      );
+        );
+        const data = response.data;
+        const expenses = data.expenses || [];
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch expenses');
-      }
+        // Group expenses by category
+        const categoryMap = {};
+        expenses.forEach((expense) => {
+          const category = expense.category || 'Uncategorized';
+          if (!categoryMap[category]) {
+            categoryMap[category] = {
+              name: category,
+              totalSpent: 0,
+              expenseCount: 0,
+              expenses: [],
+            };
+          }
+          categoryMap[category].totalSpent += parseFloat(expense.amount);
+          categoryMap[category].expenseCount += 1;
+          categoryMap[category].expenses.push(expense);
+        });
 
-      const data = await response.json();
-      const expenses = data.expenses || [];
+        // Convert to array and sort by total spent
+        const categoryList = Object.values(categoryMap).sort(
+          (a, b) => b.totalSpent - a.totalSpent,
+        );
 
-      // Group expenses by category
-      const categoryMap = {};
-      expenses.forEach((expense) => {
-        const category = expense.category || 'Uncategorized';
-        if (!categoryMap[category]) {
-          categoryMap[category] = {
-            name: category,
-            totalSpent: 0,
-            expenseCount: 0,
-            expenses: [],
-          };
+        if (isMounted) {
+          setCategories(categoryList);
         }
-        categoryMap[category].totalSpent += parseFloat(expense.amount);
-        categoryMap[category].expenseCount += 1;
-        categoryMap[category].expenses.push(expense);
-      });
-
-      // Convert to array and sort by total spent
-      const categoryList = Object.values(categoryMap).sort(
-        (a, b) => b.totalSpent - a.totalSpent,
-      );
-
-      if (isMounted) {
-        setCategories(categoryList);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        if (isMounted) {
+          setError(err.message || 'An error occurred while fetching categories.');
+          setCategories([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     } catch (err) {
       console.error('Error fetching categories:', err);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './styles/Dashboard.css';
+import axios from 'axios';
 
 // Dummy data for fallback - moved outside component to prevent recreation
 const DUMMY_EXPENSES = [
@@ -52,27 +53,18 @@ function Dashboard({ refreshFlag }) {
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`, {
-      credentials: 'include',
+    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/expenses/list/`, {
+      withCredentials: true,
     })
       .then((resp) => {
-        if (!resp.ok)
-          return resp.json().then((err) => {
-            throw new Error(err.error || 'Failed to fetch expenses');
-          });
-        return resp.json();
-      })
-      .then((data) => {
-        const normalized = (data.expenses || []).map((exp) => ({
-          id: exp.id || exp.expense_id,
-          amount: exp.amount,
-          category: exp.category,
-          description: exp.description,
-          timestamp: exp.timestamp,
-        }));
-        setExpenses(normalized);
+        setExpenses(resp.data.expenses || []);
       })
       .catch((e) => {
+        setError(
+          (e.response && (e.response.data?.error || e.response.data?.message)) ||
+            e.message ||
+            'An error occurred while fetching expenses.',
+        );
         setError(e.message || 'An error occurred while fetching expenses.');
         setExpenses([]);
       })
