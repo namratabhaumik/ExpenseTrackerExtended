@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 import os
 from .middleware import require_auth
+from .services.DynamoDBExpenseService import DynamoDBExpenseService
 from botocore.exceptions import ClientError
 
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -634,8 +635,7 @@ def add_expense(request):
                 }, status=400)
 
             # Create expense using DynamoDB
-            from .models import DynamoDBExpense
-            expense_db = DynamoDBExpense()
+            expense_db = DynamoDBExpenseService()
             expense = expense_db.create(user_id, amount, category, description)
 
             logger.info(
@@ -683,8 +683,7 @@ def get_expenses(request):
             user_id = request.user_info['user_id']
 
             # Get expenses using DynamoDB
-            from .models import DynamoDBExpense
-            expense_db = DynamoDBExpense()
+            expense_db = DynamoDBExpenseService()
             expenses = expense_db.get_by_user(user_id)
 
             expense_list = []
@@ -794,8 +793,8 @@ def upload_receipt(request):
 
             # If expense_id provided, update the expense with receipt URL
             if expense_id:
-                from .models import DynamoDBExpense
-                expense_db = DynamoDBExpense()
+                from .services import DynamoDBExpenseService
+                expense_db = DynamoDBExpenseService()
                 expense_db.update_receipt_url(
                     expense_id, upload_result['file_url'])
                 logger.info(f"Receipt URL updated for expense: {expense_id}")

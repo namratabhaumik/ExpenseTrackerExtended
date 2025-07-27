@@ -49,21 +49,21 @@ This phase focuses on improving the codebase's maintainability, testability, and
 - **Why:** The `Expenses.js` component is too large and complex, making it difficult to maintain and test.
 - **Action Items:**
 
-  - [ ] Create separate components for the "Add Expense" form, the "Upload Receipt" form, and the expenses table.
+  - [x] Create separate components for the "Add Expense" form, the "Upload Receipt" form, and the expenses table. (2025-07-27)
 
 - **Task:** Use a library like `axios` for API calls.
 - **Why:** `axios` provides a more consistent and powerful way to handle API requests and responses.
 - **Action Items:**
 
-  - [ ] Add `axios` to the frontend dependencies.
-  - [ ] Refactor all `fetch` calls to use `axios`.
+  - [x] Add `axios` to the frontend dependencies. (2025-07-27)
+  - [x] Refactor all `fetch` calls to use `axios`. (2025-07-27)
 
 - **Task:** Refactor the backend authentication views to reduce code duplication.
 - **Why:** To improve code reuse and maintainability.
 - **Action Items:**
 
-  - [ ] Create a utility function to calculate the Cognito secret hash.
-  - [ ] Refactor the authentication views to use the utility function.
+  - [x] Create a utility function to calculate the Cognito secret hash. (2025-07-27)
+  - [x] Refactor the authentication views to use the utility function. (2025-07-27)
 
 - **Task:** Move the DynamoDB logic from the `models.py` file to a separate service or repository layer.
 - **Why:** To separate the data access logic from the model definition.
