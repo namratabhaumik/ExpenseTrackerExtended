@@ -68,8 +68,10 @@ This phase focuses on improving the codebase's maintainability, testability, and
 - **Task:** Move the DynamoDB logic from the `models.py` file to a separate service or repository layer.
 - **Why:** To separate the data access logic from the model definition.
 - **Action Items:**
-  - [ ] Create a new `services` or `repositories` directory in the `auth_app`.
-  - [ ] Move the `DynamoDBExpense` class to a new file in the new directory.
+  - [x] Create a new `services` or `repositories` directory in the `auth_app`. (2025-07-27)
+  - [x] Move the `DynamoDBExpense` class to a new file in the new directory. (2025-07-27)
+  - [x] Update all backend usages to use the new service layer. (2025-07-27)
+  - [x] Verified: Backend expense logic refactor is complete and tested as of 2025-07-27.
 
 ### 2. Improve Testing
 

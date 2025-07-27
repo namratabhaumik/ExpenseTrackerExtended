@@ -793,7 +793,6 @@ def upload_receipt(request):
 
             # If expense_id provided, update the expense with receipt URL
             if expense_id:
-                from .services import DynamoDBExpenseService
                 expense_db = DynamoDBExpenseService()
                 expense_db.update_receipt_url(
                     expense_id, upload_result['file_url'])

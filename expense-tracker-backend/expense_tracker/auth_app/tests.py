@@ -125,8 +125,8 @@ class ExpenseViewTest(AuthAppTestCase):
 
     @mock_aws
     @patch('auth_app.middleware.get_cognito_client')
-    @patch('auth_app.models.get_dynamodb_table')
-    def test_add_expense_success(self, mock_get_dynamodb_table, mock_get_cognito_client):
+    @patch('auth_app.services.DynamoDBExpenseService.DynamoDBExpenseService.get_dynamodb_table')
+    def test_add_expense_success(self, mock_get_table, mock_get_cognito_client):
         """Test successful expense addition."""
         # Mock Cognito user validation
         mock_cognito_client = MagicMock()
@@ -141,7 +141,7 @@ class ExpenseViewTest(AuthAppTestCase):
         # Mock DynamoDB table
         mock_table = MagicMock()
         mock_table.put_item.return_value = None
-        mock_get_dynamodb_table.return_value = mock_table
+        mock_get_table.return_value = mock_table
 
         response = self.client.post(
             reverse('add_expense'),
@@ -197,8 +197,8 @@ class ExpenseViewTest(AuthAppTestCase):
 
     @mock_aws
     @patch('auth_app.middleware.get_cognito_client')
-    @patch('auth_app.models.get_dynamodb_table')
-    def test_get_expenses_success(self, mock_get_dynamodb_table, mock_get_cognito_client):
+    @patch('auth_app.services.DynamoDBExpenseService.DynamoDBExpenseService.get_dynamodb_table')
+    def test_get_expenses_success(self, mock_get_table, mock_get_cognito_client):
         """Test successful expense retrieval."""
         # Mock Cognito user validation
         mock_cognito_client = MagicMock()
@@ -224,7 +224,7 @@ class ExpenseViewTest(AuthAppTestCase):
                 }
             ]
         }
-        mock_get_dynamodb_table.return_value = mock_table
+        mock_get_table.return_value = mock_table
 
         response = self.client.get(
             reverse('get_expenses'),
@@ -253,8 +253,9 @@ class ReceiptUploadTest(AuthAppTestCase):
 
     @mock_aws
     @patch('auth_app.middleware.get_cognito_client')
+    @patch('auth_app.services.DynamoDBExpenseService.DynamoDBExpenseService.get_dynamodb_table')
     @patch('utils.s3_utils.get_s3_client')
-    def test_upload_receipt_success(self, mock_get_s3_client, mock_get_cognito_client):
+    def test_upload_receipt_success(self, mock_get_s3_client, mock_get_table, mock_get_cognito_client):
         """Test successful receipt upload."""
         # Mock Cognito user validation
         mock_cognito_client = MagicMock()

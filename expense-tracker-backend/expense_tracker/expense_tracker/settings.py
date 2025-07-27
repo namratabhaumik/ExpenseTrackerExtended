@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import dj_database_url
+import sys
 from pathlib import Path
 import os
 import re
@@ -147,9 +148,17 @@ S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'expense-tracker-receipts')
 S3_REGION = os.environ.get('S3_REGION', AWS_REGION)
 
 # Database Configuration
-# Priority: DATABASE_URL > IS_PRODUCTION > local SQLite
+# Priority: SQLite for tests (pytest/manage.py test) > DATABASE_URL > IS_PRODUCTION > local SQLite
 
-if 'DATABASE_URL' in os.environ:
+# Use an in-memory SQLite database when running tests to avoid Postgres duplication errors.
+if any(arg.startswith('pytest') or arg == 'test' for arg in sys.argv):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+elif 'DATABASE_URL' in os.environ:
     # Use the database defined by DATABASE_URL (for Supabase, Heroku, etc.)
     DATABASES = {
         'default': dj_database_url.config(
@@ -157,7 +166,7 @@ if 'DATABASE_URL' in os.environ:
             ssl_require=True
         )
     }
-elif IS_PRODUCTION:
+elif IS_PRODUCTION and not any(arg.startswith('pytest') or arg == 'test' for arg in sys.argv):
     # This block is kept for legacy or other non-DATABASE_URL prod environments.
     # In our case, Cloud Run will have DATABASE_URL set.
     DATABASES = {
