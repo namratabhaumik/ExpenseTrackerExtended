@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 import './styles/Expenses.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ClipLoader } from 'react-spinners';
+import AddExpenseForm from './AddExpenseForm';
+import UploadReceiptForm from './UploadReceiptForm';
+import ExpensesTable from './ExpensesTable';
 
 function Expenses({ setDashboardRefreshFlag }) {
   const [expenses, setExpenses] = useState([]);
@@ -417,159 +419,45 @@ function Expenses({ setDashboardRefreshFlag }) {
         </div>
       </div>
       <h3>Add Expense</h3>
-      <form
-        className="expenses-form"
+      <AddExpenseForm
+        form={form}
+        onChange={handleChange}
         onSubmit={handleAddExpense}
-        autoComplete="on"
-      >
-        <input
-          type="number"
-          name="amount"
-          placeholder="Amount"
-          value={form.amount}
-          onChange={handleChange}
-          required
-          disabled={loginLoading}
-        />
-        <input
-          type="text"
-          name="category"
-          placeholder="Category"
-          value={form.category}
-          onChange={handleChange}
-          required
-          disabled={loginLoading}
-        />
-        <input
-          type="text"
-          name="description"
-          placeholder="Description"
-          value={form.description}
-          onChange={handleChange}
-          disabled={loginLoading}
-        />
-        <button
-          type="submit"
-          disabled={loginLoading}
-          className="flex items-center justify-center gap-2"
-        >
-          {loginLoading ? <ClipLoader size={20} color="#fff" /> : 'Add'}
-        </button>
-      </form>
-      {addError && <p className="expenses-error">{addError}</p>}
+        loading={loginLoading}
+        error={addError}
+      />
       <h3>Upload Receipt</h3>
-      <form className="expenses-receipt-form" onSubmit={handleReceiptUpload}>
-        <input
-          type="file"
-          accept="image/*,.pdf"
-          onChange={handleReceiptFileChange}
-          disabled={receiptLoading}
-        />
-        <input
-          type="text"
-          placeholder="Filename (optional)"
-          value={receiptFilename}
-          onChange={(e) => setReceiptFilename(e.target.value)}
-          disabled={receiptLoading}
-        />
-        <input
-          type="text"
-          placeholder="Expense ID (optional)"
-          value={receiptExpenseId}
-          onChange={(e) => setReceiptExpenseId(e.target.value)}
-          disabled={receiptLoading}
-        />
-        <button
-          type="submit"
-          disabled={receiptLoading}
-          className="flex items-center justify-center gap-2"
-        >
-          {receiptLoading ? <ClipLoader size={20} color="#fff" /> : 'Upload'}
-        </button>
-      </form>
-      {receiptStatus && (
-        <p
-          className={
-            receiptStatus.includes('success')
-              ? 'expenses-success'
-              : 'expenses-error'
-          }
-        >
-          {receiptStatus}
-        </p>
+      <UploadReceiptForm
+        receiptFile={receiptFile}
+        receiptFilename={receiptFilename}
+        receiptExpenseId={receiptExpenseId}
+        receiptStatus={receiptStatus}
+        loading={receiptLoading}
+        onFileChange={handleReceiptFileChange}
+        onFilenameChange={(e) => setReceiptFilename(e.target.value)}
+        onExpenseIdChange={(e) => setReceiptExpenseId(e.target.value)}
+        onSubmit={handleReceiptUpload}
+      />
+      {error && (
+        <div className="expenses-error" style={{ marginBottom: 16 }}>
+          {error}
+        </div>
       )}
       {error && (
         <div className="expenses-error" style={{ marginBottom: 16 }}>
           {error}
         </div>
       )}
-      <h3>
-        Your Expenses
-        {categoryFilter && (
-          <span className="text-sm font-normal text-[#9CA3AF] ml-2">
-            (Filtered by: {categoryFilter})
-          </span>
-        )}
-      </h3>
-      {error && (
-        <div className="expenses-error" style={{ marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
-      {/* Render the expenses as a modern table */}
-      {!loading && expenses.length > 0 ? (
-        <div className="overflow-x-auto mt-4">
-          <table className="dashboard-table w-full border border-[#E5E7EB] rounded-lg overflow-hidden">
-            <thead>
-              <tr>
-                <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
-                  Amount
-                </th>
-                <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
-                  Category
-                </th>
-                <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
-                  Description
-                </th>
-                <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
-                  Date
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedExpenses.map((exp, idx) => (
-                <tr
-                  key={exp.id}
-                  className={
-                    'border-b border-[#E5E7EB] hover:bg-[#E0F7F4] transition-colors duration-150'
-                  }
-                >
-                  <td className="py-3 px-4 text-[#10B981] font-semibold">
-                    ${Number(exp.amount).toFixed(2)}
-                  </td>
-                  <td className="py-3 px-4 text-[#9CA3AF]">{exp.category}</td>
-                  <td className="py-3 px-4 text-[#9CA3AF]">
-                    {exp.description}
-                  </td>
-                  <td className="py-3 px-4 text-[#9CA3AF] text-sm">
-                    {new Date(exp.timestamp).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : loading ? (
-        <div>Loading...</div>
-      ) : (
-        <div>No expenses found.</div>
-      )}
+      <ExpensesTable
+        expenses={sortedExpenses}
+        loading={loading}
+        categoryFilter={categoryFilter}
+      />
     </div>
   );
 }
 
 Expenses.propTypes = {
-
   setDashboardRefreshFlag: PropTypes.func,
 };
 
