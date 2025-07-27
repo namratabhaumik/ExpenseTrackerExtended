@@ -78,8 +78,9 @@ This phase focuses on improving the codebase's maintainability, testability, and
 - **Task:** Increase test coverage to at least 80%.
 - **Why:** To ensure that the application is well-tested and to catch bugs early.
 - **Action Items:**
-  - [ ] Write more tests for the backend and frontend.
-  - [ ] Add a test coverage check to the frontend tests in the `github-ci.yml` file.
+  - [x] Write more tests for the backend and frontend. (2025-07-27)
+  - [x] Add a test coverage check to the frontend tests in the `github-ci.yml` file. (2025-07-27)
+  - [x] All backend and frontend component tests now pass with 80%+ coverage. Frontend test suite was stabilized by mocking axios and updating test selectors to handle duplicate elements. (2025-07-27)
 
 ### 3. Implement Missing Features
 

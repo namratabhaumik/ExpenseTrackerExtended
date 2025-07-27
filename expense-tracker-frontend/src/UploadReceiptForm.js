@@ -17,6 +17,7 @@ function UploadReceiptForm({
     <form className="expenses-receipt-form" onSubmit={onSubmit}>
       <input
         type="file"
+        aria-label="receipt-file"
         accept="image/*,.pdf"
         onChange={onFileChange}
         disabled={loading}

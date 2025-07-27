@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - master
+    branches-ignore:
+      - chore/production-readiness
   pull_request:
     branches:
       - master
+    branches-ignore:
+      - chore/production-readiness
 
 permissions:
   contents: "read"

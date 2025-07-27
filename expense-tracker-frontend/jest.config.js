@@ -22,9 +22,19 @@ module.exports = {
   moduleFileExtensions: ["js", "jsx", "json", "node"],
 
   // A map from regular expressions to module names that allow to stub out resources with a single module
-  moduleNameMapping: {
+  moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+
+  // Transform configuration
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+  },
+  
+  // Don't ignore node_modules for transformation (needed for axios)
+  transformIgnorePatterns: [
+    '/node_modules/(?!(axios|@babel/runtime)/)',
+  ],
 
   // The test environment that will be used for testing
   testEnvironment: "jsdom",
@@ -42,7 +52,7 @@ module.exports = {
   testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
 
   // This option allows the use of a custom results processor
-  testResultsProcessor: "jest-sonar-reporter",
+  // testResultsProcessor: "jest-sonar-reporter", // Commented out - package not installed
 
   // Indicates whether each individual test should be reported during the run
   verbose: true,

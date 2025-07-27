@@ -1,77 +1,88 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import axios from 'axios';
 import Expenses from './Expenses';
 
-// Mock axios for API calls
-jest.mock('axios', () => ({
-  post: jest.fn(),
-  get: jest.fn(),
-}));
+// Mock axios
+jest.mock('axios');
 
 describe('Expenses Component', () => {
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  test('renders expense form and list', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ expenses: [] }),
-      }),
+  const mockSetDashboardRefreshFlag = jest.fn();
+  
+  const renderExpenses = () => {
+    return render(
+      <Expenses 
+        setDashboardRefreshFlag={mockSetDashboardRefreshFlag} 
+      />,
     );
-    render(<Expenses accessToken="dummy-token" />);
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText('Amount')).toBeInTheDocument();
+  };
+
+  beforeEach(() => {
+    // Clear all mocks before each test
+    jest.clearAllMocks();
+  });
+
+  test('renders loading state initially', async () => {
+    // Mock axios.get to never resolve, keeping loading state true
+    axios.get.mockImplementationOnce(() => new Promise(() => {}));
+    
+    renderExpenses();
+    
+    // Check for loading state
+    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+  });
+
+  test('renders error state when API call fails', async () => {
+    // Mock a failed API call
+    axios.get.mockRejectedValueOnce({
+      response: {
+        data: { error: 'Failed to fetch expenses' },
+      },
     });
+
+    renderExpenses();
+    
+    // Wait for error message to appear
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Category')).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText('Description')).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getByText('Add Expense')).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getByText('Your Expenses')).toBeInTheDocument();
+      expect(screen.getAllByText(/Failed to fetch expenses/i)[0]).toBeInTheDocument();
     });
   });
 
-  test('shows loading state', async () => {
-    global.fetch = jest.fn(
-      () => new Promise(() => {}), // never resolves, so loading stays true
-    );
-    render(<Expenses accessToken="dummy-token" />);
+  test('renders expense form and table when data loads', async () => {
+    // Mock successful API response
+    axios.get.mockResolvedValueOnce({
+      data: { 
+        expenses: [
+          {
+            id: '1',
+            amount: '10.50',
+            category: 'Food',
+            description: 'Lunch',
+            timestamp: new Date().toISOString(),
+          },
+        ], 
+      },
+    });
+
+    renderExpenses();
+    
+    // Check that form inputs are rendered
+    expect(screen.getByPlaceholderText('Amount')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Category')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Description')).toBeInTheDocument();
+    
+    // Check that the table is rendered with data
     await waitFor(() => {
-      expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+      expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('Food')).toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('Lunch')).toBeInTheDocument();
     });
   });
-
-  test('shows error state', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Failed to fetch expenses' }),
-      }),
-    );
-    render(<Expenses accessToken="dummy-token" />);
-    await waitFor(() => {
-      expect(
-        screen.getAllByText(/Failed to fetch expenses/i).length,
-      ).toBeGreaterThan(0);
-    });
-  });
-
-  // Remove or comment out tests for success messages, field validation, test IDs, filter, and sort, as the UI does not show these
-  // test("adds new expense successfully", async () => { ... });
-  // test("validates required fields when adding expense", async () => { ... });
-  // test("validates amount format", async () => { ... });
-  // test("displays expenses list", () => { ... });
-  // test("filters expenses by category", () => { ... });
-  // test("sorts expenses by amount", () => { ... });
 });
