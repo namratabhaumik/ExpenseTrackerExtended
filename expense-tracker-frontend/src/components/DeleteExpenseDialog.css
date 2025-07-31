@@ -50,3 +50,16 @@
 .modal-light-bg button[aria-label="Close dialog"] {
   cursor: pointer;
 }
+
+/* Style for Description textarea in light mode */
+.modal-light-bg textarea {
+  background-color: white !important;
+  color: #111827 !important; /* gray-900 */
+}
+
+/* Keep dark mode styles for textarea */
+.dark .modal-light-bg textarea {
+  background-color: #374151 !important; /* gray-700 */
+  color: #f9fafb !important; /* gray-50 */
+}
+

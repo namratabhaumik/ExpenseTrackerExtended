@@ -38,6 +38,7 @@ function Expenses({ setDashboardRefreshFlag }) {
   // State for edit/delete modals
   const [editModalShow, setEditModalShow] = useState(false);
   const [editExpense, setEditExpense] = useState(null);
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
   const [deleteDialogShow, setDeleteDialogShow] = useState(false);
   const [deleteExpense, setDeleteExpense] = useState(null);
 
@@ -418,11 +419,37 @@ function Expenses({ setDashboardRefreshFlag }) {
         show={editModalShow}
         handleClose={() => setEditModalShow(false)}
         expense={editExpense}
+        position={modalPosition}
+        userCategories={expenses.map(exp => exp.category).filter(Boolean)}
         onExpenseUpdated={(updatedExpense) => {
-          setExpenses(expenses.map(exp => 
-            exp.id === updatedExpense.id ? { ...updatedExpense, id: updatedExpense.id } : exp,
-          ));
-          if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1);
+          // Normalize the expense data to match the frontend's expected format
+          const normalizedExpense = {
+            id: updatedExpense.id || updatedExpense.expense_id,
+            amount: updatedExpense.amount,
+            category: updatedExpense.category,
+            description: updatedExpense.description,
+            timestamp: updatedExpense.timestamp || new Date().toISOString(),
+          };
+          
+          // Update the expenses list with the normalized expense
+          setExpenses(prevExpenses => 
+            prevExpenses.map(exp => 
+              exp.id === (updatedExpense.id || updatedExpense.expense_id) ? normalizedExpense : exp,
+            ),
+          );
+          
+          // Trigger a refresh of the dashboard if needed
+          if (setDashboardRefreshFlag) {
+            setDashboardRefreshFlag(prev => prev + 1);
+          }
+          
+          // Also trigger a refresh of the current component's data
+          setRefreshFlag(prev => prev + 1);
+          
+          // Close the modal after a short delay to allow the UI to update
+          setTimeout(() => {
+            setEditModalShow(false);
+          }, 100);
         }}
       />
       <DeleteExpenseDialog
@@ -446,8 +473,9 @@ function Expenses({ setDashboardRefreshFlag }) {
         expenses={sortedExpenses}
         loading={loading}
         categoryFilter={categoryFilter}
-        onEditClick={(expense) => {
+        onEditClick={(expense, position) => {
           setEditExpense(expense);
+          setModalPosition(position);
           setEditModalShow(true);
         }}
         onDeleteClick={(expense) => {

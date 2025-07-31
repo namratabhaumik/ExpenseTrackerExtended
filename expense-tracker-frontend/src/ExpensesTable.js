@@ -52,7 +52,13 @@ function ExpensesTable({
               <td className="py-3 px-4">
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => onEditClick(exp)}
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      // Calculate position relative to the viewport
+                      const clickX = e.clientX;
+                      const clickY = e.clientY;
+                      onEditClick(exp, { x: clickX, y: clickY });
+                    }}
                     className="text-blue-500 hover:text-blue-700 transition-colors"
                     aria-label="Edit expense"
                   >

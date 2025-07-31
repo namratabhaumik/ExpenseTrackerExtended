@@ -922,8 +922,8 @@ def update_expense(request, expense_id):
     }
     """
     try:
-        # Get the user ID from the request (set by require_auth decorator)
-        user_id = request.user_id
+        # Get the user ID from the request (set by JWTAuthenticationMiddleware)
+        user_id = request.user_info['user_id']
         
         # Parse request data
         data = json.loads(request.body)
@@ -936,11 +936,23 @@ def update_expense(request, expense_id):
             }, status=400)
             
         # Validate amount if provided
-        if 'amount' in data and (not isinstance(data['amount'], (int, float)) or data['amount'] <= 0):
-            return JsonResponse({
-                'error': 'Amount must be a positive number',
-                'status': 'error'
-            }, status=400)
+        if 'amount' in data:
+            try:
+                # Convert to float if it's a string, or keep as is if it's already a number
+                amount = float(data['amount']) if isinstance(data['amount'], str) else data['amount']
+                
+                # Check if the converted value is a valid positive number
+                if not isinstance(amount, (int, float)) or amount <= 0:
+                    raise ValueError("Amount must be a positive number")
+                    
+                # Update the data with the converted amount
+                data['amount'] = amount
+                
+            except (ValueError, TypeError) as e:
+                return JsonResponse({
+                    'error': 'Amount must be a positive number',
+                    'status': 'error'
+                }, status=400)
             
         # Update the expense
         expense_service = DynamoDBExpenseService()

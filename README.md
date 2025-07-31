@@ -92,7 +92,7 @@ DATABASE_URL=postgresql://postgres:your-password@db.your-project-ref.supabase.co
 | ------------------- | ---------- | ----------------------------------------- |
 | Add Expense         | ✅ Present | Amount, category (free-text), description |
 | List Expenses       | ✅ Present | Table view, sort/filter by date/category  |
-| Edit/Delete Expense | ❌ Missing | Not yet supported                         |
+| Edit/Delete Expense | ✅ Present | Full CRUD operations with modal dialogs   |
 | Category Management | 🚧 Partial | UI present, backend integration pending   |
 | Filtering/Sorting   | ✅ Present | By date, amount, and category             |
 | Dashboard           | ✅ Present | Summary cards, recent transactions        |

@@ -87,8 +87,8 @@ This phase focuses on improving the codebase's maintainability, testability, and
 - **Task:** Implement the ability to edit and delete expenses.
 - **Why:** To make the application more useful.
 - **Action Items:**
-  - [ ] Add new API endpoints to the backend for editing and deleting expenses.
-  - [ ] Add UI elements to the frontend for editing and deleting expenses.
+  - [x] Add new API endpoints to the backend for editing and deleting expenses.
+  - [x] Add UI elements to the frontend for editing and deleting expenses.
 
 ### 4. Improve Observability
 
