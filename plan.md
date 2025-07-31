@@ -103,14 +103,7 @@ This phase focuses on improving the codebase's maintainability, testability, and
 
 This phase focuses on polishing the application and adding advanced features.
 
-### 1. Advanced Observability
-
-- **Task:** Implement distributed tracing.
-- **Why:** To get a better understanding of how requests flow through the system.
-- **Action Items:**
-  - [ ] Use a library like OpenTelemetry to add distributed tracing to the backend and frontend.
-
-### 2. Enhanced Developer Experience
+### 1. Enhanced Developer Experience
 
 - **Task:** Use a tool like Swagger/OpenAPI to generate interactive API documentation.
 - **Why:** To make it easier for developers to understand and use the API.
@@ -125,3 +118,25 @@ This phase focuses on polishing the application and adding advanced features.
 - **Action Items:**
   - [ ] Analyze the DynamoDB queries and data models to identify any potential performance bottlenecks.
   - [ ] Use techniques like indexing and query optimization to improve performance.
+
+## Phase 4: AI-Powered Enhancements
+
+This phase introduces an LLM-powered feature to provide users with intelligent, actionable insights into their spending habits, significantly increasing the app's value and showcasing modern AI integration skills.
+
+### 1. The Feature: "Smart Summary"
+
+- **Task:** Implement an "AI Financial Summary" on the main dashboard.
+- **Why:** To provide users with a quick, digestible overview of their financial activity and trends without manual analysis. This serves as a strong portfolio piece demonstrating practical AI application.
+- **Action Items:**
+  - [ ] **Tech Stack Definition:**
+    - **LLM Provider:** Google AI for Developers (Gemini Pro API).
+  - [ ] **Backend Implementation:**
+    - [ ] Add `google-generativeai` and `python-dotenv` to `requirements.txt`.
+    - [ ] Securely store the Google AI API key using a `.env` file and ensure `.env` is in `.gitignore`.
+    - [ ] Create a new service in the backend to handle communication with the Gemini API.
+    - [ ] Develop a robust prompt that sends expense data and asks for a structured JSON output of 3-5 financial insights.
+    - [ ] Create a new API endpoint (e.g., `/api/financial-summary/`) to expose this functionality.
+  - [ ] **Frontend Implementation:**
+    - [ ] Create a new React component (`FinancialSummary.js`) to display the insights.
+    - [ ] Fetch the summary from the backend API when the dashboard loads.
+    - [ ] Render the insights in a clean, readable format (e.g., a bulleted list) on the dashboard.
