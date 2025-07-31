@@ -907,3 +907,103 @@ def change_password_view(request):
 
 def healthz(request):
     return JsonResponse({"status": "ok"})
+
+@require_http_methods(["PUT"])
+@require_auth
+def update_expense(request, expense_id):
+    """
+    Update an existing expense.
+    
+    Expected JSON payload (all fields are optional except amount which is required if provided):
+    {
+        "amount": 100.50,
+        "category": "Food",
+        "description": "Dinner with team"
+    }
+    """
+    try:
+        # Get the user ID from the request (set by require_auth decorator)
+        user_id = request.user_id
+        
+        # Parse request data
+        data = json.loads(request.body)
+        
+        # Validate that at least one field is being updated
+        if not any(key in data for key in ['amount', 'category', 'description']):
+            return JsonResponse({
+                'error': 'At least one field (amount, category, or description) is required',
+                'status': 'error'
+            }, status=400)
+            
+        # Validate amount if provided
+        if 'amount' in data and (not isinstance(data['amount'], (int, float)) or data['amount'] <= 0):
+            return JsonResponse({
+                'error': 'Amount must be a positive number',
+                'status': 'error'
+            }, status=400)
+            
+        # Update the expense
+        expense_service = DynamoDBExpenseService()
+        updated_expense = expense_service.update_expense(
+            expense_id=expense_id,
+            user_id=user_id,
+            amount=data.get('amount'),
+            category=data.get('category'),
+            description=data.get('description')
+        )
+        
+        if not updated_expense:
+            return JsonResponse({
+                'error': 'Expense not found or you do not have permission to update it',
+                'status': 'error'
+            }, status=404)
+            
+        return JsonResponse({
+            'message': 'Expense updated successfully',
+            'expense': updated_expense,
+            'status': 'success'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'error': 'Invalid JSON payload',
+            'status': 'error'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error updating expense: {str(e)}")
+        return JsonResponse({
+            'error': 'An error occurred while updating the expense',
+            'status': 'error'
+        }, status=500)
+
+@require_http_methods(["DELETE"])
+@require_auth
+def delete_expense(request, expense_id):
+    """
+    Delete an expense.
+    """
+    try:
+        # Get the user ID from the request (set by JWTAuthenticationMiddleware)
+        user_id = request.user_info['user_id']
+        
+        # Delete the expense
+        expense_service = DynamoDBExpenseService()
+        success = expense_service.delete_expense(expense_id, user_id)
+        
+        if not success:
+            return JsonResponse({
+                'error': 'Expense not found or you do not have permission to delete it',
+                'status': 'error'
+            }, status=404)
+            
+        return JsonResponse({
+            'message': 'Expense deleted successfully',
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error deleting expense: {str(e)}")
+        return JsonResponse({
+            'error': 'An error occurred while deleting the expense',
+            'status': 'error'
+        }, status=500)

@@ -1,0 +1,52 @@
+/* Force white background in light mode */
+.modal-light-bg {
+  background-color: white;
+}
+
+/* Override for dark mode */
+.dark .modal-light-bg {
+  background-color: #1f2937; /* gray-800 */
+}
+
+/* Make sure text is readable in both modes */
+.modal-light-bg,
+.modal-light-bg p,
+.modal-light-bg span,
+.modal-light-bg div:not([class*="text-"]) {
+  color: #111827 !important; /* gray-900 - force dark text in light mode */
+}
+
+.dark .modal-light-bg,
+.dark .modal-light-bg p,
+.dark .modal-light-bg span,
+.dark .modal-light-bg div:not([class*="text-"]) {
+  color: #f9fafb !important; /* gray-50 - light text in dark mode */
+}
+
+/* Ensure Delete button text is white in light mode */
+.modal-light-bg button[class*="bg-red-"] {
+  color: white !important; /* Force white text on red background buttons */
+  cursor: pointer;
+}
+
+/* Ensure Cancel button text is white in light mode */
+.modal-light-bg button[class*="border-gray-300"] {
+  color: white !important;
+  cursor: pointer;
+}
+
+/* Remove cursor: pointer from modal container */
+.modal-light-bg {
+  cursor: default;
+}
+
+/* For other text elements */
+.modal-light-bg [class*="text-"] {
+  color: inherit;
+  cursor: default;
+}
+
+/* Add cursor pointer to close button */
+.modal-light-bg button[aria-label="Close dialog"] {
+  cursor: pointer;
+}

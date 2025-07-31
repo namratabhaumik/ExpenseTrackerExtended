@@ -1,7 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
-function ExpensesTable({ expenses, loading, categoryFilter }) {
+function ExpensesTable({ 
+  expenses, 
+  loading, 
+  categoryFilter, 
+  onEditClick, 
+  onDeleteClick, 
+}) {
   if (loading) return <div>Loading...</div>;
   if (!expenses.length) return <div>No expenses found.</div>;
   return (
@@ -21,6 +28,9 @@ function ExpensesTable({ expenses, loading, categoryFilter }) {
             <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
               Date
             </th>
+            <th className="text-left py-3 px-4 text-[#4B5563] font-semibold text-base border-b border-[#E5E7EB]">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -39,6 +49,24 @@ function ExpensesTable({ expenses, loading, categoryFilter }) {
               <td className="py-3 px-4 text-[#9CA3AF] text-sm">
                 {new Date(exp.timestamp).toLocaleDateString()}
               </td>
+              <td className="py-3 px-4">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => onEditClick(exp)}
+                    className="text-blue-500 hover:text-blue-700 transition-colors"
+                    aria-label="Edit expense"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    onClick={() => onDeleteClick(exp)}
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                    aria-label="Delete expense"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -51,6 +79,8 @@ ExpensesTable.propTypes = {
   expenses: PropTypes.array.isRequired,
   loading: PropTypes.bool,
   categoryFilter: PropTypes.string,
+  onEditClick: PropTypes.func.isRequired,
+  onDeleteClick: PropTypes.func.isRequired,
 };
 
 export default ExpensesTable;

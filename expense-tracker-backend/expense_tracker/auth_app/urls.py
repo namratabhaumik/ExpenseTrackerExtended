@@ -9,6 +9,8 @@ from .views import (
     verify_reset_code_view,
     profile_view,
     change_password_view,
+    update_expense,
+    delete_expense,
 )
 
 urlpatterns = [
@@ -23,6 +25,8 @@ urlpatterns = [
     path('profile/change-password/', change_password_view, name='change_password'),
     path('expenses/', views.add_expense, name='add_expense'),
     path('expenses/list/', views.get_expenses, name='get_expenses'),
+    path('expenses/<uuid:expense_id>/', views.update_expense, name='update_expense'),
+    path('expenses/<uuid:expense_id>/delete/', views.delete_expense, name='delete_expense'),
     path('receipts/upload/', views.upload_receipt, name='upload_receipt'),
     path('healthz/', views.healthz, name='healthz'),
 ]

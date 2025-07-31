@@ -1,0 +1,9 @@
+/* Force white background for the modal in light mode */
+.delete-expense-dialog {
+  background-color: white !important;
+}
+
+/* Dark mode styles */
+.dark .delete-expense-dialog {
+  background-color: #1f2937 !important; /* gray-800 */
+}

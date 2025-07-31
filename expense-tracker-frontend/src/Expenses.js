@@ -6,6 +6,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import AddExpenseForm from './AddExpenseForm';
 import UploadReceiptForm from './UploadReceiptForm';
 import ExpensesTable from './ExpensesTable';
+import EditExpenseModal from './components/EditExpenseModal';
+import DeleteExpenseDialog from './components/DeleteExpenseDialog';
 import axios from 'axios';
 
 function Expenses({ setDashboardRefreshFlag }) {
@@ -32,6 +34,12 @@ function Expenses({ setDashboardRefreshFlag }) {
   const [refreshFlag, setRefreshFlag] = useState(0);
   // In Expenses.js, add support for category filtering via URL params
   const [selectedCategory, setSelectedCategory] = useState('');
+  
+  // State for edit/delete modals
+  const [editModalShow, setEditModalShow] = useState(false);
+  const [editExpense, setEditExpense] = useState(null);
+  const [deleteDialogShow, setDeleteDialogShow] = useState(false);
+  const [deleteExpense, setDeleteExpense] = useState(null);
 
   // Refs to prevent infinite loops
   const isMountedRef = useRef(true);
@@ -406,15 +414,46 @@ function Expenses({ setDashboardRefreshFlag }) {
           {error}
         </div>
       )}
-      {error && (
-        <div className="expenses-error" style={{ marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
+      <EditExpenseModal
+        show={editModalShow}
+        handleClose={() => setEditModalShow(false)}
+        expense={editExpense}
+        onExpenseUpdated={(updatedExpense) => {
+          setExpenses(expenses.map(exp => 
+            exp.id === updatedExpense.id ? { ...updatedExpense, id: updatedExpense.id } : exp,
+          ));
+          if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1);
+        }}
+      />
+      <DeleteExpenseDialog
+        show={deleteDialogShow}
+        handleClose={() => setDeleteDialogShow(false)}
+        expense={deleteExpense}
+        onExpenseDeleted={(deletedExpenseId) => {
+          // Update local state immediately for better UX
+          setExpenses(expenses.filter(exp => exp.id !== deletedExpenseId));
+          
+          // Force refresh all components that depend on expenses
+          if (setDashboardRefreshFlag) {
+            setDashboardRefreshFlag(prev => prev + 1);
+          }
+          
+          // Also trigger a refresh of the current component's data
+          setRefreshFlag(prev => prev + 1);
+        }}
+      />
       <ExpensesTable
         expenses={sortedExpenses}
         loading={loading}
         categoryFilter={categoryFilter}
+        onEditClick={(expense) => {
+          setEditExpense(expense);
+          setEditModalShow(true);
+        }}
+        onDeleteClick={(expense) => {
+          setDeleteExpense(expense);
+          setDeleteDialogShow(true);
+        }}
       />
     </div>
   );
