@@ -188,11 +188,33 @@ npm start
 
 ### Backend Testing
 
+The backend uses a separate test configuration (`test_settings.py`) that overrides production settings to avoid external dependencies during testing.
+
 ```bash
 cd expense-tracker-backend/expense_tracker
 python -m pytest
 python -m pytest --cov=. --cov-report=html --cov-report=term-missing
 python -m pytest auth_app/tests.py -v
+```
+
+#### Test Configuration
+
+- **Test Settings**: Uses `expense_tracker.test_settings` instead of production settings
+- **Database**: In-memory SQLite for fast, isolated tests
+- **External Services**: All AWS services are mocked using `moto` and `unittest.mock`
+- **Environment Variables**: Test values are hardcoded in test settings to avoid dependency on external configuration
+
+#### Running Specific Tests
+
+```bash
+# Run a specific test class
+python -m pytest auth_app/tests.py::LoginViewTest -v
+
+# Run a specific test method
+python -m pytest auth_app/tests.py::LoginViewTest::test_login_success -v
+
+# Run tests with coverage
+python -m pytest --cov=auth_app --cov-report=html --cov-report=term-missing
 ```
 
 ### Frontend Testing

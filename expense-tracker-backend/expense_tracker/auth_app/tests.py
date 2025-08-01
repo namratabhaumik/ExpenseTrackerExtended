@@ -21,24 +21,6 @@ class AuthAppTestCase(TestCase):
             'password': 'testpassword123'
         }
 
-        # Mock environment variables for testing
-        self.env_patcher = patch.dict(os.environ, {
-            'DJANGO_SECRET_KEY': 'test-secret-key',
-            'COGNITO_CLIENT_ID': 'testclientid123',
-            'COGNITO_CLIENT_SECRET': 'test-client-secret',
-            'AWS_ACCESS_KEY_ID': 'test-access-key',
-            'AWS_SECRET_ACCESS_KEY': 'test-secret-key',
-            'AWS_REGION': 'us-east-1',
-            'DYNAMODB_TABLE_NAME': 'test-expenses-table',
-            'S3_BUCKET_NAME': 'test-bucket',
-            'S3_REGION': 'us-east-1'
-        })
-        self.env_patcher.start()
-
-    def tearDown(self):
-        """Clean up after tests."""
-        self.env_patcher.stop()
-
 
 class LoginViewTest(AuthAppTestCase):
     """Test cases for login endpoint."""

@@ -21,10 +21,8 @@ logger = logging.getLogger(__name__)
 
 # Cognito configuration
 COGNITO_REGION = settings.AWS_REGION
-# This will be fetched from settings now
-COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
-# This will be fetched from settings now
-COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
+COGNITO_CLIENT_ID = settings.COGNITO_CLIENT_ID
+COGNITO_CLIENT_SECRET = settings.COGNITO_CLIENT_SECRET
 
 # Lazy-load Cognito client
 _cognito_client = None
@@ -908,12 +906,13 @@ def change_password_view(request):
 def healthz(request):
     return JsonResponse({"status": "ok"})
 
+
 @require_http_methods(["PUT"])
 @require_auth
 def update_expense(request, expense_id):
     """
     Update an existing expense.
-    
+
     Expected JSON payload (all fields are optional except amount which is required if provided):
     {
         "amount": 100.50,
@@ -924,36 +923,37 @@ def update_expense(request, expense_id):
     try:
         # Get the user ID from the request (set by JWTAuthenticationMiddleware)
         user_id = request.user_info['user_id']
-        
+
         # Parse request data
         data = json.loads(request.body)
-        
+
         # Validate that at least one field is being updated
         if not any(key in data for key in ['amount', 'category', 'description']):
             return JsonResponse({
                 'error': 'At least one field (amount, category, or description) is required',
                 'status': 'error'
             }, status=400)
-            
+
         # Validate amount if provided
         if 'amount' in data:
             try:
                 # Convert to float if it's a string, or keep as is if it's already a number
-                amount = float(data['amount']) if isinstance(data['amount'], str) else data['amount']
-                
+                amount = float(data['amount']) if isinstance(
+                    data['amount'], str) else data['amount']
+
                 # Check if the converted value is a valid positive number
                 if not isinstance(amount, (int, float)) or amount <= 0:
                     raise ValueError("Amount must be a positive number")
-                    
+
                 # Update the data with the converted amount
                 data['amount'] = amount
-                
+
             except (ValueError, TypeError) as e:
                 return JsonResponse({
                     'error': 'Amount must be a positive number',
                     'status': 'error'
                 }, status=400)
-            
+
         # Update the expense
         expense_service = DynamoDBExpenseService()
         updated_expense = expense_service.update_expense(
@@ -963,19 +963,19 @@ def update_expense(request, expense_id):
             category=data.get('category'),
             description=data.get('description')
         )
-        
+
         if not updated_expense:
             return JsonResponse({
                 'error': 'Expense not found or you do not have permission to update it',
                 'status': 'error'
             }, status=404)
-            
+
         return JsonResponse({
             'message': 'Expense updated successfully',
             'expense': updated_expense,
             'status': 'success'
         })
-        
+
     except json.JSONDecodeError:
         return JsonResponse({
             'error': 'Invalid JSON payload',
@@ -988,6 +988,7 @@ def update_expense(request, expense_id):
             'status': 'error'
         }, status=500)
 
+
 @require_http_methods(["DELETE"])
 @require_auth
 def delete_expense(request, expense_id):
@@ -997,22 +998,22 @@ def delete_expense(request, expense_id):
     try:
         # Get the user ID from the request (set by JWTAuthenticationMiddleware)
         user_id = request.user_info['user_id']
-        
+
         # Delete the expense
         expense_service = DynamoDBExpenseService()
         success = expense_service.delete_expense(expense_id, user_id)
-        
+
         if not success:
             return JsonResponse({
                 'error': 'Expense not found or you do not have permission to delete it',
                 'status': 'error'
             }, status=404)
-            
+
         return JsonResponse({
             'message': 'Expense deleted successfully',
             'status': 'success'
         })
-        
+
     except Exception as e:
         logger.error(f"Error deleting expense: {str(e)}")
         return JsonResponse({
