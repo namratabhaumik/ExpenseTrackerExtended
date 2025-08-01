@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - master
-    branches-ignore:
-      - chore/production-readiness
+      - main
+      - develop
   pull_request:
     branches:
       - master
-    branches-ignore:
-      - chore/production-readiness
+      - main
+      - develop
+  workflow_dispatch:
 
 permissions:
   contents: "read"
