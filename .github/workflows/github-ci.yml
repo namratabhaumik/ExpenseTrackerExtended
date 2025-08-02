@@ -4,12 +4,11 @@ on:
   push:
     branches:
       - master
-      - main
+      - chore/production-readiness
       - develop
   pull_request:
     branches:
       - master
-      - main
       - develop
   workflow_dispatch:
 
