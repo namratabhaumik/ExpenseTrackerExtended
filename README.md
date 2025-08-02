@@ -98,9 +98,58 @@ DATABASE_URL=postgresql://postgres:your-password@db.your-project-ref.supabase.co
 | Dashboard           | ✅ Present | Summary cards, recent transactions        |
 | Profile/Settings    | ✅ Present | UI for account info, password change      |
 | Logout              | ✅ Present | Button in Navbar                          |
-| Receipt Upload      | ✅ Present | Via form                                  |
-| Budgeting/Analytics | ❌ Missing | Not present                               |
-| Responsive Layout   | ✅ Present | Fully responsive, mobile/tablet/desktop   |
+| Monitoring          | ✅ Present | Google Cloud Operations Suite integration |
+
+## 📊 Monitoring & Observability
+
+The application includes comprehensive monitoring and observability using Google Cloud Operations Suite:
+
+### Features
+
+- **Structured JSON Logging**: All logs are formatted as JSON for easy parsing and analysis
+- **Request/Response Tracking**: Automatic logging of all HTTP requests with performance metrics
+- **Error Monitoring**: Comprehensive error tracking with context and stack traces
+- **Performance Monitoring**: Detection and alerting for slow requests (>1 second)
+- **Dashboard**: Pre-configured dashboard with key metrics
+- **Alerts**: Automated alerting for critical issues
+
+### Setup
+
+1. **Automatic Setup** (Recommended):
+
+   ```bash
+   cd expense-tracker-backend
+   python scripts/setup_monitoring.py
+   ```
+
+2. **Manual Setup**: See [monitoring/README.md](expense-tracker-backend/monitoring/README.md) for detailed instructions
+
+### Key Metrics
+
+- **Request Rate**: Requests per second
+- **Error Rate**: Errors per second with error type breakdown
+- **Response Time**: 95th percentile response time
+- **Slow Requests**: Count of requests taking >1 second
+- **Success Rate**: Percentage of successful requests
+
+### Viewing Logs
+
+- **Google Cloud Console**: [Logs](https://console.cloud.google.com/logs) and [Monitoring](https://console.cloud.google.com/monitoring)
+- **Command Line**: Use `gcloud logging read` with structured queries
+- **Dashboard**: Pre-configured dashboard with real-time metrics
+
+### Alerting
+
+The system monitors and alerts on:
+
+- High error rates (>5% over 5 minutes)
+- High response times (>2 second 95th percentile)
+- Service unavailability
+
+For detailed monitoring documentation, see [monitoring/README.md](expense-tracker-backend/monitoring/README.md).
+| Receipt Upload | ✅ Present | Via form |
+| Budgeting/Analytics | ❌ Missing | Not present |
+| Responsive Layout | ✅ Present | Fully responsive, mobile/tablet/desktop |
 
 ## 🧑‍💻 Prerequisites
 

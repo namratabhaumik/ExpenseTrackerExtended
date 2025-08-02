@@ -88,6 +88,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'auth_app.middleware.JWTAuthenticationMiddleware',
+    'auth_app.logging_middleware.RequestLoggingMiddleware',
+    'auth_app.logging_middleware.PerformanceLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'expense_tracker.urls'
@@ -258,11 +260,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Logging Configuration
 if os.environ.get('CLOUD_RUN', 'false').lower() == 'true':
-    # Cloud Run: Console only
+    # Cloud Run: Structured JSON logging for Google Cloud Operations Suite
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
+            'json': {
+                'class': 'utils.logging_config.GoogleCloudJsonFormatter',
+                'format': '%(timestamp)s %(severity)s %(name)s %(message)s',
+                'json_ensure_ascii': False,
+            },
             'verbose': {
                 'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
                 'style': '{',
@@ -271,7 +278,7 @@ if os.environ.get('CLOUD_RUN', 'false').lower() == 'true':
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
-                'formatter': 'verbose',
+                'formatter': 'json',
             },
         },
         'root': {
@@ -287,6 +294,21 @@ if os.environ.get('CLOUD_RUN', 'false').lower() == 'true':
             'auth_app': {
                 'handlers': ['console'],
                 'level': 'DEBUG',
+                'propagate': False,
+            },
+            'request': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'error': {
+                'handlers': ['console'],
+                'level': 'ERROR',
+                'propagate': False,
+            },
+            'google.cloud': {
+                'handlers': ['console'],
+                'level': 'WARNING',
                 'propagate': False,
             },
         },

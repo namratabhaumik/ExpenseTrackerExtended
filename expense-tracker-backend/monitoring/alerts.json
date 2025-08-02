@@ -1,0 +1,63 @@
+{
+  "displayName": "Expense Tracker Alerts",
+  "conditions": [
+    {
+      "displayName": "High Error Rate",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/log_entry_count\" resource.type=\"cloud_run_revision\" resource.labels.service_name=\"expense-tracker-backend\" jsonPayload.severity=\"ERROR\"",
+        "comparison": "COMPARISON_GREATER_THAN",
+        "thresholdValue": 0.05,
+        "duration": "300s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_RATE",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ]
+      }
+    },
+    {
+      "displayName": "High Response Time",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/log_entry_count\" resource.type=\"cloud_run_revision\" resource.labels.service_name=\"expense-tracker-backend\" jsonPayload.duration_ms>0",
+        "comparison": "COMPARISON_GREATER_THAN",
+        "thresholdValue": 2000,
+        "duration": "300s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_PERCENTILE_95",
+            "crossSeriesReducer": "REDUCE_MEAN"
+          }
+        ]
+      }
+    },
+    {
+      "displayName": "Service Unavailable",
+      "conditionThreshold": {
+        "filter": "metric.type=\"run.googleapis.com/request_count\" resource.type=\"cloud_run_revision\" resource.labels.service_name=\"expense-tracker-backend\"",
+        "comparison": "COMPARISON_LESS_THAN",
+        "thresholdValue": 1,
+        "duration": "60s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_COUNT",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ]
+      }
+    }
+  ],
+  "notificationChannels": [
+    {
+      "type": "email",
+      "displayName": "Expense Tracker Alerts",
+      "description": "Email notifications for critical alerts"
+    }
+  ],
+  "documentation": {
+    "content": "This alerting policy monitors the Expense Tracker application for:\n- High error rates (>5% over 5 minutes)\n- High response times (>2s 95th percentile)\n- Service unavailability\n\nFor more information, check the Google Cloud Operations Suite dashboard."
+  }
+}
