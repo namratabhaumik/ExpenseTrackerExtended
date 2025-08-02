@@ -10,8 +10,14 @@ import os
 from datetime import datetime
 from typing import Any, Dict
 
-import google.cloud.logging
 from pythonjsonlogger import jsonlogger
+
+# Conditional import for Google Cloud Logging (only in production)
+try:
+    import google.cloud.logging
+    GOOGLE_CLOUD_LOGGING_AVAILABLE = True
+except ImportError:
+    GOOGLE_CLOUD_LOGGING_AVAILABLE = False
 
 
 class GoogleCloudJsonFormatter(jsonlogger.JsonFormatter):
@@ -50,7 +56,7 @@ def setup_google_cloud_logging() -> None:
     Set up Google Cloud Logging client for production environment.
     This should be called early in the application startup.
     """
-    if os.environ.get('CLOUD_RUN', 'false').lower() == 'true':
+    if os.environ.get('CLOUD_RUN', 'false').lower() == 'true' and GOOGLE_CLOUD_LOGGING_AVAILABLE:
         try:
             # Initialize Google Cloud Logging client
             client = google.cloud.logging.Client()
@@ -62,6 +68,9 @@ def setup_google_cloud_logging() -> None:
             # Fallback to console logging if Google Cloud setup fails
             logging.warning(
                 f"Failed to initialize Google Cloud Logging: {e}. Falling back to console logging.")
+    elif os.environ.get('CLOUD_RUN', 'false').lower() == 'true' and not GOOGLE_CLOUD_LOGGING_AVAILABLE:
+        logging.warning(
+            "Google Cloud Logging not available. Using console logging.")
 
 
 def get_structured_logger(name: str) -> logging.Logger:
