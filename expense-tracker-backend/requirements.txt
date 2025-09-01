@@ -25,7 +25,7 @@ dj-database-url==2.1.0  # For parsing database URLs
 flake8==7.0.0
 pytest==8.3.4
 pytest-django==4.8.0
-pytest-cov==4.1.0
+pytest-cov==6.2.1
 coverage==7.4.0
 moto==5.0.27
 uvicorn[standard]==0.27.1
