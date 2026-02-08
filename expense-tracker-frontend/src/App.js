@@ -64,7 +64,7 @@ function App() {
             transition: 'all 0.2s',
           }}
         >
-          {theme === 'dark' ? '☀️' : '🌙'}
+          {theme === 'dark' ? '' : ''}
         </button>
       )}
       {isAuthenticated && (

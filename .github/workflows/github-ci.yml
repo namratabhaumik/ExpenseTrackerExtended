@@ -81,68 +81,69 @@ jobs:
           cd expense-tracker-backend
           docker build -t expense-tracker-backend:ci .
 
-  deploy-backend:
-    needs: build-and-test-backend
-    runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Google Auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: "projects/876160330159/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
-          service_account: "cloud-run-sa@nimble-analyst-402215.iam.gserviceaccount.com"
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev
-
-      - name: Create Artifact Registry repository
-        run: |
-          gcloud artifacts repositories create expense-tracker-backend \
-            --repository-format=docker \
-            --location=us-central1 \
-            --quiet || echo "Repository already exists"
-
-      - name: Build and push Docker image
-        run: |
-          cd expense-tracker-backend
-          docker build -t us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} .
-          docker push us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }}
-
-      - name: Delete existing Cloud Run service (if exists)
-        run: |
-          gcloud run services delete expense-tracker-backend \
-            --region=us-central1 \
-            --quiet || true
-
-      - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy expense-tracker-backend \
-            --image=us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} \
-            --platform=managed \
-            --region=us-central1 \
-            --allow-unauthenticated \
-            --port=8000 \
-            --memory=1Gi \
-            --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}" \
-            --set-secrets="DATABASE_URL=DATABASE_URL:latest,DJANGO_SECRET_KEY=DJANGO_SECRET_KEY:latest,COGNITO_USER_POOL_ID=COGNITO_USER_POOL_ID:latest,COGNITO_CLIENT_ID=COGNITO_CLIENT_ID:latest,COGNITO_CLIENT_SECRET=COGNITO_CLIENT_SECRET:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest"
-
-      - name: Get Cloud Run URL
-        id: get-url
-        run: |
-          URL=$(gcloud run services describe expense-tracker-backend --region=us-central1 --format='value(status.url)')
-          echo "url=$URL" >> $GITHUB_OUTPUT
-
-      - name: Show deployment URL
-        run: |
-          echo " Backend deployed to: ${{ steps.get-url.outputs.url }}"
-          echo " Test your API with: curl -X POST ${{ steps.get-url.outputs.url }}/api/login/"
+  # deploy-backend:
+  #   needs: build-and-test-backend
+  #   runs-on: ubuntu-latest
+  #   # Disabled: Cloud deployment requires secrets in Google Cloud Secret Manager
+  #   # To enable, configure these secrets: DATABASE_URL, DJANGO_SECRET_KEY, COGNITO credentials, AWS credentials
+  #
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Google Auth
+  #       uses: google-github-actions/auth@v2
+  #       with:
+  #         workload_identity_provider: "projects/876160330159/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+  #         service_account: "cloud-run-sa@nimble-analyst-402215.iam.gserviceaccount.com"
+  #
+  #     - name: Set up Cloud SDK
+  #       uses: google-github-actions/setup-gcloud@v2
+  #
+  #     - name: Configure Docker for Artifact Registry
+  #       run: gcloud auth configure-docker us-central1-docker.pkg.dev
+  #
+  #     - name: Create Artifact Registry repository
+  #       run: |
+  #         gcloud artifacts repositories create expense-tracker-backend \
+  #           --repository-format=docker \
+  #           --location=us-central1 \
+  #           --quiet || echo "Repository already exists"
+  #
+  #     - name: Build and push Docker image
+  #       run: |
+  #         cd expense-tracker-backend
+  #         docker build -t us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} .
+  #         docker push us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }}
+  #
+  #     - name: Delete existing Cloud Run service (if exists)
+  #       run: |
+  #         gcloud run services delete expense-tracker-backend \
+  #           --region=us-central1 \
+  #           --quiet || true
+  #
+  #     - name: Deploy to Cloud Run
+  #       run: |
+  #         gcloud run deploy expense-tracker-backend \
+  #           --image=us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/expense-tracker-backend/expense-tracker-backend:${{ github.sha }} \
+  #           --platform=managed \
+  #           --region=us-central1 \
+  #           --allow-unauthenticated \
+  #           --port=8000 \
+  #           --memory=1Gi \
+  #           --set-env-vars="CLOUD_RUN=true,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},AWS_REGION=${{ vars.AWS_REGION }},DYNAMODB_TABLE_NAME=${{ vars.DYNAMODB_TABLE_NAME }},S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }},S3_REGION=${{ vars.S3_REGION }}" \
+  #           --set-secrets="DATABASE_URL=DATABASE_URL:latest,DJANGO_SECRET_KEY=DJANGO_SECRET_KEY:latest,COGNITO_USER_POOL_ID=COGNITO_USER_POOL_ID:latest,COGNITO_CLIENT_ID=COGNITO_CLIENT_ID:latest,COGNITO_CLIENT_SECRET=COGNITO_CLIENT_SECRET:latest,AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest"
+  #
+  #     - name: Get Cloud Run URL
+  #       id: get-url
+  #       run: |
+  #         URL=$(gcloud run services describe expense-tracker-backend --region=us-central1 --format='value(status.url)')
+  #         echo "url=$URL" >> $GITHUB_OUTPUT
+  #
+  #     - name: Show deployment URL
+  #       run: |
+  #         echo " Backend deployed to: ${{ steps.get-url.outputs.url }}"
+  #         echo " Test your API with: curl -X POST ${{ steps.get-url.outputs.url }}/api/login/"
 
   build-and-test-frontend:
     runs-on: ubuntu-latest
@@ -178,36 +179,37 @@ jobs:
           cd expense-tracker-frontend
           npm run build
 
-  deploy-frontend:
-    needs: build-and-test-frontend
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      checks: "write"
-      deployments: "write"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Install dependencies
-        run: |
-          cd expense-tracker-frontend
-          npm ci
-
-      - name: Build React app
-        env:
-          CI: false
-          REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
-        run: |
-          cd expense-tracker-frontend
-          npm run build
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
-          channelId: live
-          projectId: expense-tracker-frontend-1a909
-          entryPoint: expense-tracker-frontend
+  # deploy-frontend:
+  #   needs: build-and-test-frontend
+  #   runs-on: ubuntu-latest
+  #   # Disabled: Firebase deployment disabled to avoid cloud costs
+  #   permissions:
+  #     contents: "read"
+  #     checks: "write"
+  #     deployments: "write"
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Use Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "20"
+  #     - name: Install dependencies
+  #       run: |
+  #         cd expense-tracker-frontend
+  #         npm ci
+  #
+  #     - name: Build React app
+  #       env:
+  #         CI: false
+  #         REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
+  #       run: |
+  #         cd expense-tracker-frontend
+  #         npm run build
+  #     - name: Deploy to Firebase Hosting
+  #       uses: FirebaseExtended/action-hosting-deploy@v0
+  #       with:
+  #         repoToken: "${{ secrets.GITHUB_TOKEN }}"
+  #         firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+  #         channelId: live
+  #         projectId: expense-tracker-frontend-1a909
+  #         entryPoint: expense-tracker-frontend

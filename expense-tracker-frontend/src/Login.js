@@ -289,7 +289,7 @@ function PasswordResetModal({ open, onClose }) {
                           }
                         >
                           <span className="requirement-icon">
-                            {passed ? '✓' : '✗'}
+                            {passed ? '' : ''}
                           </span>
                           {rule.message}
                         </li>
@@ -685,7 +685,7 @@ function AuthForm({ onLoginSuccess, theme }) {
                           }
                         >
                           <span className="requirement-icon">
-                            {passed ? '✓' : '✗'}
+                            {passed ? '' : ''}
                           </span>
                           {rule.message}
                         </li>

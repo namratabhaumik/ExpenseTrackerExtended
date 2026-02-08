@@ -71,7 +71,7 @@ export default function Navbar({
             className="theme-toggle p-2 rounded-md hover:bg-[#6B7280] transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-2 focus:ring-offset-[#4B5563]"
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+            {theme === 'dark' ? '' : ''}
           </button>
         </div>
       </nav>

@@ -15,6 +15,9 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from django.conf import settings
 
+# Import local auth for demo mode
+from .local_auth import local_login, local_signup, IS_LOCAL_DEMO
+
 # Get logger for this module
 logger = logging.getLogger(__name__)
 
@@ -64,6 +67,35 @@ def login_view(request):
                     'status': 'error'
                 }, status=400)
 
+            # Use local mock auth in demo mode
+            if IS_LOCAL_DEMO:
+                tokens, error = local_login(email, password)
+                if error:
+                    return JsonResponse({
+                        'error': error,
+                        'status': 'error'
+                    }, status=400)
+
+                logger.info(f"Local demo login for user: {email}")
+                response = JsonResponse({
+                    'message': 'Login successful',
+                    'id_token': tokens['id_token'],
+                    'refresh_token': tokens['refresh_token'],
+                    'status': 'success'
+                })
+                # Set access_token as HttpOnly, Secure cookie (local uses secure=False)
+                response.set_cookie(
+                    key='access_token',
+                    value=tokens['access_token'],
+                    httponly=True,
+                    secure=False,  # Local development
+                    samesite='Lax',  # Local development
+                    path='/',
+                    max_age=60*60*24  # 1 day
+                )
+                return response
+
+            # Production: Use AWS Cognito
             # Calculate the secret hash
             secret_hash = calculate_secret_hash(email)
 
@@ -162,6 +194,22 @@ def signup_view(request):
                     'status': 'error'
                 }, status=400)
 
+            # Use local mock auth in demo mode
+            if IS_LOCAL_DEMO:
+                success, error = local_signup(email, password)
+                if not success:
+                    return JsonResponse({
+                        'error': error or 'Signup failed',
+                        'status': 'error'
+                    }, status=400)
+
+                logger.info(f"Local demo signup for user: {email}")
+                return JsonResponse({
+                    'message': 'Sign up successful! You can now log in.',
+                    'status': 'success'
+                }, status=201)
+
+            # Production: Use AWS Cognito
             # Calculate the secret hash
             secret_hash = calculate_secret_hash(email)
 
@@ -335,10 +383,18 @@ def forgot_password_view(request):
                     'status': 'error'
                 }, status=400)
 
+            # Local demo mode: just pretend to send reset code
+            if IS_LOCAL_DEMO:
+                logger.info(f"Mock password reset initiated for user: {email}")
+                return JsonResponse({
+                    'message': 'Password reset code sent (demo mode - use any 6-digit code)',
+                    'status': 'success'
+                }, status=200)
+
+            # Production: Initiate forgot password flow with Cognito
             # Calculate the secret hash
             secret_hash = calculate_secret_hash(email)
 
-            # Initiate forgot password flow with Cognito
             cognito_client = get_cognito_client()
             cognito_client.forgot_password(
                 ClientId=COGNITO_CLIENT_ID,
@@ -414,10 +470,18 @@ def confirm_forgot_password_view(request):
                     'status': 'error'
                 }, status=400)
 
+            # Local demo mode: just accept any code and reset password
+            if IS_LOCAL_DEMO:
+                logger.info(f"Mock password reset completed for user: {email}")
+                return JsonResponse({
+                    'message': 'Password reset successful! You can now log in with your new password.',
+                    'status': 'success'
+                }, status=200)
+
+            # Production: Confirm forgot password with Cognito
             # Calculate the secret hash
             secret_hash = calculate_secret_hash(email)
 
-            # Confirm forgot password with Cognito
             cognito_client = get_cognito_client()
             cognito_client.confirm_forgot_password(
                 ClientId=COGNITO_CLIENT_ID,
@@ -505,6 +569,14 @@ def verify_reset_code_view(request):
                     'error': 'Missing required fields: email and code',
                     'status': 'error'
                 }, status=400)
+
+            # Local demo mode: accept any code as valid
+            if IS_LOCAL_DEMO:
+                logger.info(f"Mock reset code verification for user: {email}")
+                return JsonResponse({
+                    'message': 'Reset code is valid.',
+                    'status': 'success'
+                }, status=200)
 
             secret_hash = calculate_secret_hash(email)
 
@@ -725,7 +797,7 @@ def get_expenses(request):
 
 @require_auth
 def upload_receipt(request):
-    """Upload a receipt file to S3."""
+    """Upload a receipt file to S3 (or mock in local mode)."""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -768,7 +840,30 @@ def upload_receipt(request):
                     'status': 'error'
                 }, status=400)
 
-            # Upload to S3
+            # Local demo mode: return mock file URL
+            if IS_LOCAL_DEMO:
+                mock_file_key = f"{user_id}/{file_name}"
+                mock_file_url = f"local://receipts/{mock_file_key}"
+
+                logger.info(f"Mock receipt upload: {mock_file_key} for user {user_id}")
+
+                # If expense_id provided, update the expense with receipt URL
+                if expense_id:
+                    from .models import DynamoDBExpense
+                    expense_db = DynamoDBExpense()
+                    expense_db.update_receipt_url(expense_id, mock_file_url)
+                    logger.info(f"Mock receipt URL updated for expense: {expense_id}")
+
+                return JsonResponse({
+                    'message': 'Receipt uploaded successfully (local demo)',
+                    'file_url': mock_file_url,
+                    'file_key': mock_file_key,
+                    'file_name': file_name,
+                    'expense_id': expense_id,
+                    'status': 'success'
+                }, status=201)
+
+            # Production: Upload to S3
             from utils.s3_utils import S3Handler
             s3_handler = S3Handler()
 
@@ -850,6 +945,13 @@ def profile_view(request):
             name = data.get('name')
             if not email and not name:
                 return JsonResponse({'error': 'No fields to update', 'status': 'error'}, status=400)
+
+            # Local demo mode: just accept the update and return success
+            if IS_LOCAL_DEMO:
+                logger.info(f"Mock profile update for user: {request.user_info.get('email')}")
+                return JsonResponse({'message': 'Profile updated successfully', 'status': 'success'})
+
+            # Production: Update in AWS Cognito
             cognito_client = get_cognito_client()
             access_token = request.COOKIES.get('access_token')
             if not access_token:
@@ -883,6 +985,13 @@ def change_password_view(request):
         new_password = data.get('new_password')
         if not current_password or not new_password:
             return JsonResponse({'error': 'Missing required fields: current_password and new_password', 'status': 'error'}, status=400)
+
+        # Local demo mode: just accept the password change and return success
+        if IS_LOCAL_DEMO:
+            logger.info(f"Mock password change for user: {request.user_info.get('email')}")
+            return JsonResponse({'message': 'Password changed successfully', 'status': 'success'})
+
+        # Production: Change password in AWS Cognito
         cognito_client = get_cognito_client()
         access_token = request.COOKIES.get('access_token')
         if not access_token:

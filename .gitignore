@@ -20,7 +20,7 @@ env/
 pip-log.txt
 
 # Django/Database
-expense-tracker-backend/expense_tracker/db.sqlite3
+*.db.sqlite3
 
 # Docker
 .dockerignore
