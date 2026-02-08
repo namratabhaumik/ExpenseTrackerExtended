@@ -13,10 +13,49 @@ A fully functional, cloud-native expense tracker with:
 
 > **Note:** This README is the single source of documentation for both backend and frontend. The previous frontend/README.md has been merged here for clarity and maintainability.
 
-## 🚀 Live Demo
+## 🚀 Running the Application
 
-- **Frontend**: https://expense-tracker-frontend-1a909.firebaseapp.com/
-- **Backend**: https://expense-tracker-backend-876160330159.us-central1.run.app
+This project supports **two deployment modes** with feature parity:
+
+### Option 1: Local Development (Recommended for Testing/Demo)
+
+Run the app locally **without any cloud resources**:
+
+```bash
+# Terminal 1 - Backend
+cd expense-tracker-backend/expense_tracker
+python manage.py runserver
+
+# Terminal 2 - Frontend
+cd expense-tracker-frontend
+npm start
+```
+
+**Credentials:**
+- Any email/password (mock auth)
+- Admin panel: http://localhost:8000/admin (username: `admin`, password: `admin`)
+
+**What works locally:**
+- ✅ Full authentication flow (mocked)
+- ✅ CRUD operations on expenses (SQLite)
+- ✅ File upload (returns mock URLs)
+- ✅ Dark mode, responsive UI, all features
+
+**No cost, no setup, perfect for development/demo!**
+
+---
+
+### Option 2: Cloud Deployment (Production)
+
+Deploy to production using AWS, GCP, and Firebase:
+
+- **Frontend**: Firebase Hosting
+- **Backend**: GCP Cloud Run
+- **Database**: Supabase PostgreSQL
+- **Authentication**: AWS Cognito
+- **Storage**: AWS S3
+
+> **Note:** The original cloud deployment (https://expense-tracker-frontend-1a909.firebaseapp.com/) is currently offline for cost optimization.
 
 ## 🏗️ Architecture
 
