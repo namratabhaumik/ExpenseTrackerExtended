@@ -12,9 +12,7 @@ A fully functional expense tracker application built with Django backend and Rea
 
 ## Demo
 
-Watch the application:
-
-[![Expense Tracker Demo](https://img.youtube.com/vi/lm1Z1apoY2s/maxresdefault.jpg)](https://youtu.be/lm1Z1apoY2s)
+[![Expense Tracker Demo](https://img.youtube.com/vi/lm1Z1apoY2s/hqdefault.jpg)](https://youtu.be/lm1Z1apoY2s)
 
 ## Running the Application
 
