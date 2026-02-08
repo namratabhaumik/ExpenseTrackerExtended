@@ -415,7 +415,7 @@ function Profile({ theme }) {
                           : 'requirement-unmet flex items-center'
                       }
                     >
-                      <span className="mr-1">{passed ? '✓' : '✗'}</span>
+                      <span className="mr-1">{passed ? '' : ''}</span>
                       {rule.message}
                     </li>
                   );
