@@ -1,0 +1,32 @@
+===================================================
+        WHOLE FOODS MARKET
+===================================================
+Date: 02/06/2026  Time: 03:45 PM
+Location: Palo Alto, CA
+Store ID: WFM-2104
+
+Fresh Organic Vegetables ....... $12.50
+   - Spinach (organic)
+   - Tomatoes (heirloom)
+   - Bell Peppers
+
+Free-Range Chicken Breast (2lb) $18.99
+Almond Milk (unsweetened) ....... $4.99
+Greek Yogurt (32oz) ............. $6.49
+Wild-Caught Salmon Fillet ....... $16.75
+Whole Grain Bread ............... $5.45
+Free-Trade Coffee Beans (1lb) ... $13.99
+
+Subtotal ....................... $79.16
+Tax (7.375%) .................... $5.84
+---------------------------------------------------
+TOTAL ......................... $84.00
+---------------------------------------------------
+
+Payment: Debit Card
+Card: ****5678
+Reference: WFM20260206374501
+
+Items: 8
+Thank you for shopping at Whole Foods!
+===================================================
