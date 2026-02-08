@@ -10,6 +10,12 @@ A fully functional expense tracker application built with Django backend and Rea
 - **Authentication**: Mock auth (local) or AWS Cognito (cloud)
 - **File Storage**: Mock uploads (local) or AWS S3 (cloud)
 
+## Demo
+
+Watch the application:
+
+[![Expense Tracker Demo](https://img.youtube.com/vi/lm1Z1apoY2s/maxresdefault.jpg)](https://youtu.be/lm1Z1apoY2s)
+
 ## Running the Application
 
 This project supports **two deployment modes**:
