@@ -5,8 +5,13 @@ from django.http import JsonResponse
 from django.conf import settings
 import boto3
 from botocore.exceptions import ClientError
+import os
+import base64
 
 logger = logging.getLogger(__name__)
+
+# Check if in local demo mode
+IS_LOCAL_DEMO = os.environ.get('LOCAL_DEMO', 'false').lower() == 'true'
 
 # Lazy-load Cognito client
 _cognito_client = None
@@ -53,7 +58,28 @@ class JWTAuthenticationMiddleware:
                 }, status=401)
 
         try:
-            # Validate token with Cognito
+            # Local demo mode: use simple token validation
+            if IS_LOCAL_DEMO:
+                try:
+                    # Decode mock token (base64 encoded JSON)
+                    payload = json.loads(base64.b64decode(token).decode())
+                    user_email = payload.get('sub')  # 'sub' contains the email
+
+                    request.user_info = {
+                        'user_id': user_email.replace('@', '_').replace('.', '_'),
+                        'email': user_email,
+                        'name': user_email.split('@')[0]
+                    }
+                    logger.debug(f"Local demo auth successful for: {user_email}")
+                    return self.get_response(request)
+                except Exception as e:
+                    logger.warning(f"Invalid local demo token: {str(e)}")
+                    return JsonResponse({
+                        'error': 'Invalid token',
+                        'status': 'error'
+                    }, status=401)
+
+            # Production: Validate token with Cognito
             cognito_client = get_cognito_client()
             response = cognito_client.get_user(
                 AccessToken=token

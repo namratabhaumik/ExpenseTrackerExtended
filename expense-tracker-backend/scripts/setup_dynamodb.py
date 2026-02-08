@@ -78,13 +78,13 @@ def create_dynamodb_table():
 
         # Wait for table to be created
         table.meta.client.get_waiter('table_exists').wait(TableName=table_name)
-        print(f"✅ DynamoDB table '{table_name}' created successfully!")
+        print(f" DynamoDB table '{table_name}' created successfully!")
 
     except Exception as e:
         if 'Table already exists' in str(e):
-            print(f"ℹ️  Table '{table_name}' already exists.")
+            print(f"ℹ  Table '{table_name}' already exists.")
         else:
-            print(f"❌ Error creating table: {e}")
+            print(f" Error creating table: {e}")
 
 
 if __name__ == '__main__':
