@@ -176,8 +176,11 @@ else:
     }
 
 # Caching configuration
-if IS_PRODUCTION:
-    # Use in-memory cache in Cloud Run. This supports atomic increment required by django-ratelimit
+IS_LOCAL_DEMO = os.environ.get('LOCAL_DEMO', 'false').lower() == 'true'
+
+if IS_PRODUCTION or IS_LOCAL_DEMO:
+    # Use in-memory cache in Cloud Run or Local Demo mode
+    # This supports atomic increment required by django-ratelimit
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -185,13 +188,13 @@ if IS_PRODUCTION:
         }
     }
     # Silence django-ratelimit warnings/errors about non-shared cache.
-    # Using LocMemCache is acceptable because Cloud Run free tier usually runs a single instance.
+    # Using LocMemCache is acceptable because Cloud Run and local dev usually run a single instance.
     SILENCED_SYSTEM_CHECKS = [
         "django_ratelimit.E003",
         "django_ratelimit.W001",
     ]
 else:
-    # Local development and CI: use Redis if available for shared cache supporting atomic incr
+    # Local development with Redis (if available): use Redis for shared cache supporting atomic incr
     REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1")
     CACHES = {
         "default": {
