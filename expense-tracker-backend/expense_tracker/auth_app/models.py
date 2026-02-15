@@ -1,16 +1,12 @@
-from django.db import models
-import boto3
-import json
 import uuid
 from datetime import datetime
 from decimal import Decimal
+
+import boto3
 from django.conf import settings
-import os
+from django.db import models
 
 # Create your models here.
-
-# Check if in local demo mode
-IS_LOCAL_DEMO = os.environ.get('LOCAL_DEMO', 'false').lower() == 'true'
 
 # Lazy-load DynamoDB resource
 _dynamodb_resource = None
@@ -40,7 +36,7 @@ class DynamoDBExpense:
     """
 
     def __init__(self):
-        self.is_local = IS_LOCAL_DEMO
+        self.is_local = settings.IS_LOCAL_DEMO if hasattr(settings, 'IS_LOCAL_DEMO') else False
         if not self.is_local:
             self.table = get_dynamodb_table()
 

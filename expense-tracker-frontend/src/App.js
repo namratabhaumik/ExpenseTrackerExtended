@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import AuthForm from './Login';
-import Expenses from './Expenses';
-import Dashboard from './Dashboard';
-import Categories from './Categories';
-import Profile from './Profile';
-import './styles/App.css';
-import Navbar from './Navbar';
+import AuthForm from './pages/Login/Login';
+import Expenses from './pages/Expenses/Expenses';
+import Dashboard from './pages/Dashboard/Dashboard';
+import Categories from './pages/Categories/Categories';
+import Profile from './pages/Profile/Profile';
+import Navbar from './components/Navbar/Navbar';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -1,17 +1,16 @@
-import React from 'react';
 import {
   render,
   screen,
   fireEvent,
   waitFor,
   within,
+  act,
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
-import { act } from 'react-dom/test-utils';
 
 // Mock the AWS configuration
-jest.mock('./awsconfig', () => ({
+jest.mock('./config/awsconfig', () => ({
   Auth: {
     configure: jest.fn(),
   },
@@ -25,7 +24,7 @@ jest.mock('axios', () => ({
 
 describe('App Component', () => {
   beforeEach(() => {
-    global.fetch = jest.fn((url, options) => {
+    global.fetch = jest.fn((url) => {
       // Mock /api/signup/ POST
       if (url && url.includes('/api/signup/')) {
         return Promise.resolve({
@@ -204,13 +203,13 @@ describe('App Component', () => {
     fireEvent.change(
       screen.getByLabelText('Password:', { selector: 'input' }),
       {
-        target: { value: 'Password1!' },
+        target: { value: 'Test_Pass_1!' },
       },
     );
     fireEvent.change(
       screen.getByLabelText('Confirm Password:', { selector: 'input' }),
       {
-        target: { value: 'Password1!' },
+        target: { value: 'Test_Pass_1!' },
       },
     );
     const signUpSubmit = screen
@@ -239,13 +238,13 @@ describe('App Component', () => {
     fireEvent.change(
       screen.getByLabelText('Password:', { selector: 'input' }),
       {
-        target: { value: 'Password1!' },
+        target: { value: 'Test_Pass_1!' },
       },
     );
     fireEvent.change(
       screen.getByLabelText('Confirm Password:', { selector: 'input' }),
       {
-        target: { value: 'Password1!' },
+        target: { value: 'Test_Pass_1!' },
       },
     );
     const signUpSubmit = screen
@@ -416,10 +415,10 @@ describe('App Component', () => {
       target: { value: '123456' },
     });
     fireEvent.change(screen.getByPlaceholderText('New password'), {
-      target: { value: 'NewPassword123!' },
+      target: { value: 'Test_New_1!' },
     });
     fireEvent.change(screen.getByPlaceholderText('Confirm new password'), {
-      target: { value: 'NewPassword123!' },
+      target: { value: 'Test_New_1!' },
     });
 
     const resetButton = screen.getByRole('button', { name: /Reset Password/i });
@@ -474,10 +473,10 @@ describe('App Component', () => {
       target: { value: '123456' },
     });
     fireEvent.change(screen.getByPlaceholderText('New password'), {
-      target: { value: 'NewPassword123!' },
+      target: { value: 'Test_New_1!' },
     });
     fireEvent.change(screen.getByPlaceholderText('Confirm new password'), {
-      target: { value: 'DifferentPassword123!' },
+      target: { value: 'Test_Diff_1!' },
     });
 
     const resetButton = screen.getByRole('button', { name: /Reset Password/i });

@@ -1,0 +1,47 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: "read"
+  checks: "write"
+
+jobs:
+  # Backend tests with local configuration (default)
+  test-backend:
+    uses: ./.github/workflows/backend-test-local.yml
+
+  # Frontend tests and build
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          cd expense-tracker-frontend
+          npm ci
+
+      - name: Lint
+        run: cd expense-tracker-frontend && npm run lint
+
+      - name: Test
+        run: |
+          cd expense-tracker-frontend
+          npm run test:coverage
+        env:
+          CI: true
+
+      - name: Build
+        run: |
+          cd expense-tracker-frontend
+          npm run build
+        env:
+          CI: true
