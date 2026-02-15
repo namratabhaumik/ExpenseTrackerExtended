@@ -33,12 +33,8 @@ jobs:
         run: |
           cd expense-tracker-frontend
           npm run test:coverage
-        env:
-          CI: true
 
       - name: Build
         run: |
           cd expense-tracker-frontend
           npm run build
-        env:
-          CI: true
