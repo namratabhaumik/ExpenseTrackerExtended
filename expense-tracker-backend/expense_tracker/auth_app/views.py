@@ -21,6 +21,25 @@ from .middleware import require_auth
 logger = logging.getLogger(__name__)
 
 
+def _encode_cookie_token(token: str) -> str:
+    """
+    Produce a cookie-safe representation of a token.
+
+    Ensures the value only contains URL-safe base64 characters so it
+    cannot break cookie parsing or inject additional attributes, even
+    if the underlying token were attacker-controlled.
+    """
+    if token is None:
+        return ''
+    if isinstance(token, str):
+        token_bytes = token.encode('utf-8')
+    else:
+        token_bytes = token
+    encoded = base64.urlsafe_b64encode(token_bytes).decode('ascii')
+    # Strip padding to keep the value compact and still reversible if needed.
+    return encoded.rstrip('=')
+
+
 @csrf_exempt
 @ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
 def login_view(request):
@@ -63,7 +82,7 @@ def login_view(request):
         is_local = settings.IS_LOCAL_DEMO if hasattr(settings, 'IS_LOCAL_DEMO') else False
         response.set_cookie(
             key='access_token',
-            value=tokens['access_token'],
+            value=_encode_cookie_token(tokens['access_token']),
             httponly=True,
             secure=not is_local,
             samesite='Lax' if is_local else 'None',
