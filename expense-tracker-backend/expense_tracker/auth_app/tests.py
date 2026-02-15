@@ -1,13 +1,11 @@
-import json
 import base64
-from unittest.mock import patch, MagicMock
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.contrib.auth.models import User
-from django.conf import settings
-import boto3
-from moto import mock_aws
+import json
 import os
+from unittest.mock import MagicMock, patch
+
+from django.test import Client, TestCase
+from django.urls import reverse
+from moto import mock_aws
 
 
 class AuthAppTestCase(TestCase):
@@ -253,7 +251,7 @@ class ReceiptUploadTest(AuthAppTestCase):
 
     @mock_aws
     @patch('auth_app.middleware.get_cognito_client')
-    @patch('utils.s3_utils.get_s3_client')
+    @patch('cloud_app.implementations.utils.s3_utils.get_s3_client')
     def test_upload_receipt_success(self, mock_get_s3_client, mock_get_cognito_client):
         """Test successful receipt upload."""
         # Mock Cognito user validation

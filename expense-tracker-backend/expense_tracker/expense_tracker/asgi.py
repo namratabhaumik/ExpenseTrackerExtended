@@ -8,11 +8,12 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-from dotenv import load_dotenv
 
 from django.core.asgi import get_asgi_application
+from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'expense_tracker.settings')
+# Default to local settings; can be overridden by DJANGO_SETTINGS_MODULE environment variable
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'expense_tracker.settings.local')
 
 application = get_asgi_application()
