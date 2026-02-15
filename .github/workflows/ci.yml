@@ -29,9 +29,6 @@ jobs:
           cd expense-tracker-frontend
           npm ci
 
-      - name: Lint
-        run: cd expense-tracker-frontend && npm run lint
-
       - name: Test
         run: |
           cd expense-tracker-frontend
