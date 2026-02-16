@@ -1,4 +1,4 @@
-import { apiGet, apiPut } from '../../services/api';
+import { apiGet, apiPut, apiPost } from '../../services/api';
 import { API_ENDPOINTS } from '../../utils/constants';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
 import { usePasswordValidation } from '../../hooks/usePasswordValidation';
@@ -11,7 +11,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
-function Profile({ theme }) {
+function Profile({ theme, onLogout }) {
   // State for profile info
   const [profile, setProfile] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(true);
@@ -63,31 +63,29 @@ function Profile({ theme }) {
 
   // Fetch profile info on mount
   useEffect(() => {
-
-    setLoading(true);
-    setError('');
-    fetch(`${API_BASE}/api/profile/`, {
-      credentials: 'include',
-    })
-      .then(async (resp) => {
-        if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.error || 'Failed to fetch profile');
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await apiGet('/api/profile/');
+        if (data?.profile) {
+          setProfile({
+            name: data.profile.name || '',
+            email: data.profile.email || '',
+          });
+          setEditProfile({
+            name: data.profile.name || '',
+            email: data.profile.email || '',
+          });
         }
-        return resp.json();
-      })
-      .then((data) => {
-        setProfile({
-          name: data.profile.name || '',
-          email: data.profile.email || '',
-        });
-        setEditProfile({
-          name: data.profile.name || '',
-          email: data.profile.email || '',
-        });
-      })
-      .catch((e) => setError(e.message || 'An error occurred.'))
-      .finally(() => setLoading(false));
+      } catch (e) {
+        setError(e.message || 'Failed to fetch profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   // Handle profile form input
@@ -95,33 +93,15 @@ function Profile({ theme }) {
     setEditProfile({ ...editProfile, [e.target.name]: e.target.value });
   };
 
-  // Validate email format
-  const validateEmail = (email) => /.+@.+\..+/.test(email);
-
-  // Save profile changes
+  // Save profile changes (name only)
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    if (!validateEmail(editProfile.email)) {
-      showErrorToast('Invalid email format.', toastOptions('error'));
-      return;
-    }
     setSaveLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/api/profile/`, {
-        credentials: 'include',
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          
-        },
-        body: JSON.stringify({
-          name: editProfile.name,
-          email: editProfile.email,
-        }),
+      await apiPut('/api/profile/', {
+        name: editProfile.name,
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Failed to update profile');
-      setProfile({ ...editProfile });
+      setProfile({ ...profile, name: editProfile.name });
       setEditMode(false);
       showSuccessToast('Profile updated successfully!', toastOptions('success'));
     } catch (e) {
@@ -143,6 +123,7 @@ function Profile({ theme }) {
   // Toast style options
   const toastOptions = (type) => ({
     position: 'top-right',
+    containerId: 'profile-toast',
     style: {
       background: type === 'success' ? '#d1fae5' : '#fee2e2',
       color: type === 'success' ? '#10B981' : '#B91C1C',
@@ -175,22 +156,16 @@ function Profile({ theme }) {
     }
     setPwLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/api/profile/change-password/`, {
-        credentials: 'include',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          
-        },
-        body: JSON.stringify({
-          current_password: pwForm.current,
-          new_password: pwForm.new1,
-        }),
+      await apiPost('/api/profile/change-password/', {
+        current_password: pwForm.current,
+        new_password: pwForm.new1,
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Failed to change password');
-      showSuccessToast('Password changed successfully!', toastOptions('success'));
+      showSuccessToast('Password changed successfully! Please log in with your new password.', toastOptions('success'));
       setPwForm({ current: '', new1: '', new2: '' });
+      // Log out user after password change for security
+      setTimeout(() => {
+        if (onLogout) onLogout();
+      }, 1500);
     } catch (e) {
       showErrorToast(
         e.message || 'Failed to change password.',
@@ -274,7 +249,7 @@ function Profile({ theme }) {
                 setEditProfile(profile);
               }}
             >
-              Edit Profile
+              Edit Name
             </button>
           </div>
         ) : (
@@ -295,25 +270,6 @@ function Profile({ theme }) {
                 className="profile-input"
                 placeholder="Your name"
                 autoComplete="name"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="profile-email"
-                className="block font-semibold mb-1 text-[#374151] dark:text-[#F3F4F6]"
-              >
-                Email
-              </label>
-              <input
-                id="profile-email"
-                type="email"
-                name="email"
-                value={editProfile.email}
-                onChange={handleEditChange}
-                className="profile-input"
-                placeholder="your@email.com"
-                autoComplete="email"
-                required
               />
             </div>
             <div className="flex gap-2 mt-2">
@@ -487,8 +443,8 @@ function Profile({ theme }) {
 }
 
 Profile.propTypes = {
-
   theme: PropTypes.string.isRequired,
+  onLogout: PropTypes.func,
 };
 
 export default Profile;

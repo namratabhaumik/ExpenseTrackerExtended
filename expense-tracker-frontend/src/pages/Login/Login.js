@@ -4,7 +4,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import './Login.css';
 import ConfirmAccountModal from './components/ConfirmAccountModal';
-import PasswordResetModal from './components/PasswordResetModal';
+import { apiPost, APIError, clearCSRFTokenCache } from '../../services/api';
 
 function AuthForm({ onLoginSuccess, theme }) {
   const [activeTab, setActiveTab] = useState('login');
@@ -26,8 +26,6 @@ function AuthForm({ onLoginSuccess, theme }) {
   const [showSignupConfirm, setShowSignupConfirm] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
-  // Password reset modal state
-  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   // Password requirements UI state
   const [passwordFocused, setPasswordFocused] = useState(false);
 
@@ -63,24 +61,19 @@ function AuthForm({ onLoginSuccess, theme }) {
     setLoginError('');
     setLoginLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/login/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-          credentials: 'include',
-        },
-      );
-      if (response.ok) {
-        await response.json();
-        onLoginSuccess();
-      } else {
-        const errorData = await response.json();
-        setLoginError(errorData.message || 'Login failed. Please try again.');
-      }
+      await apiPost('/api/login/', {
+        email: loginEmail,
+        password: loginPassword,
+      });
+      // Clear cached CSRF token since Django rotates it after login
+      clearCSRFTokenCache();
+      onLoginSuccess();
     } catch (err) {
-      setLoginError('An error occurred. Please try again later.');
+      if (err instanceof APIError) {
+        setLoginError(err.message || 'Login failed. Please try again.');
+      } else {
+        setLoginError('An error occurred. Please try again later.');
+      }
     } finally {
       setLoginLoading(false);
     }
@@ -105,36 +98,24 @@ function AuthForm({ onLoginSuccess, theme }) {
     }
     setSignupLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/signup/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: signupEmail,
-            password: signupPassword,
-          }),
-        },
+      await apiPost('/api/signup/', {
+        email: signupEmail,
+        password: signupPassword,
+      });
+      setSignupSuccess(
+        'Sign up successful! You can now log in with your credentials.',
       );
-      if (response.ok) {
-        setSignupSuccess(
-          'Sign up successful! Please check your email to verify your account.',
-        );
-        setSignupEmail('');
-        setSignupPassword('');
-        setSignupConfirm('');
-        setConfirmEmail(signupEmail);
-        setShowConfirmModal(true);
-      } else {
-        const errorData = await response.json();
-        setSignupError(
-          errorData.error ||
-            errorData.message ||
-            'Sign up failed. Please try again.',
-        );
-      }
+      setSignupEmail('');
+      setSignupPassword('');
+      setSignupConfirm('');
     } catch (err) {
-      setSignupError('An error occurred. Please try again later.');
+      if (err instanceof APIError) {
+        setSignupError(
+          err.message || 'Sign up failed. Please try again.',
+        );
+      } else {
+        setSignupError('An error occurred. Please try again later.');
+      }
     } finally {
       setSignupLoading(false);
     }
@@ -251,18 +232,6 @@ function AuthForm({ onLoginSuccess, theme }) {
                 }}
               >
                 Don&apos;t have an account? Sign Up
-              </span>
-              <span
-                className="auth-link forgot-password"
-                onClick={() => setShowPasswordResetModal(true)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ')
-                    setShowPasswordResetModal(true);
-                }}
-              >
-                Forgot Password?
               </span>
             </div>
             {loginError && <p className="login-error">{loginError}</p>}
@@ -419,10 +388,6 @@ function AuthForm({ onLoginSuccess, theme }) {
             setShowConfirmModal(false);
             setActiveTab('login');
           }}
-        />
-        <PasswordResetModal
-          open={showPasswordResetModal}
-          onClose={() => setShowPasswordResetModal(false)}
         />
       </div>
     </div>

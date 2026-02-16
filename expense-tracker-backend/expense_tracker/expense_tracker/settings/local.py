@@ -4,47 +4,7 @@ Local development settings for expense_tracker.
 Used for local development with SQLite, local authentication, and local file storage.
 """
 
-from .base import (
-    INSTALLED_APPS,
-    BASE_DIR,
-    MIDDLEWARE,
-    TEMPLATES,
-    SECRET_KEY,
-    ROOT_URLCONF,
-    ALLOWED_HOSTS,
-    STATIC_URL,
-    DEFAULT_AUTO_FIELD,
-    CORS_ALLOW_CREDENTIALS,
-    CORS_ALLOWED_ORIGIN_REGEXES,
-    RATELIMIT_USE_CACHE,
-    AUTH_PASSWORD_VALIDATORS,
-    LANGUAGE_CODE,
-    TIME_ZONE,
-    USE_I18N,
-    USE_TZ,
-    WSGI_APPLICATION,
-)
-
-__all__ = [
-    'INSTALLED_APPS',
-    'BASE_DIR',
-    'MIDDLEWARE',
-    'TEMPLATES',
-    'SECRET_KEY',
-    'ROOT_URLCONF',
-    'ALLOWED_HOSTS',
-    'STATIC_URL',
-    'DEFAULT_AUTO_FIELD',
-    'CORS_ALLOW_CREDENTIALS',
-    'CORS_ALLOWED_ORIGIN_REGEXES',
-    'RATELIMIT_USE_CACHE',
-    'AUTH_PASSWORD_VALIDATORS',
-    'LANGUAGE_CODE',
-    'TIME_ZONE',
-    'USE_I18N',
-    'USE_TZ',
-    'WSGI_APPLICATION',
-]
+from .base import *
 
 # Add local app for local development implementations
 INSTALLED_APPS.append('local_app')

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { ClipLoader } from 'react-spinners';
 import { showSuccessToast, showErrorToast } from '../../../utils/toast';
+import { apiPost, APIError } from '../../../services/api';
 
 function AddExpenseForm({ onSuccess, setDashboardRefreshFlag }) {
   const [form, setForm] = useState({
@@ -21,48 +22,24 @@ function AddExpenseForm({ onSuccess, setDashboardRefreshFlag }) {
     setAddError('');
     setLoading(true);
     try {
-      const resp = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/expenses/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(form),
+      await apiPost('/api/expenses/', form);
+      setForm({ amount: '', category: '', description: '' });
+      if (onSuccess) onSuccess();
+      if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1);
+      showSuccessToast('Expense added successfully!', {
+        position: 'top-right',
+        style: {
+          background: '#d1fae5',
+          color: '#10B981',
+          borderRadius: 8,
+          fontWeight: 500,
         },
-      );
-      if (!resp.ok) {
-        const err = await resp.json();
-        setAddError(err.error || 'Failed to add expense');
-        showErrorToast(err.error || 'Failed to add expense', {
-          position: 'top-right',
-          style: {
-            background: '#fee2e2',
-            color: '#4B5563',
-            borderRadius: 8,
-            fontWeight: 500,
-          },
-          progressStyle: { background: '#ef4444' },
-        });
-      } else {
-        setForm({ amount: '', category: '', description: '' });
-        if (onSuccess) onSuccess();
-        if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1);
-        showSuccessToast('Expense added successfully!', {
-          position: 'top-right',
-          style: {
-            background: '#d1fae5',
-            color: '#10B981',
-            borderRadius: 8,
-            fontWeight: 500,
-          },
-          progressStyle: { background: '#14B8A6' },
-        });
-      }
-    } catch (e) {
-      setAddError('An error occurred while adding expense.');
-      showErrorToast('An error occurred while adding expense.', {
+        progressStyle: { background: '#14B8A6' },
+      });
+    } catch (err) {
+      const errorMsg = err instanceof APIError ? err.message : 'An error occurred while adding expense.';
+      setAddError(errorMsg);
+      showErrorToast(errorMsg, {
         position: 'top-right',
         style: {
           background: '#fee2e2',

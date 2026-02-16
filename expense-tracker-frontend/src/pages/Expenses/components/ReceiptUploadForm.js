@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { ClipLoader } from 'react-spinners';
 import { showSuccessToast, showErrorToast } from '../../../utils/toast';
+import { apiPost, APIError } from '../../../services/api';
 
 function ReceiptUploadForm() {
   const [receiptFile, setReceiptFile] = useState(null);
@@ -43,46 +44,21 @@ function ReceiptUploadForm() {
       };
       if (receiptExpenseId) payload.expense_id = receiptExpenseId;
       try {
-        const resp = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/receipts/upload/`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify(payload),
+        await apiPost('/api/receipts/upload/', payload);
+        setReceiptStatus('Receipt uploaded successfully!');
+        setReceiptFile(null);
+        setReceiptFilename('');
+        setReceiptExpenseId('');
+        showSuccessToast('Receipt uploaded successfully!', {
+          position: 'top-right',
+          style: {
+            background: '#d1fae5',
+            color: '#2563EB',
+            borderRadius: 8,
+            fontWeight: 500,
           },
-        );
-        const data = await resp.json();
-        if (!resp.ok) {
-          setReceiptStatus(data.error || 'Failed to upload receipt');
-          showErrorToast(data.error || 'Failed to upload receipt', {
-            position: 'top-right',
-            style: {
-              background: '#fee2e2',
-              color: '#4B5563',
-              borderRadius: 8,
-              fontWeight: 500,
-            },
-            progressStyle: { background: '#ef4444' },
-          });
-        } else {
-          setReceiptStatus('Receipt uploaded successfully!');
-          setReceiptFile(null);
-          setReceiptFilename('');
-          setReceiptExpenseId('');
-          showSuccessToast('Receipt uploaded successfully!', {
-            position: 'top-right',
-            style: {
-              background: '#d1fae5',
-              color: '#2563EB',
-              borderRadius: 8,
-              fontWeight: 500,
-            },
-            progressStyle: { background: '#10b981' },
-          });
-        }
+          progressStyle: { background: '#10b981' },
+        });
       } catch (e) {
         setReceiptStatus('An error occurred while uploading receipt.');
         showErrorToast('An error occurred while uploading receipt.', {

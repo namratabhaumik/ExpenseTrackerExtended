@@ -36,15 +36,14 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'auth_app.middleware.JWTAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'expense_tracker.urls'
@@ -109,12 +108,47 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS (Cross-Origin Resource Sharing) settings
 CORS_ALLOW_CREDENTIALS = True
 
+# Allow specific origins for local development and production
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
+
 # Use regex to allow the frontend domain and its subdomains
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.web\.app$",
     r"^https://.*\.firebaseapp\.com$",
-    r"^http://localhost:3000$",
-    r"http://127.0.0.1:3000",
+]
+
+# Allow all headers and methods for CORS
+CORS_ALLOW_ALL_HEADERS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# CSRF Settings for SPA (Single Page Application)
+# Allow frontend to read CSRF token from cookie
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ]
 
 # django-ratelimit should use the configured default cache

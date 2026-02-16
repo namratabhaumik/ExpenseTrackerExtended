@@ -59,6 +59,10 @@ class JWTAuthenticationMiddleware:
             if is_local_demo:
                 try:
                     # Decode mock token (base64 encoded JSON)
+                    # Add padding back if it was stripped
+                    padding = 4 - (len(token) % 4)
+                    if padding != 4:
+                        token = token + ('=' * padding)
                     payload = json.loads(base64.b64decode(token).decode())
                     user_email = payload.get('sub')  # 'sub' contains the email
 
