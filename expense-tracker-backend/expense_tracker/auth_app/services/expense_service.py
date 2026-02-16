@@ -11,7 +11,7 @@ class ExpenseRepository(ABC):
 
     @abstractmethod
     def create(
-        self, user_id: str, amount: float, category: str, description: str = ""
+        self, user_id: int, amount: float, category: str, description: str = ""
     ) -> Dict:
         """
         Create a new expense.
@@ -22,7 +22,7 @@ class ExpenseRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_user(self, user_id: str) -> List[Dict]:
+    def get_by_user(self, user_id: int) -> List[Dict]:
         """
         Get all expenses for a user.
 
@@ -54,7 +54,7 @@ class ExpenseRepository(ABC):
     @abstractmethod
     def add_expense_with_receipt(
         self,
-        user_id: str,
+        user_id: int,
         amount: float,
         category: str,
         description: str = "",

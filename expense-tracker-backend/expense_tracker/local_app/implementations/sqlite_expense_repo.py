@@ -3,6 +3,8 @@
 import logging
 from typing import Dict, List, Optional
 
+from django.contrib.auth.models import User
+
 from auth_app.models import Expense
 from auth_app.services.expense_service import ExpenseRepository
 
@@ -10,15 +12,16 @@ logger = logging.getLogger(__name__)
 
 
 class SQLiteExpenseRepository(ExpenseRepository):
-    """Expense storage using Django ORM with SQLite."""
+    """Expense storage using Django ORM with SQLite and proper User relationships."""
 
     def create(
-        self, user_id: str, amount: float, category: str, description: str = ''
+        self, user_id: int, amount: float, category: str, description: str = ''
     ) -> Dict:
-        """Create a new expense in SQLite."""
+        """Create a new expense in SQLite using User ForeignKey."""
         try:
+            user = User.objects.get(pk=user_id)
             expense = Expense.objects.create(
-                user_id=user_id,
+                user=user,
                 amount=amount,
                 category=category,
                 description=description,
@@ -28,7 +31,7 @@ class SQLiteExpenseRepository(ExpenseRepository):
 
             return {
                 'expense_id': str(expense.id),
-                'user_id': expense.user_id,
+                'user_id': expense.user.id,
                 'amount': float(expense.amount),
                 'category': expense.category,
                 'description': expense.description,
@@ -36,19 +39,24 @@ class SQLiteExpenseRepository(ExpenseRepository):
                 'receipt_url': expense.receipt_url,
             }
 
+        except User.DoesNotExist:
+            logger.error(f'User not found: {user_id}')
+            raise ValueError(f'User with id {user_id} does not exist')
         except Exception as e:
             logger.error(f'Error creating expense: {str(e)}', exc_info=True)
             raise
 
-    def get_by_user(self, user_id: str) -> List[Dict]:
-        """Get all expenses for a user from SQLite."""
+    def get_by_user(self, user_id: int) -> List[Dict]:
+        """Get all expenses for a user from SQLite using ForeignKey with optimization."""
         try:
-            expenses = Expense.objects.filter(user_id=user_id).order_by('-timestamp')
+            expenses = Expense.objects.filter(
+                user_id=user_id
+            ).select_related('user').order_by('-timestamp')
 
             result = [
                 {
                     'expense_id': str(exp.id),
-                    'user_id': exp.user_id,
+                    'user_id': exp.user.id,
                     'amount': float(exp.amount),
                     'category': exp.category,
                     'description': exp.description,
@@ -68,13 +76,13 @@ class SQLiteExpenseRepository(ExpenseRepository):
     def get_by_id(self, expense_id: str) -> Optional[Dict]:
         """Get a specific expense by ID from SQLite."""
         try:
-            expense = Expense.objects.get(id=expense_id)
+            expense = Expense.objects.select_related('user').get(id=expense_id)
 
             logger.info(f'Retrieved expense: {expense_id}')
 
             return {
                 'expense_id': str(expense.id),
-                'user_id': expense.user_id,
+                'user_id': expense.user.id if expense.user else None,
                 'amount': float(expense.amount),
                 'category': expense.category,
                 'description': expense.description,
@@ -108,16 +116,17 @@ class SQLiteExpenseRepository(ExpenseRepository):
 
     def add_expense_with_receipt(
         self,
-        user_id: str,
+        user_id: int,
         amount: float,
         category: str,
         description: str = '',
         receipt_url: Optional[str] = None,
     ) -> Dict:
-        """Create a new expense with optional receipt URL."""
+        """Create a new expense with optional receipt URL using User ForeignKey."""
         try:
+            user = User.objects.get(pk=user_id)
             expense = Expense.objects.create(
-                user_id=user_id,
+                user=user,
                 amount=amount,
                 category=category,
                 description=description,
@@ -128,7 +137,7 @@ class SQLiteExpenseRepository(ExpenseRepository):
 
             return {
                 'expense_id': str(expense.id),
-                'user_id': expense.user_id,
+                'user_id': expense.user.id,
                 'amount': float(expense.amount),
                 'category': expense.category,
                 'description': expense.description,
@@ -136,6 +145,9 @@ class SQLiteExpenseRepository(ExpenseRepository):
                 'receipt_url': expense.receipt_url,
             }
 
+        except User.DoesNotExist:
+            logger.error(f'User not found: {user_id}')
+            raise ValueError(f'User with id {user_id} does not exist')
         except Exception as e:
             logger.error(
                 f'Error creating expense with receipt for user {user_id}: {str(e)}',

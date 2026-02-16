@@ -9,7 +9,7 @@ class FileStorage(ABC):
     """Abstract interface for file storage operations."""
 
     @abstractmethod
-    def upload(self, filename: str, file_data: bytes, user_id: str) -> str:
+    def upload(self, filename: str, file_data: bytes, user_id: int) -> str:
         """
         Upload a file and return its URL/path.
 
