@@ -1,208 +1,374 @@
-"""Unit tests for API views (mocking service abstractions, not implementations)."""
+"""Unit tests for API views using Django's session-based authentication."""
 
 import json
+import base64
 from unittest.mock import Mock, patch
 
+from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
 
 
 class AuthEndpointsTest(TestCase):
-    """Test authentication endpoints with mocked service layer."""
+    """Test authentication endpoints with session-based auth."""
 
     def setUp(self):
         self.client = Client()
+        self.test_email = 'test@example.com'
+        self.test_password = 'Test_Pass_1!'
 
-    @patch('auth_app.views.get_auth_service')
-    def test_login_success(self, mock_get_service):
+    def test_login_success(self):
         """Test successful login"""
-        # Mock the service to return tokens
-        mock_service = Mock()
-        mock_service.login.return_value = (
-            {
-                'access_token': 'test_access_token',
-                'id_token': 'test_id_token',
-                'refresh_token': 'test_refresh_token',
-            },
-            None,  # no error
+        # Create a user first
+        User.objects.create_user(
+            username=self.test_email,
+            email=self.test_email,
+            password=self.test_password
         )
-        mock_get_service.return_value = mock_service
 
         response = self.client.post(
             reverse('login'),
-            data=json.dumps({'email': 'test@example.com', 'password': 'password123'}),
+            data=json.dumps({'email': self.test_email, 'password': self.test_password}),
             content_type='application/json',
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('access_token', response.cookies)
         data = response.json()
         self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['email'], self.test_email)
+        self.assertIn('csrf_token', data)
+        # Check that session cookie is set
+        self.assertIn('sessionid', self.client.cookies)
 
-    @patch('auth_app.views.get_auth_service')
-    def test_login_invalid_credentials(self, mock_get_service):
+    def test_login_invalid_credentials(self):
         """Test login with invalid credentials"""
-        mock_service = Mock()
-        mock_service.login.return_value = (None, 'Invalid credentials')
-        mock_get_service.return_value = mock_service
+        # Create a user
+        User.objects.create_user(
+            username=self.test_email,
+            email=self.test_email,
+            password=self.test_password
+        )
 
         response = self.client.post(
             reverse('login'),
-            data=json.dumps({'email': 'test@example.com', 'password': 'wrong'}),
+            data=json.dumps({'email': self.test_email, 'password': 'wrong_password'}),
             content_type='application/json',
         )
 
         self.assertEqual(response.status_code, 401)
         data = response.json()
-        self.assertEqual(data['status'], 'error')
+        self.assertIn('error', data)
 
     def test_login_missing_fields(self):
         """Test login with missing fields"""
         response = self.client.post(
             reverse('login'),
-            data=json.dumps({'email': 'test@example.com'}),
+            data=json.dumps({'email': self.test_email}),
             content_type='application/json',
         )
 
         self.assertEqual(response.status_code, 400)
         data = response.json()
-        self.assertEqual(data['status'], 'error')
+        self.assertIn('error', data)
 
-    @patch('auth_app.views.get_auth_service')
-    def test_signup_success(self, mock_get_service):
+    def test_signup_success(self):
         """Test successful signup"""
-        mock_service = Mock()
-        mock_service.signup.return_value = (True, None)
-        mock_get_service.return_value = mock_service
-
         response = self.client.post(
             reverse('signup'),
-            data=json.dumps({'email': 'newuser@example.com', 'password': 'password123'}),
+            data=json.dumps({'email': 'newuser@example.com', 'password': self.test_password}),
             content_type='application/json',
         )
 
         self.assertEqual(response.status_code, 201)
         data = response.json()
         self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['email'], 'newuser@example.com')
+        # Verify user was created
+        self.assertTrue(User.objects.filter(username='newuser@example.com').exists())
 
-    @patch('auth_app.views.get_auth_service')
-    def test_signup_user_already_exists(self, mock_get_service):
+    def test_signup_user_already_exists(self):
         """Test signup when user already exists"""
-        mock_service = Mock()
-        mock_service.signup.return_value = (False, 'User already exists')
-        mock_get_service.return_value = mock_service
+        User.objects.create_user(
+            username=self.test_email,
+            email=self.test_email,
+            password=self.test_password
+        )
 
         response = self.client.post(
             reverse('signup'),
-            data=json.dumps({'email': 'existing@example.com', 'password': 'password123'}),
+            data=json.dumps({'email': self.test_email, 'password': self.test_password}),
             content_type='application/json',
         )
 
         self.assertEqual(response.status_code, 409)
         data = response.json()
-        self.assertEqual(data['status'], 'error')
+        self.assertIn('error', data)
 
-    @patch('auth_app.views.get_auth_service')
-    def test_confirm_signup_success(self, mock_get_service):
-        """Test successful signup confirmation"""
-        mock_service = Mock()
-        mock_service.confirm_signup.return_value = (True, None)
-        mock_get_service.return_value = mock_service
-
+    def test_confirm_signup_success(self):
+        """Test successful signup confirmation (placeholder endpoint)"""
         response = self.client.post(
             reverse('confirm_signup'),
             data=json.dumps({'email': 'user@example.com', 'code': '123456'}),
             content_type='application/json',
         )
 
+        # This is a placeholder endpoint that returns 200
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['status'], 'success')
+        self.assertIn('message', data)
 
-    @patch('auth_app.views.get_auth_service')
-    def test_forgot_password(self, mock_get_service):
-        """Test forgot password request"""
-        mock_service = Mock()
-        mock_service.forgot_password.return_value = (True, None)
-        mock_get_service.return_value = mock_service
-
+    def test_forgot_password(self):
+        """Test forgot password request (placeholder endpoint)"""
         response = self.client.post(
             reverse('forgot_password'),
             data=json.dumps({'email': 'user@example.com'}),
             content_type='application/json',
         )
 
+        # This is a placeholder endpoint that returns 200
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['status'], 'success')
+        self.assertIn('message', data)
 
-    @patch('auth_app.views.get_auth_service')
-    def test_confirm_forgot_password(self, mock_get_service):
-        """Test password reset confirmation"""
-        mock_service = Mock()
-        mock_service.confirm_forgot_password.return_value = (True, None)
-        mock_get_service.return_value = mock_service
-
+    def test_confirm_forgot_password(self):
+        """Test password reset confirmation (placeholder endpoint)"""
         response = self.client.post(
             reverse('confirm_forgot_password'),
             data=json.dumps({
                 'email': 'user@example.com',
                 'code': '123456',
-                'new_password': 'newpassword456',
+                'new_password': self.test_password,
             }),
             content_type='application/json',
         )
 
+        # This is a placeholder endpoint that returns 200
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['status'], 'success')
+        self.assertIn('message', data)
 
-    @patch('auth_app.views.get_auth_service')
-    def test_verify_reset_code(self, mock_get_service):
-        """Test reset code verification"""
-        mock_service = Mock()
-        mock_service.verify_reset_code.return_value = (True, None)
-        mock_get_service.return_value = mock_service
-
+    def test_verify_reset_code(self):
+        """Test reset code verification (placeholder endpoint)"""
         response = self.client.post(
             reverse('verify_reset_code'),
             data=json.dumps({'email': 'user@example.com', 'code': '123456'}),
             content_type='application/json',
         )
 
+        # This is a placeholder endpoint that returns 200
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['status'], 'success')
+        self.assertIn('message', data)
 
 
-class ExpenseEndpointsTest(TestCase):
-    """Test expense endpoints with mocked service layer."""
+class CSRFTokenEndpointTest(TestCase):
+    """Test CSRF token endpoint."""
 
     def setUp(self):
         self.client = Client()
 
-    def test_add_expense_missing_fields(self):
-        """Test adding expense with missing required fields (requires auth)"""
+    def test_csrf_token_generation(self):
+        """Test CSRF token is generated and returned"""
+        response = self.client.get(reverse('csrf_token'))
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('csrf_token', data)
+        self.assertTrue(len(data['csrf_token']) > 0)
+
+
+class LogoutEndpointTest(TestCase):
+    """Test logout endpoint."""
+
+    def setUp(self):
+        self.client = Client()
+        self.test_email = 'test@example.com'
+        self.test_password = 'Test_Pass_1!'
+        self.user = User.objects.create_user(
+            username=self.test_email,
+            email=self.test_email,
+            password=self.test_password
+        )
+
+    def test_logout_success(self):
+        """Test successful logout"""
+        # Login first
+        self.client.login(username=self.test_email, password=self.test_password)
+
+        # Then logout
+        response = self.client.post(reverse('logout'))
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('message', data)
+
+
+class ExpenseEndpointsTest(TestCase):
+    """Test expense endpoints with session auth."""
+
+    def setUp(self):
+        self.client = Client()
+        self.test_email = 'test@example.com'
+        self.test_password = 'Test_Pass_1!'
+        self.user = User.objects.create_user(
+            username=self.test_email,
+            email=self.test_email,
+            password=self.test_password
+        )
+        # Login
+        self.client.login(username=self.test_email, password=self.test_password)
+
+    @patch('auth_app.views.get_expense_repository')
+    def test_add_expense_success(self, mock_get_repo):
+        """Test adding expense with authentication"""
+        mock_repo = Mock()
+        mock_repo.create.return_value = {
+            'expense_id': 'test-id',
+            'amount': 50.0,
+            'category': 'Food',
+            'description': 'Test expense'
+        }
+        mock_get_repo.return_value = mock_repo
+
         response = self.client.post(
             reverse('add_expense'),
-            data=json.dumps({'amount': 50.0}),  # Missing category and description
+            data=json.dumps({'amount': 50.0, 'category': 'Food', 'description': 'Test expense'}),
             content_type='application/json',
         )
 
-        # Middleware enforces auth first, so request fails with 401 before field validation
-        # In real test with valid auth, would get 400 for missing fields
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertIn('expense_id', data)
 
-    def test_get_expenses_returns_list(self):
-        """Test retrieving expenses list"""
-        response = self.client.get(
-            reverse('get_expenses'),
-            HTTP_COOKIE='access_token=mock_token',
+    def test_add_expense_missing_fields(self):
+        """Test adding expense with missing required fields"""
+        response = self.client.post(
+            reverse('add_expense'),
+            data=json.dumps({'amount': 50.0}),  # Missing category
+            content_type='application/json',
         )
 
-        # Note: Endpoint may fail due to auth middleware, but structure is valid
-        # Demonstrates that GET method is accepted
-        self.assertIn(response.status_code, [200, 401, 403])
+        # Request succeeds auth but fails validation
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_add_expense_not_authenticated(self):
+        """Test adding expense without authentication"""
+        self.client.logout()
+
+        response = self.client.post(
+            reverse('add_expense'),
+            data=json.dumps({'amount': 50.0, 'category': 'Food'}),
+            content_type='application/json',
+        )
+
+        # Should redirect to login
+        self.assertIn(response.status_code, [301, 302])
+
+    @patch('auth_app.views.get_expense_repository')
+    def test_get_expenses_success(self, mock_get_repo):
+        """Test retrieving expenses list"""
+        mock_repo = Mock()
+        mock_repo.get_by_user.return_value = [
+            {'expense_id': 'test-1', 'amount': 25.50, 'category': 'Food'},
+            {'expense_id': 'test-2', 'amount': 15.00, 'category': 'Transport'}
+        ]
+        mock_get_repo.return_value = mock_repo
+
+        response = self.client.get(reverse('get_expenses'))
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('expenses', data)
+        self.assertEqual(len(data['expenses']), 2)
+
+    def test_get_expenses_not_authenticated(self):
+        """Test retrieving expenses without authentication"""
+        self.client.logout()
+
+        response = self.client.get(reverse('get_expenses'))
+
+        # Should redirect to login
+        self.assertIn(response.status_code, [301, 302])
+
+
+class ReceiptUploadEndpointTest(TestCase):
+    """Test receipt upload endpoint."""
+
+    def setUp(self):
+        self.client = Client()
+        self.test_email = 'test@example.com'
+        self.test_password = 'Test_Pass_1!'
+        self.user = User.objects.create_user(
+            username=self.test_email,
+            email=self.test_email,
+            password=self.test_password
+        )
+        # Login
+        self.client.login(username=self.test_email, password=self.test_password)
+
+    @patch('auth_app.views.get_file_storage')
+    def test_upload_receipt_success(self, mock_get_storage):
+        """Test successful receipt upload"""
+        mock_storage = Mock()
+        mock_storage.upload.return_value = 'https://example.com/receipt.jpg'
+        mock_get_storage.return_value = mock_storage
+
+        file_data = base64.b64encode(b'test file content').decode('utf-8')
+        response = self.client.post(
+            reverse('upload_receipt'),
+            data=json.dumps({
+                'file': file_data,
+                'filename': 'test_receipt.jpg',
+                'expense_id': 'test-expense-1'
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('file_url', data)
+        self.assertIn('file_name', data)
+
+    def test_upload_receipt_missing_file(self):
+        """Test receipt upload with missing file"""
+        response = self.client.post(
+            reverse('upload_receipt'),
+            data=json.dumps({'filename': 'test.jpg'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_upload_receipt_missing_filename(self):
+        """Test receipt upload with missing filename"""
+        file_data = base64.b64encode(b'test').decode('utf-8')
+        response = self.client.post(
+            reverse('upload_receipt'),
+            data=json.dumps({'file': file_data}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_upload_receipt_not_authenticated(self):
+        """Test receipt upload without authentication"""
+        self.client.logout()
+
+        file_data = base64.b64encode(b'test').decode('utf-8')
+        response = self.client.post(
+            reverse('upload_receipt'),
+            data=json.dumps({'file': file_data, 'filename': 'test.jpg'}),
+            content_type='application/json',
+        )
+
+        # Should redirect to login
+        self.assertIn(response.status_code, [301, 302])
 
 
 class ProfileEndpointsTest(TestCase):
@@ -210,27 +376,96 @@ class ProfileEndpointsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
+        self.test_email = 'test@example.com'
+        self.test_password = 'Test_Pass_1!'
+        self.user = User.objects.create_user(
+            username=self.test_email,
+            email=self.test_email,
+            password=self.test_password,
+            first_name='Test User'
+        )
+        # Login
+        self.client.login(username=self.test_email, password=self.test_password)
 
-    @patch('auth_app.views.get_auth_service')
-    def test_change_password(self, mock_get_service):
-        """Test password change endpoint"""
-        mock_service = Mock()
-        mock_service.change_password.return_value = (True, None)
-        mock_get_service.return_value = mock_service
+    def test_get_profile(self):
+        """Test getting user profile"""
+        response = self.client.get(reverse('profile'))
 
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('profile', data)
+        self.assertEqual(data['profile']['email'], self.test_email)
+
+    def test_update_profile(self):
+        """Test updating user profile"""
+        response = self.client.put(
+            reverse('profile'),
+            data=json.dumps({'name': 'Updated Name'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('message', data)
+
+        # Verify update
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Updated Name')
+
+    def test_change_password_success(self):
+        """Test successful password change"""
         response = self.client.post(
             reverse('change_password'),
             data=json.dumps({
-                'old_password': 'oldpass123',
-                'new_password': 'newpass456',
+                'current_password': self.test_password,
+                'new_password': 'Test_New_1!',
             }),
             content_type='application/json',
         )
 
-        # Endpoint will fail auth, but demonstrates the pattern
-        # In real scenario with proper auth, would verify success (200)
-        # Acceptable statuses in this test environment
-        self.assertIn(response.status_code, [200, 401, 403])
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('message', data)
+
+        # User should be logged out after password change
+        profile_response = self.client.get(reverse('profile'))
+        self.assertIn(profile_response.status_code, [301, 302])
+
+    def test_change_password_wrong_current(self):
+        """Test password change with wrong current password"""
+        response = self.client.post(
+            reverse('change_password'),
+            data=json.dumps({
+                'current_password': 'WrongPassword123!',
+                'new_password': 'Test_New_1!',
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 401)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_change_password_missing_fields(self):
+        """Test password change with missing fields"""
+        response = self.client.post(
+            reverse('change_password'),
+            data=json.dumps({'current_password': self.test_password}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_profile_not_authenticated(self):
+        """Test profile access without authentication"""
+        self.client.logout()
+
+        response = self.client.get(reverse('profile'))
+
+        # Should redirect to login
+        self.assertIn(response.status_code, [301, 302])
 
 
 class MethodValidationTest(TestCase):
@@ -240,27 +475,24 @@ class MethodValidationTest(TestCase):
         self.client = Client()
 
     def test_login_rejects_get(self):
-        """Login endpoint requires POST (middleware enforces auth first)"""
+        """Login endpoint requires POST"""
         response = self.client.get(reverse('login'))
-        # Middleware checks auth before view method validation
-        # So non-auth-exempt endpoints return 401 before 405
+        # Signup is @csrf_exempt POST only
         self.assertIn(response.status_code, [401, 405])
 
     def test_login_rejects_put(self):
-        """Login endpoint requires POST (middleware enforces auth first)"""
+        """Login endpoint requires POST"""
         response = self.client.put(
             reverse('login'),
             data=json.dumps({'email': 'test@example.com'}),
             content_type='application/json',
         )
-        # Middleware checks auth before view method validation
         self.assertIn(response.status_code, [401, 405])
 
     def test_signup_rejects_delete(self):
         """Signup endpoint requires POST"""
         response = self.client.delete(reverse('signup'))
-        # Middleware only exempts POST signup from auth, so DELETE returns 401
-        # In theory it would be 405, but middleware checks auth first
+        # Signup is @csrf_exempt POST only
         self.assertIn(response.status_code, [401, 405])
 
 
