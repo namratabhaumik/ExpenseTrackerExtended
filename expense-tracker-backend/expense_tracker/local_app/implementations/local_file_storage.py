@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class LocalFileStorage(FileStorage):
     """Local file storage for development (no actual file persistence)."""
 
-    def upload(self, filename: str, file_data: bytes, user_id: str) -> str:
+    def upload(self, filename: str, file_data: bytes, user_id: int) -> str:
         """
         Mock file upload for local development.
 
@@ -28,7 +28,8 @@ class LocalFileStorage(FileStorage):
         try:
             # Generate a mock URL
             file_id = str(uuid.uuid4())
-            mock_url = f'http://localhost:8000/mock-files/{user_id}/{file_id}'
+            user_id_str = str(user_id)
+            mock_url = f'http://localhost:8000/mock-files/{user_id_str}/{file_id}'
 
             logger.info(
                 f'Mock file upload for user {user_id}: {filename} -> {mock_url}'

@@ -19,6 +19,10 @@ function Expenses({ setDashboardRefreshFlag }) {
   const [refreshFlag, setRefreshFlag] = useState(0);
   // Support for category filtering via URL params
   const [selectedCategory, setSelectedCategory] = useState('');
+  // Track if user added an expense in this session
+  const [expenseAddedInSession, setExpenseAddedInSession] = useState(false);
+  // Store the ID of the last added expense for receipt upload
+  const [lastAddedExpenseId, setLastAddedExpenseId] = useState('');
 
   // Refs to prevent infinite loops
   const isMountedRef = useRef(true);
@@ -150,11 +154,15 @@ function Expenses({ setDashboardRefreshFlag }) {
       />
       {/* Add Expense Form */}
       <AddExpenseForm
-        onSuccess={() => setRefreshFlag((f) => f + 1)}
+        onSuccess={(expenseId) => {
+          setRefreshFlag((f) => f + 1);
+          setExpenseAddedInSession(true);
+          if (expenseId) setLastAddedExpenseId(expenseId);
+        }}
         setDashboardRefreshFlag={setDashboardRefreshFlag}
       />
       {/* Upload Receipt Form */}
-      <ReceiptUploadForm />
+      <ReceiptUploadForm hasExpenses={expenseAddedInSession} defaultExpenseId={lastAddedExpenseId} />
       {error && (
         <div className="expenses-error" style={{ marginBottom: 16 }}>
           {error}

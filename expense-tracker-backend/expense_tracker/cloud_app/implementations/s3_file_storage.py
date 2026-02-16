@@ -38,7 +38,7 @@ class S3FileStorage(FileStorage):
         self.bucket_name = settings.S3_BUCKET_NAME
         self.region = settings.AWS_REGION
 
-    def upload(self, filename: str, file_data: bytes, user_id: str) -> str:
+    def upload(self, filename: str, file_data: bytes, user_id: int) -> str:
         """
         Upload a file to S3 and return its public URL.
 
@@ -53,7 +53,8 @@ class S3FileStorage(FileStorage):
         try:
             # Generate unique file key with user_id and timestamp
             file_ext = os.path.splitext(filename)[1]
-            unique_filename = f'{user_id}/{datetime.utcnow().timestamp()}_{uuid.uuid4()}{file_ext}'
+            user_id_str = str(user_id)
+            unique_filename = f'{user_id_str}/{datetime.utcnow().timestamp()}_{uuid.uuid4()}{file_ext}'
 
             # Upload to S3
             self.s3_client.put_object(

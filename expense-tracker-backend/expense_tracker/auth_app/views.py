@@ -198,7 +198,7 @@ def add_expense(request):
     """Add a new expense."""
     try:
         data = json.loads(request.body)
-        user_id = str(request.user.id)
+        user_id = request.user.id
 
         # Validate required fields
         if not data.get('amount') or not data.get('category'):
@@ -233,7 +233,7 @@ def add_expense(request):
 def get_expenses(request):
     """Get expenses for a user."""
     try:
-        user_id = str(request.user.id)
+        user_id = request.user.id
 
         # Use service layer
         expense_repo = get_expense_repository()
@@ -254,7 +254,7 @@ def upload_receipt(request):
     """Upload a receipt file."""
     try:
         data = json.loads(request.body)
-        user_id = str(request.user.id)
+        user_id = request.user.id
 
         # Validate required fields
         if not data.get('file') or not data.get('filename'):
@@ -285,6 +285,16 @@ def upload_receipt(request):
         file_url = file_storage.upload(file_name, file_bytes, user_id)
 
         logger.info(f"Receipt uploaded for user {user_id}: {file_name}")
+
+        # Update expense with receipt URL if expense_id provided
+        if expense_id:
+            try:
+                expense_repo = get_expense_repository()
+                expense_repo.update_receipt_url(expense_id, file_url)
+                logger.info(f"Receipt URL saved to expense {expense_id}")
+            except Exception as e:
+                logger.error(f"Error updating expense receipt URL: {str(e)}")
+                return JsonResponse({'error': 'Receipt uploaded but could not link to expense'}, status=500)
 
         return JsonResponse({
             'file_url': file_url,
