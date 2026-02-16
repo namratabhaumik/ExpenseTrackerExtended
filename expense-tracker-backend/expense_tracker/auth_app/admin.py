@@ -1,6 +1,20 @@
 from django.contrib import admin
+from django.contrib.sessions.models import Session
 
 from .models import Expense
+
+
+@admin.register(Session)
+class SessionAdmin(admin.ModelAdmin):
+    list_display = ('session_key', 'expire_date')
+    search_fields = ('session_key',)
+    readonly_fields = ('session_key', 'session_data', 'expire_date')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Expense)
