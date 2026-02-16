@@ -4,10 +4,10 @@ Local development settings for expense_tracker.
 Used for local development with SQLite, local authentication, and local file storage.
 """
 
-from .base import BASE_DIR, INSTALLED_APPS as BASE_INSTALLED_APPS
+from .base import *  # noqa: F401, F403
 
 # Add local app for local development implementations
-INSTALLED_APPS = [*BASE_INSTALLED_APPS, 'local_app']
+INSTALLED_APPS.append('local_app')  # noqa: F405
 
 # DEBUG mode for development
 DEBUG = True
@@ -16,7 +16,7 @@ DEBUG = True
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',  # noqa: F405
     }
 }
 
