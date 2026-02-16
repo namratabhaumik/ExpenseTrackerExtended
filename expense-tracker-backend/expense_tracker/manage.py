@@ -2,6 +2,7 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+
 from dotenv import load_dotenv
 
 
@@ -10,7 +11,8 @@ def main():
     # Load .env from parent directory (expense-tracker-backend)
     load_dotenv(os.path.join(os.path.dirname(
         os.path.dirname(__file__)), '.env'))
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'expense_tracker.settings')
+    # Default to local settings; set to 'expense_tracker.settings.cloud' for cloud deployment
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'expense_tracker.settings.local')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

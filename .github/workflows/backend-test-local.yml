@@ -1,0 +1,14 @@
+name: Backend Tests - Local
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test-local:
+    uses: ./.github/workflows/backend-common.yml
+    with:
+      settings_module: expense_tracker.settings.local
+      requirements_file: requirements.txt

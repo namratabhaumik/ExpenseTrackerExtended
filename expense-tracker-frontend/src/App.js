@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import AuthForm from './Login';
-import Expenses from './Expenses';
-import Dashboard from './Dashboard';
-import Categories from './Categories';
-import Profile from './Profile';
-import './styles/App.css';
-import Navbar from './Navbar';
+import AuthForm from './pages/Login/Login';
+import Expenses from './pages/Expenses/Expenses';
+import Dashboard from './pages/Dashboard/Dashboard';
+import Categories from './pages/Categories/Categories';
+import Profile from './pages/Profile/Profile';
+import Navbar from './components/Navbar/Navbar';
+import { apiPost, clearCSRFTokenCache } from './services/api';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -32,9 +32,16 @@ function App() {
     setActivePage('dashboard');
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setActivePage('dashboard');
+  const handleLogout = async () => {
+    try {
+      await apiPost('/api/logout/');
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      clearCSRFTokenCache();
+      setIsAuthenticated(false);
+      setActivePage('dashboard');
+    }
   };
 
   const handleThemeToggle = () => {
@@ -97,7 +104,7 @@ function App() {
           )}
           {activePage === 'profile' && (
             <div className="content-wrapper">
-              <Profile theme={theme} />
+              <Profile theme={theme} onLogout={handleLogout} />
             </div>
           )}
         </main>

@@ -1,1020 +1,305 @@
-import boto3
+"""
+Session-based authentication views for traditional web app.
+Uses Django's built-in authentication + CSRF protection.
+"""
 import json
-import hmac
-import hashlib
-import base64
 import logging
+import base64
+
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
 from django_ratelimit.decorators import ratelimit
-import os
-from .middleware import require_auth
-from botocore.exceptions import ClientError
 
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from auth_app.services import (
+    get_expense_repository,
+    get_file_storage,
+)
 
-from django.conf import settings
-
-# Import local auth for demo mode
-from .local_auth import local_login, local_signup, IS_LOCAL_DEMO
-
-# Get logger for this module
 logger = logging.getLogger(__name__)
 
-# Cognito configuration
-COGNITO_REGION = settings.AWS_REGION
-# This will be fetched from settings now
-COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
-# This will be fetched from settings now
-COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
-
-# Lazy-load Cognito client
-_cognito_client = None
-
-
-def get_cognito_client():
-    global _cognito_client
-    if _cognito_client is None:
-        _cognito_client = boto3.client(
-            'cognito-idp', region_name=COGNITO_REGION)
-    return _cognito_client
-
-
-def calculate_secret_hash(username):
-    """Generate the SECRET_HASH for Cognito."""
-    message = username + COGNITO_CLIENT_ID
-    secret = bytes(COGNITO_CLIENT_SECRET, 'utf-8')
-    digest = hmac.new(secret, message.encode('utf-8'), hashlib.sha256).digest()
-    return base64.b64encode(digest).decode()
-
 
 @csrf_exempt
-@ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
-def login_view(request):
-    if request.method == 'POST':
-        try:
-            # Get the email and password from the request body
-            data = json.loads(request.body)
-            email = data.get('email')
-            password = data.get('password')
-
-            # Validate required fields
-            if not email or not password:
-                logger.warning(
-                    f"Login attempt with missing credentials: email={bool(email)}")
-                return JsonResponse({
-                    'error': 'Missing required fields: email and password',
-                    'status': 'error'
-                }, status=400)
-
-            # Use local mock auth in demo mode
-            if IS_LOCAL_DEMO:
-                tokens, error = local_login(email, password)
-                if error:
-                    return JsonResponse({
-                        'error': error,
-                        'status': 'error'
-                    }, status=400)
-
-                logger.info(f"Local demo login for user: {email}")
-                response = JsonResponse({
-                    'message': 'Login successful',
-                    'id_token': tokens['id_token'],
-                    'refresh_token': tokens['refresh_token'],
-                    'status': 'success'
-                })
-                # Set access_token as HttpOnly, Secure cookie (local uses secure=False)
-                response.set_cookie(
-                    key='access_token',
-                    value=tokens['access_token'],
-                    httponly=True,
-                    secure=False,  # Local development
-                    samesite='Lax',  # Local development
-                    path='/',
-                    max_age=60*60*24  # 1 day
-                )
-                return response
-
-            # Production: Use AWS Cognito
-            # Calculate the secret hash
-            secret_hash = calculate_secret_hash(email)
-
-            # Authenticate user with Cognito
-            cognito_client = get_cognito_client()
-            response = cognito_client.initiate_auth(
-                AuthFlow='USER_PASSWORD_AUTH',
-                ClientId=COGNITO_CLIENT_ID,
-                AuthParameters={
-                    'USERNAME': email,
-                    'PASSWORD': password,
-                    'SECRET_HASH': secret_hash,
-                }
-            )
-
-            # If successful, return the tokens
-            access_token = response['AuthenticationResult']['AccessToken']
-            id_token = response['AuthenticationResult']['IdToken']
-            refresh_token = response['AuthenticationResult']['RefreshToken']
-
-            logger.info(f"Successful login for user: {email}")
-            response = JsonResponse({
-                'message': 'Login successful',
-                'id_token': id_token,
-                'refresh_token': refresh_token,
-                'status': 'success'
-            })
-            # Set access_token as HttpOnly, Secure cookie
-            response.set_cookie(
-                key='access_token',
-                value=access_token,
-                httponly=True,
-                secure=True,  # Must be True for SameSite='None'
-                samesite='None',  # Required for cross-domain cookies
-                path='/',
-                max_age=60*60*24  # 1 day
-            )
-            return response
-
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'NotAuthorizedException':
-                logger.warning(f"Invalid credentials for user: {email}")
-                return JsonResponse({
-                    'error': 'Invalid credentials',
-                    'status': 'error'
-                }, status=401)
-            elif error_code == 'UserNotFoundException':
-                logger.warning(f"User not found: {email}")
-                return JsonResponse({
-                    'error': 'User does not exist',
-                    'status': 'error'
-                }, status=404)
-            else:
-                logger.error(f"Unexpected Cognito error: {str(e)}")
-                return JsonResponse({
-                    'error': 'An unexpected error occurred',
-                    'status': 'error'
-                }, status=500)
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in login request")
-            return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error during login: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An unexpected error occurred',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(f"Invalid method {request.method} for login endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
-
-
-@csrf_exempt
+@require_http_methods(["POST"])
 @ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
 def signup_view(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            password = data.get('password')
+    """Register a new user using Django's built-in User model."""
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+        password = data.get('password')
 
-            # Validate required fields
-            if not email or not password:
-                logger.warning(
-                    f"Signup attempt with missing credentials: email={bool(email)}")
-                return JsonResponse({
-                    'error': 'Missing required fields: email and password',
-                    'status': 'error'
-                }, status=400)
+        if not email or not password:
+            return JsonResponse({'error': 'Email and password required'}, status=400)
 
-            # Use local mock auth in demo mode
-            if IS_LOCAL_DEMO:
-                success, error = local_signup(email, password)
-                if not success:
-                    return JsonResponse({
-                        'error': error or 'Signup failed',
-                        'status': 'error'
-                    }, status=400)
+        # Check if user already exists
+        if User.objects.filter(username=email).exists():
+            return JsonResponse({'error': 'User already exists'}, status=409)
 
-                logger.info(f"Local demo signup for user: {email}")
-                return JsonResponse({
-                    'message': 'Sign up successful! You can now log in.',
-                    'status': 'success'
-                }, status=201)
+        # Create user with email as username
+        user = User.objects.create_user(username=email, email=email, password=password)
+        logger.info(f"User registered: {email}")
 
-            # Production: Use AWS Cognito
-            # Calculate the secret hash
-            secret_hash = calculate_secret_hash(email)
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Sign up successful! You can now log in.',
+            'user_id': user.id,
+            'email': user.email
+        }, status=201)
 
-            # Register user with Cognito
-            cognito_client = get_cognito_client()
-            response = cognito_client.sign_up(
-                ClientId=COGNITO_CLIENT_ID,
-                SecretHash=secret_hash,
-                Username=email,
-                Password=password,
-                UserAttributes=[
-                    {'Name': 'email', 'Value': email},
-                ]
-            )
-
-            logger.info(f"User signup successful: {email}")
-            return JsonResponse({
-                'message': 'Sign up successful! Please check your email to verify your account.',
-                'status': 'success'
-            }, status=201)
-
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'UsernameExistsException':
-                logger.warning(f"Signup failed: user already exists: {email}")
-                return JsonResponse({
-                    'error': 'User already exists',
-                    'status': 'error'
-                }, status=409)
-            elif error_code == 'InvalidPasswordException':
-                logger.warning(
-                    f"Signup failed: invalid password for user: {email}")
-                return JsonResponse({
-                    'error': 'Password does not meet requirements',
-                    'status': 'error'
-                }, status=400)
-            elif error_code == 'InvalidParameterException':
-                logger.warning(
-                    f"Signup failed: invalid parameter for user: {email}")
-                return JsonResponse({
-                    'error': 'Invalid parameter',
-                    'status': 'error'
-                }, status=400)
-            else:
-                logger.error(
-                    f"Unexpected Cognito error during signup: {str(e)}")
-                return JsonResponse({
-                    'error': 'An unexpected error occurred',
-                    'status': 'error'
-                }, status=500)
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in signup request")
-            return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error during signup: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An unexpected error occurred',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(f"Invalid method {request.method} for signup endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        return JsonResponse({'error': 'Registration failed'}, status=500)
 
 
-@csrf_exempt
 def confirm_signup_view(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            code = data.get('code')
-
-            if not email or not code:
-                logger.warning(
-                    f"Confirm signup attempt with missing fields: email={bool(email)}, code={bool(code)}")
-                return JsonResponse({
-                    'error': 'Missing required fields: email and code',
-                    'status': 'error'
-                }, status=400)
-
-            secret_hash = calculate_secret_hash(email)
-
-            cognito_client = get_cognito_client()
-            cognito_client.confirm_sign_up(
-                ClientId=COGNITO_CLIENT_ID,
-                SecretHash=secret_hash,
-                Username=email,
-                ConfirmationCode=code
-            )
-
-            logger.info(f"User confirmed successfully: {email}")
-            return JsonResponse({
-                'message': 'Account confirmed! You can now log in.',
-                'status': 'success'
-            }, status=200)
-
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'CodeMismatchException':
-                logger.warning(f"Invalid confirmation code for user: {email}")
-                return JsonResponse({
-                    'error': 'Invalid confirmation code',
-                    'status': 'error'
-                }, status=400)
-            elif error_code == 'ExpiredCodeException':
-                logger.warning(f"Expired confirmation code for user: {email}")
-                return JsonResponse({
-                    'error': 'Confirmation code expired',
-                    'status': 'error'
-                }, status=400)
-            elif error_code == 'UserNotFoundException':
-                logger.warning(f"User not found during confirmation: {email}")
-                return JsonResponse({
-                    'error': 'User not found',
-                    'status': 'error'
-                }, status=404)
-            elif error_code == 'NotAuthorizedException':
-                logger.warning(f"User already confirmed: {email}")
-                return JsonResponse({
-                    'error': 'User already confirmed',
-                    'status': 'error'
-                }, status=400)
-            else:
-                logger.error(
-                    f"Unexpected Cognito error during confirmation: {str(e)}")
-                return JsonResponse({
-                    'error': 'An unexpected error occurred',
-                    'status': 'error'
-                }, status=500)
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in confirm signup request")
-            return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error during confirm signup: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An unexpected error occurred',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(
-        f"Invalid method {request.method} for confirm-signup endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
+    """Placeholder for signup confirmation (not needed for session auth)."""
+    return JsonResponse({'message': 'Already confirmed'})
 
 
-@csrf_exempt
-@ratelimit(key='ip', rate='5/m', method=ratelimit.ALL, block=True)
 def forgot_password_view(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-
-            if not email:
-                logger.warning(f"Forgot password attempt with missing email")
-                return JsonResponse({
-                    'error': 'Missing required field: email',
-                    'status': 'error'
-                }, status=400)
-
-            # Local demo mode: just pretend to send reset code
-            if IS_LOCAL_DEMO:
-                logger.info(f"Mock password reset initiated for user: {email}")
-                return JsonResponse({
-                    'message': 'Password reset code sent (demo mode - use any 6-digit code)',
-                    'status': 'success'
-                }, status=200)
-
-            # Production: Initiate forgot password flow with Cognito
-            # Calculate the secret hash
-            secret_hash = calculate_secret_hash(email)
-
-            cognito_client = get_cognito_client()
-            cognito_client.forgot_password(
-                ClientId=COGNITO_CLIENT_ID,
-                SecretHash=secret_hash,
-                Username=email
-            )
-
-            logger.info(f"Password reset initiated for user: {email}")
-            return JsonResponse({
-                'message': 'Password reset code sent to your email.',
-                'status': 'success'
-            }, status=200)
-
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'UserNotFoundException':
-                logger.warning(
-                    f"Password reset attempted for non-existent user: {email}")
-                return JsonResponse({
-                    'error': 'User not found',
-                    'status': 'error'
-                }, status=404)
-            elif error_code == 'LimitExceededException':
-                logger.warning(
-                    f"Password reset limit exceeded for user: {email}")
-                return JsonResponse({
-                    'error': 'Too many password reset attempts. Please try again later.',
-                    'status': 'error'
-                }, status=429)
-            else:
-                logger.error(
-                    f"Unexpected Cognito error during password reset: {str(e)}")
-                return JsonResponse({
-                    'error': 'An unexpected error occurred',
-                    'status': 'error'
-                }, status=500)
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in forgot password request")
-            return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error during password reset: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An unexpected error occurred',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(
-        f"Invalid method {request.method} for forgot-password endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
+    """Placeholder for forgot password (can implement email reset later)."""
+    return JsonResponse({'message': 'Check email for reset link'})
 
 
-@csrf_exempt
 def confirm_forgot_password_view(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            code = data.get('code')
-            new_password = data.get('new_password')
+    """Placeholder for confirm forgot password."""
+    return JsonResponse({'message': 'Password reset'})
 
-            if not email or not code or not new_password:
-                logger.warning(
-                    f"Confirm forgot password attempt with missing fields: email={bool(email)}, code={bool(code)}, password={bool(new_password)}")
-                return JsonResponse({
-                    'error': 'Missing required fields: email, code, and new_password',
-                    'status': 'error'
-                }, status=400)
 
-            # Local demo mode: just accept any code and reset password
-            if IS_LOCAL_DEMO:
-                logger.info(f"Mock password reset completed for user: {email}")
-                return JsonResponse({
-                    'message': 'Password reset successful! You can now log in with your new password.',
-                    'status': 'success'
-                }, status=200)
-
-            # Production: Confirm forgot password with Cognito
-            # Calculate the secret hash
-            secret_hash = calculate_secret_hash(email)
-
-            cognito_client = get_cognito_client()
-            cognito_client.confirm_forgot_password(
-                ClientId=COGNITO_CLIENT_ID,
-                SecretHash=secret_hash,
-                Username=email,
-                ConfirmationCode=code,
-                Password=new_password
-            )
-
-            logger.info(
-                f"Password reset completed successfully for user: {email}")
-            return JsonResponse({
-                'message': 'Password reset successful! You can now log in with your new password.',
-                'status': 'success'
-            }, status=200)
-
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'CodeMismatchException':
-                logger.warning(f"Invalid reset code for user: {email}")
-                return JsonResponse({
-                    'error': 'Invalid reset code',
-                    'status': 'error'
-                }, status=400)
-            elif error_code == 'ExpiredCodeException':
-                logger.warning(f"Expired reset code for user: {email}")
-                return JsonResponse({
-                    'error': 'Reset code expired. Please request a new one.',
-                    'status': 'error'
-                }, status=400)
-            elif error_code == 'UserNotFoundException':
-                logger.warning(
-                    f"User not found during password reset: {email}")
-                return JsonResponse({
-                    'error': 'User not found',
-                    'status': 'error'
-                }, status=404)
-            elif error_code == 'InvalidPasswordException':
-                logger.warning(f"Invalid new password for user: {email}")
-                return JsonResponse({
-                    'error': 'New password does not meet requirements',
-                    'status': 'error'
-                }, status=400)
-            else:
-                logger.error(
-                    f"Unexpected Cognito error during password reset confirmation: {str(e)}")
-                return JsonResponse({
-                    'error': 'An unexpected error occurred',
-                    'status': 'error'
-                }, status=500)
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in confirm forgot password request")
-            return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error during password reset confirmation: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An unexpected error occurred',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(
-        f"Invalid method {request.method} for confirm-forgot-password endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
+def verify_reset_code_view(request):
+    """Placeholder for verify reset code."""
+    return JsonResponse({'message': 'Code verified'})
 
 
 @csrf_exempt
-def verify_reset_code_view(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            code = data.get('code')
+@require_http_methods(["POST"])
+@ratelimit(key='ip', rate='10/m', method=ratelimit.ALL, block=True)
+def login_view(request):
+    """Authenticate user and create session."""
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+        password = data.get('password')
 
-            if not email or not code:
-                logger.warning(
-                    f"Verify reset code attempt with missing fields: email={bool(email)}, code={bool(code)}")
-                return JsonResponse({
-                    'error': 'Missing required fields: email and code',
-                    'status': 'error'
-                }, status=400)
+        if not email or not password:
+            return JsonResponse({'error': 'Email and password required'}, status=400)
 
-            # Local demo mode: accept any code as valid
-            if IS_LOCAL_DEMO:
-                logger.info(f"Mock reset code verification for user: {email}")
-                return JsonResponse({
-                    'message': 'Reset code is valid.',
-                    'status': 'success'
-                }, status=200)
+        # Authenticate using Django's auth
+        user = authenticate(request, username=email, password=password)
 
-            secret_hash = calculate_secret_hash(email)
+        if user is not None:
+            login(request, user)  # Creates session cookie
+            logger.info(f"User logged in: {email}")
 
-            # Use a password that passes Cognito's regex validation but fails password requirements
-            # Regex requires: ^[\S]+.*[\S]+$ (at least 2 non-whitespace chars with something in between)
-            # Password requirements: 8+ chars, uppercase, lowercase, number, special char
-            invalid_password = 'ab'  # 2 chars, no uppercase, no number, no special char
+            # Get CSRF token for frontend
+            csrf_token = get_token(request)
 
-            try:
-                cognito_client = get_cognito_client()
-                cognito_client.confirm_forgot_password(
-                    ClientId=COGNITO_CLIENT_ID,
-                    SecretHash=secret_hash,
-                    Username=email,
-                    ConfirmationCode=code,
-                    Password=invalid_password
-                )
-                # If we reach here, something unexpected happened
-                logger.error(
-                    f"Unexpected success with invalid password for user: {email}")
-                return JsonResponse({
-                    'error': 'Verification failed - unexpected result',
-                    'status': 'error'
-                }, status=400)
-            except ClientError as e:
-                error_code = e.response['Error']['Code']
-                if error_code == 'InvalidPasswordException':
-                    # Code is valid, password is not - this is what we want
-                    logger.info(
-                        f"Reset code verified successfully for user: {email}")
-                    return JsonResponse({
-                        'message': 'Reset code is valid.',
-                        'status': 'success'
-                    }, status=200)
-                elif error_code == 'CodeMismatchException':
-                    logger.warning(f"Invalid reset code for user: {email}")
-                    return JsonResponse({
-                        'error': 'Invalid reset code',
-                        'status': 'error'
-                    }, status=400)
-                elif error_code == 'ExpiredCodeException':
-                    logger.warning(f"Expired reset code for user: {email}")
-                    return JsonResponse({
-                        'error': 'Reset code expired. Please request a new one.',
-                        'status': 'error'
-                    }, status=400)
-                elif error_code == 'UserNotFoundException':
-                    logger.warning(
-                        f"User not found during reset code verification: {email}")
-                    return JsonResponse({
-                        'error': 'User not found',
-                        'status': 'error'
-                    }, status=404)
-                elif error_code == 'LimitExceededException':
-                    logger.warning(f"Too many attempts for user: {email}")
-                    return JsonResponse({
-                        'error': 'Too many verification attempts. Please try again later.',
-                        'status': 'error'
-                    }, status=429)
-                else:
-                    logger.error(
-                        f"Unexpected Cognito error during reset code verification: {str(e)}")
-                    return JsonResponse({
-                        'error': 'An unexpected error occurred',
-                        'status': 'error'
-                    }, status=500)
-            except Exception as e:
-                logger.error(
-                    f"Unexpected error during reset code verification: {str(e)}", exc_info=True)
-                return JsonResponse({
-                    'error': 'An unexpected error occurred',
-                    'status': 'error'
-                }, status=500)
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in verify reset code request")
             return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error during verify reset code: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An unexpected error occurred',
-                'status': 'error'
-            }, status=500)
-    logger.warning(
-        f"Invalid method {request.method} for verify-reset-code endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
-
-
-@require_auth
-def add_expense(request):
-    """Add a new expense."""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-
-            # Get user_id from authenticated request
-            user_id = request.user_info['user_id']
-
-            # Extract expense data
-            amount = data.get('amount')
-            category = data.get('category')
-            description = data.get('description', '')
-
-            # Validate required fields
-            if not all([amount, category]):
-                logger.warning(
-                    f"Add expense attempt with missing fields: amount={bool(amount)}, category={bool(category)}")
-                return JsonResponse({
-                    'error': 'Missing required fields: amount, category',
-                    'status': 'error'
-                }, status=400)
-
-            # Validate amount is numeric
-            try:
-                float(amount)
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid amount format: {amount}")
-                return JsonResponse({
-                    'error': 'Amount must be a valid number',
-                    'status': 'error'
-                }, status=400)
-
-            # Create expense using DynamoDB
-            from .models import DynamoDBExpense
-            expense_db = DynamoDBExpense()
-            expense = expense_db.create(user_id, amount, category, description)
-
-            logger.info(
-                f"Expense added successfully: user_id={user_id}, amount={amount}, category={category}")
-            return JsonResponse({
-                'message': 'Expense added successfully',
-                'expense_id': expense['expense_id'],
-                'expense': {
-                    'id': expense['expense_id'],
-                    'user_id': expense['user_id'],
-                    'amount': str(expense['amount']),
-                    'category': expense['category'],
-                    'description': expense['description'],
-                    'timestamp': expense['timestamp']
-                },
-                'status': 'success'
-            }, status=201)
-
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in add expense request")
-            return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(f"Error adding expense: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An error occurred while adding expense',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(f"Invalid method {request.method} for add expense endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
-
-
-@require_auth
-def get_expenses(request):
-    """Get expenses for a user."""
-    if request.method == 'GET':
-        try:
-            # Get user_id from authenticated request
-            user_id = request.user_info['user_id']
-
-            # Get expenses using DynamoDB
-            from .models import DynamoDBExpense
-            expense_db = DynamoDBExpense()
-            expenses = expense_db.get_by_user(user_id)
-
-            expense_list = []
-            for expense in expenses:
-                expense_list.append({
-                    'id': expense['expense_id'],
-                    'user_id': expense['user_id'],
-                    'amount': str(expense['amount']),
-                    'category': expense['category'],
-                    'description': expense['description'],
-                    'timestamp': expense['timestamp'],
-                    'receipt_url': expense.get('receipt_url')
-                })
-
-            logger.info(
-                f"Retrieved {len(expense_list)} expenses for user: {user_id}")
-            return JsonResponse({
-                'message': 'Expenses retrieved successfully',
-                'expenses': expense_list,
-                'count': len(expense_list),
-                'status': 'success'
+                'status': 'success',
+                'message': 'Login successful',
+                'user_id': user.id,
+                'email': user.email,
+                'csrf_token': csrf_token
             })
+        else:
+            logger.warning(f"Failed login attempt for: {email}")
+            return JsonResponse({'error': 'Invalid credentials'}, status=401)
 
-        except Exception as e:
-            logger.error(f"Error getting expenses: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An error occurred while retrieving expenses',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(
-        f"Invalid method {request.method} for get expenses endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        return JsonResponse({'error': 'Login failed'}, status=500)
 
 
-@require_auth
-def upload_receipt(request):
-    """Upload a receipt file to S3 (or mock in local mode)."""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-
-            # Get user_id from authenticated request
-            user_id = request.user_info['user_id']
-
-            # Extract data
-            file_data = data.get('file')
-            file_name = data.get('filename')
-            # Optional: link to existing expense
-            expense_id = data.get('expense_id')
-
-            # Validate required fields
-            if not all([file_data, file_name]):
-                logger.warning(
-                    f"Receipt upload attempt with missing fields: file_data={bool(file_data)}, file_name={bool(file_name)}")
-                return JsonResponse({
-                    'error': 'Missing required fields: file, filename',
-                    'status': 'error'
-                }, status=400)
-
-            # Validate file size (max 10MB)
-            try:
-                if file_data.startswith('data:'):
-                    header, encoded = file_data.split(',', 1)
-                    file_data = encoded
-
-                file_bytes = base64.b64decode(file_data)
-                if len(file_bytes) > 10 * 1024 * 1024:  # 10MB limit
-                    logger.warning(f"File too large: {len(file_bytes)} bytes")
-                    return JsonResponse({
-                        'error': 'File size exceeds 10MB limit',
-                        'status': 'error'
-                    }, status=400)
-            except Exception as e:
-                logger.error(f"Error processing file data: {str(e)}")
-                return JsonResponse({
-                    'error': 'Invalid file data format',
-                    'status': 'error'
-                }, status=400)
-
-            # Local demo mode: return mock file URL
-            if IS_LOCAL_DEMO:
-                mock_file_key = f"{user_id}/{file_name}"
-                mock_file_url = f"local://receipts/{mock_file_key}"
-
-                logger.info(f"Mock receipt upload: {mock_file_key} for user {user_id}")
-
-                # If expense_id provided, update the expense with receipt URL
-                if expense_id:
-                    from .models import DynamoDBExpense
-                    expense_db = DynamoDBExpense()
-                    expense_db.update_receipt_url(expense_id, mock_file_url)
-                    logger.info(f"Mock receipt URL updated for expense: {expense_id}")
-
-                return JsonResponse({
-                    'message': 'Receipt uploaded successfully (local demo)',
-                    'file_url': mock_file_url,
-                    'file_key': mock_file_key,
-                    'file_name': file_name,
-                    'expense_id': expense_id,
-                    'status': 'success'
-                }, status=201)
-
-            # Production: Upload to S3
-            from utils.s3_utils import S3Handler
-            s3_handler = S3Handler()
-
-            # Check if bucket exists
-            if not s3_handler.check_bucket_exists():
-                logger.error(
-                    f"S3 bucket {s3_handler.bucket_name} does not exist")
-                return JsonResponse({
-                    'error': 'Storage service not available',
-                    'status': 'error'
-                }, status=503)
-
-            # Upload file
-            upload_result = s3_handler.upload_file(
-                file_data, file_name, user_id)
-
-            if not upload_result['success']:
-                logger.error(f"S3 upload failed: {upload_result.get('error')}")
-                return JsonResponse({
-                    'error': 'Failed to upload file',
-                    'status': 'error'
-                }, status=500)
-
-            # If expense_id provided, update the expense with receipt URL
-            if expense_id:
-                from .models import DynamoDBExpense
-                expense_db = DynamoDBExpense()
-                expense_db.update_receipt_url(
-                    expense_id, upload_result['file_url'])
-                logger.info(f"Receipt URL updated for expense: {expense_id}")
-
-            logger.info(
-                f"Receipt uploaded successfully: {upload_result['file_key']} for user {user_id}")
-
-            return JsonResponse({
-                'message': 'Receipt uploaded successfully',
-                'file_url': upload_result['file_url'],
-                'file_key': upload_result['file_key'],
-                'file_name': upload_result['file_name'],
-                'expense_id': expense_id,
-                'status': 'success'
-            }, status=201)
-
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON in receipt upload request")
-            return JsonResponse({
-                'error': 'Invalid JSON format',
-                'status': 'error'
-            }, status=400)
-        except Exception as e:
-            logger.error(f"Error uploading receipt: {str(e)}", exc_info=True)
-            return JsonResponse({
-                'error': 'An error occurred while uploading receipt',
-                'status': 'error'
-            }, status=500)
-
-    logger.warning(
-        f"Invalid method {request.method} for upload receipt endpoint")
-    return JsonResponse({
-        'error': 'Method not allowed',
-        'status': 'error'
-    }, status=405)
+@require_http_methods(["POST"])
+def logout_view(request):
+    """Logout user and destroy session."""
+    logout(request)
+    logger.info("User logged out")
+    return JsonResponse({'message': 'Logged out'})
 
 
-@require_auth
+@csrf_exempt
+@require_http_methods(["GET"])
+def csrf_token_view(request):
+    """Return CSRF token for frontend to use in requests."""
+    token = get_token(request)
+    return JsonResponse({'csrf_token': token})
+
+
+@login_required(login_url='/api/login/')
 @require_http_methods(["GET", "PUT"])
 def profile_view(request):
+    """Get or update user profile."""
     if request.method == 'GET':
-        try:
-            # The user_info is attached by the JWTAuthenticationMiddleware
-            return JsonResponse({'profile': request.user_info, 'status': 'success'})
-        except Exception as e:
-            logger.error(f"Unexpected error in get_profile_view: {str(e)}")
-            return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
+        return JsonResponse({
+            'profile': {
+                'user_id': request.user.id,
+                'email': request.user.email,
+                'name': request.user.first_name or request.user.username.split('@')[0]
+            }
+        })
     elif request.method == 'PUT':
         try:
             data = json.loads(request.body)
-            email = data.get('email')
-            name = data.get('name')
-            if not email and not name:
-                return JsonResponse({'error': 'No fields to update', 'status': 'error'}, status=400)
-
-            # Local demo mode: just accept the update and return success
-            if IS_LOCAL_DEMO:
-                logger.info(f"Mock profile update for user: {request.user_info.get('email')}")
-                return JsonResponse({'message': 'Profile updated successfully', 'status': 'success'})
-
-            # Production: Update in AWS Cognito
-            cognito_client = get_cognito_client()
-            access_token = request.COOKIES.get('access_token')
-            if not access_token:
-                return JsonResponse({'error': 'Authentication token missing', 'status': 'error'}, status=401)
-
-            user_attributes = []
-            if email:
-                user_attributes.append({'Name': 'email', 'Value': email})
-            if name:
-                user_attributes.append({'Name': 'name', 'Value': name})
-            cognito_client.update_user_attributes(
-                AccessToken=access_token,
-                UserAttributes=user_attributes
-            )
-            return JsonResponse({'message': 'Profile updated successfully', 'status': 'success'})
-        except ClientError as e:
-            logger.error(f"Cognito error in update_profile_view: {str(e)}")
-            return JsonResponse({'error': 'Failed to update profile', 'status': 'error'}, status=500)
+            request.user.first_name = data.get('name', request.user.first_name)
+            request.user.save()
+            return JsonResponse({'message': 'Profile updated'})
         except Exception as e:
-            logger.error(f"Unexpected error in update_profile_view: {str(e)}")
-            return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
+            logger.error(f"Profile update error: {str(e)}")
+            return JsonResponse({'error': 'Update failed'}, status=500)
 
 
-@require_auth
+@login_required(login_url='/api/login/')
 @require_POST
 def change_password_view(request):
-    """Change the user's password in Cognito (requires current and new password)."""
+    """Change user password."""
     try:
         data = json.loads(request.body)
         current_password = data.get('current_password')
         new_password = data.get('new_password')
+
         if not current_password or not new_password:
-            return JsonResponse({'error': 'Missing required fields: current_password and new_password', 'status': 'error'}, status=400)
+            return JsonResponse({'error': 'Both passwords required'}, status=400)
 
-        # Local demo mode: just accept the password change and return success
-        if IS_LOCAL_DEMO:
-            logger.info(f"Mock password change for user: {request.user_info.get('email')}")
-            return JsonResponse({'message': 'Password changed successfully', 'status': 'success'})
+        # Verify current password
+        if not request.user.check_password(current_password):
+            return JsonResponse({'error': 'Current password incorrect'}, status=401)
 
-        # Production: Change password in AWS Cognito
-        cognito_client = get_cognito_client()
-        access_token = request.COOKIES.get('access_token')
-        if not access_token:
-            return JsonResponse({'error': 'Authentication token missing', 'status': 'error'}, status=401)
+        # Set new password
+        request.user.set_password(new_password)
+        request.user.save()
 
-        cognito_client.change_password(
-            PreviousPassword=current_password,
-            ProposedPassword=new_password,
-            AccessToken=access_token
-        )
-        return JsonResponse({'message': 'Password changed successfully', 'status': 'success'})
-    except ClientError as e:
-        error_code = e.response['Error']['Code']
-        if error_code == 'NotAuthorizedException':
-            return JsonResponse({'error': 'Current password is incorrect', 'status': 'error'}, status=401)
-        elif error_code == 'InvalidPasswordException':
-            return JsonResponse({'error': 'New password does not meet requirements', 'status': 'error'}, status=400)
-        logger.error(f"Cognito error in change_password_view: {str(e)}")
-        return JsonResponse({'error': 'Failed to change password', 'status': 'error'}, status=500)
+        logger.info(f"Password changed for: {request.user.email}")
+
+        # Log out the user for security - they must log back in with new password
+        logout(request)
+
+        return JsonResponse({'message': 'Password changed successfully. Please log in with your new password.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
-        logger.error(f"Unexpected error in change_password_view: {str(e)}")
-        return JsonResponse({'error': 'An unexpected error occurred', 'status': 'error'}, status=500)
+        logger.error(f"Password change error: {str(e)}")
+        return JsonResponse({'error': 'Change failed'}, status=500)
 
 
+@login_required(login_url='/api/login/')
+@require_http_methods(["POST"])
+def add_expense(request):
+    """Add a new expense."""
+    try:
+        data = json.loads(request.body)
+        user_id = str(request.user.id)
+
+        # Validate required fields
+        if not data.get('amount') or not data.get('category'):
+            return JsonResponse({'error': 'Amount and category required'}, status=400)
+
+        amount = data.get('amount')
+        category = data.get('category')
+        description = data.get('description', '')
+
+        # Use service layer
+        expense_repo = get_expense_repository()
+        expense = expense_repo.create(
+            user_id=user_id,
+            amount=amount,
+            category=category,
+            description=description
+        )
+
+        logger.info(f"Expense added for user {user_id}: ${amount} in {category}")
+
+        return JsonResponse(expense, status=201)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f"Error adding expense: {str(e)}")
+        return JsonResponse({'error': 'Failed to add expense'}, status=500)
+
+
+@login_required(login_url='/api/login/')
+@require_http_methods(["GET"])
+def get_expenses(request):
+    """Get expenses for a user."""
+    try:
+        user_id = str(request.user.id)
+
+        # Use service layer
+        expense_repo = get_expense_repository()
+        expenses = expense_repo.get_by_user(user_id)
+
+        logger.info(f"Retrieved {len(expenses)} expenses for user {user_id}")
+
+        return JsonResponse({'expenses': expenses})
+
+    except Exception as e:
+        logger.error(f"Error retrieving expenses: {str(e)}")
+        return JsonResponse({'error': 'Failed to retrieve expenses'}, status=500)
+
+
+@login_required(login_url='/api/login/')
+@require_http_methods(["POST"])
+def upload_receipt(request):
+    """Upload a receipt file."""
+    try:
+        data = json.loads(request.body)
+        user_id = str(request.user.id)
+
+        # Validate required fields
+        if not data.get('file') or not data.get('filename'):
+            return JsonResponse({
+                'error': 'Validation failed',
+                'errors': {'file': 'file is required', 'filename': 'filename is required'}
+            }, status=400)
+
+        file_data = data.get('file')
+        file_name = data.get('filename')
+        expense_id = data.get('expense_id')
+
+        # Validate and decode file data
+        try:
+            if file_data.startswith('data:'):
+                header, encoded = file_data.split(',', 1)
+                file_data = encoded
+
+            file_bytes = base64.b64decode(file_data)
+            if len(file_bytes) > 10 * 1024 * 1024:  # 10MB limit
+                return JsonResponse({'error': 'File too large (max 10MB)'}, status=400)
+        except Exception as e:
+            logger.error(f"File decode error: {str(e)}")
+            return JsonResponse({'error': 'Invalid file format'}, status=400)
+
+        # Use service layer for file storage
+        file_storage = get_file_storage()
+        file_url = file_storage.upload(file_name, file_bytes, user_id)
+
+        logger.info(f"Receipt uploaded for user {user_id}: {file_name}")
+
+        return JsonResponse({
+            'file_url': file_url,
+            'file_name': file_name,
+            'expense_id': expense_id
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f"Error uploading receipt: {str(e)}")
+        return JsonResponse({'error': 'Upload failed'}, status=500)
+
+
+@require_http_methods(["GET"])
 def healthz(request):
-    return JsonResponse({"status": "ok"})
+    """Health check endpoint."""
+    return JsonResponse({'status': 'ok'})

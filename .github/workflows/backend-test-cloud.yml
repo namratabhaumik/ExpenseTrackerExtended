@@ -1,0 +1,15 @@
+name: Backend Tests - Cloud
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-cloud:
+    uses: ./.github/workflows/backend-common.yml
+    with:
+      settings_module: expense_tracker.settings.cloud
+      requirements_file: requirements.txt
