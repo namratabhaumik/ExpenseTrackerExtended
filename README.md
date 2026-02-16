@@ -50,23 +50,20 @@ npm start
 
 ---
 
-### Cloud Deployment (Production)
+### Cloud Deployment (Archived)
 
-Deploy to production using AWS, GCP, and Firebase:
+Cloud deployment files are archived in the [archive/](./archive/) folder (Dockerfile, entrypoint.sh, cloud scripts).
+
+To deploy to production using GCP Cloud Run with AWS services:
 
 **Services:**
 - **Frontend**: Firebase Hosting
 - **Backend**: GCP Cloud Run
-- **Database**: Supabase PostgreSQL
+- **Database**: Cloud SQL (PostgreSQL)
 - **Authentication**: AWS Cognito
 - **File Storage**: AWS S3
 
-**Deployment steps:**
-1. Configure AWS credentials (Cognito, S3, DynamoDB)
-2. Set up Supabase PostgreSQL database
-3. Push code to `master` or `main` branch
-4. GitHub Actions CI/CD will deploy automatically to Cloud Run
-5. Set environment variables in Cloud Run settings
+**Note:** Cloud deployment is not currently active. All development focuses on local mode with SQLite.
 
 ---
 
@@ -76,15 +73,17 @@ Deploy to production using AWS, GCP, and Firebase:
 ExpenseTrackerExtended/
 ├── expense-tracker-backend/     # Django API
 │   ├── expense_tracker/         # Django project
-│   │   ├── auth_app/           # Authentication & expenses API
-│   │   └── settings.py          # Django configuration
-│   ├── requirements.txt         # Python dependencies
-│   └── scripts/                # Setup and utility scripts
+│   │   ├── auth_app/           # Authentication & expenses API (shared)
+│   │   ├── local_app/          # Local implementations
+│   │   ├── cloud_app/          # Cloud implementations
+│   │   └── settings/           # Django configuration (base, local, cloud)
+│   └── requirements.txt         # Python dependencies
 ├── expense-tracker-frontend/    # React app
 │   ├── src/                    # React components
 │   ├── package.json            # Node dependencies
 │   └── public/                 # Static files
-├── sample-receipts/            # Sample receipt files for testing
+├── sample-receipts/            # Receipt generator for testing
+├── archive/                    # Cloud-specific files (Dockerfile, scripts, etc.)
 └── README.md                   # This file
 ```
 
@@ -105,9 +104,15 @@ Refer docs available in the [docs/](./docs/) folder
 
 ## Sample Receipts
 
-Sample receipts to upload available in [sample-receipts/](./sample-receipts/)
+Generate random text-based receipts for testing in [sample-receipts/](./sample-receipts/)
 
-You can also run the `receipt-generator.py` script to create additional sample receipt files for testing.
+Run the generator to create a random receipt:
+```bash
+cd sample-receipts
+python3 receipt-generator.py
+```
+
+Copy the output and paste it in the app's receipt upload field.
 
 ## License
 
