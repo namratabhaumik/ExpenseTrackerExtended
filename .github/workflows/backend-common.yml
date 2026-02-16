@@ -1,0 +1,70 @@
+name: Backend Common Tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      settings_module:
+        required: true
+        type: string
+        description: "Django settings module (e.g., expense_tracker.settings.local)"
+      requirements_file:
+        required: true
+        type: string
+        description: "Requirements file (e.g., requirements-local.txt)"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd expense-tracker-backend
+          python -m pip install --upgrade pip
+          pip install -r ${{ inputs.requirements_file }}
+
+      - name: Django system checks
+        run: |
+          cd expense-tracker-backend/expense_tracker
+          python manage.py check
+        env:
+          DJANGO_SECRET_KEY: test-secret-key
+          DJANGO_SETTINGS_MODULE: ${{ inputs.settings_module }}
+          AWS_ACCESS_KEY_ID: test-key
+          AWS_SECRET_ACCESS_KEY: test-secret
+          AWS_REGION: us-east-1
+          COGNITO_USER_POOL_ID: test-pool
+          COGNITO_CLIENT_ID: test-client
+          COGNITO_CLIENT_SECRET: test-secret
+          DYNAMODB_TABLE_NAME: test-table
+          S3_BUCKET_NAME: test-bucket
+
+      - name: Run tests
+        run: |
+          cd expense-tracker-backend/expense_tracker
+          python -m pytest -v --tb=short
+        env:
+          DJANGO_SECRET_KEY: test-secret-key
+          DJANGO_SETTINGS_MODULE: ${{ inputs.settings_module }}
+          AWS_ACCESS_KEY_ID: test-key
+          AWS_SECRET_ACCESS_KEY: test-secret
+          AWS_REGION: us-east-1
+          COGNITO_USER_POOL_ID: test-pool
+          COGNITO_CLIENT_ID: test-client
+          COGNITO_CLIENT_SECRET: test-secret
+          DYNAMODB_TABLE_NAME: test-table
+          S3_BUCKET_NAME: test-bucket

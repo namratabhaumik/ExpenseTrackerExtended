@@ -2,18 +2,12 @@
 Local/Demo Authentication Module
 Uses mock authentication for local development without AWS Cognito.
 """
-import os
-import json
-import uuid
 import base64
+import json
 from datetime import datetime
-from django.http import JsonResponse
 
 # Store for local users (in-memory for demo purposes)
 LOCAL_USERS_DB = {}
-
-# Enable local demo mode
-IS_LOCAL_DEMO = os.environ.get('LOCAL_DEMO', 'false').lower() == 'true'
 
 
 def create_mock_tokens(email):
