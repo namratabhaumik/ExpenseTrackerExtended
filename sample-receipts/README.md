@@ -1,64 +1,71 @@
-# Sample Receipts for Demo Testing
+# Sample Receipts Generator
 
-This folder contains sample receipt files for testing the receipt upload functionality in the Expense Tracker app.
+Utility for generating random text-based receipts for testing the receipt upload functionality in the Expense Tracker app.
 
-## Files Included
+## Files
 
-1. **coffee-receipt.txt** - Coffee shop receipt (Starbucks-style)
-2. **grocery-receipt.txt** - Supermarket receipt (Whole Foods-style)
-3. **restaurant-receipt.txt** - Restaurant bill (fancy restaurant-style)
-4. **gas-receipt.txt** - Gas station receipt (Shell-style)
-5. **movie-receipt.txt** - Movie theater receipt (Cinemark-style)
-6. **receipt-generator.py** - Python script to generate receipt data URIs
+- **receipt-generator.py** - Generates a random receipt each time you run it
 
-## How to Use in Demo
+## Usage
 
-### Option 1: Upload Text Receipts (Quickest)
-
-1. In the app, click **"Add Expense"**
-2. Fill in the details (amount, category, description)
-3. Click **"Upload Receipt"**
-4. Open one of the `.txt` files in this folder
-5. Copy the entire content
-6. Paste it in the upload field
-7. Submit
-
-### Option 2: Create Receipt Images from Text
-
-If you want image files, use the helper script:
+Generate a random receipt and print to stdout:
 
 ```bash
-cd sample-receipts
 python3 receipt-generator.py
 ```
 
-This will create PNG images from the text receipts.
+Example output:
+```
+==================================================
+          Whole Foods Market
+        (Grocery Store)
+==================================================
 
-### Option 3: Take Screenshots (Most Realistic)
+Date: 02/10/2026
+Time: 03:45 PM
+Location: Store #4521
 
-1. Open a real receipt in your phone/computer
-2. Take a screenshot
-3. Upload the screenshot in the app
+--------------------------------------------------
+ITEMS:
+--------------------------------------------------
+Organic Coffee Beans       x2 $   25.98
+Fresh Vegetables           x1 $    8.50
+Bread                      x3 $    8.97
+--------------------------------------------------
+SUBTOTAL                           $   43.45
+TAX (8%)                           $    3.48
+==================================================
+TOTAL                              $   46.93
+==================================================
 
-## Quick Demo Script
+Thank you for your purchase!
+Please come again.
+```
 
-Want to quickly demo all upload scenarios? Here's a workflow:
+## How to Use for Testing
 
-1. **Lunch Expense** - Amount: $13.31, Category: Food
-2. **Grocery Shopping** - Amount: $84.00, Category: Groceries
-3. **Dinner** - Amount: $148.15, Category: Dining
-4. **Gas** - Amount: $57.53, Category: Transportation
-5. **Entertainment** - Amount: $87.89, Category: Entertainment
+### Quick Upload
 
-Upload the corresponding receipt for each to show the full feature.
+1. Run the generator: `python3 receipt-generator.py`
+2. Copy the output
+3. In the app, click **"Add Expense"** → **"Upload Receipt"**
+4. Paste the receipt text
+5. Submit
+
+### Save to File
+
+```bash
+python3 receipt-generator.py > receipt.txt
+```
 
 ## Notes
 
-- In **local demo mode**, uploaded receipts return fake URLs (`local://receipts/...`)
-- The receipt files are stored locally in this folder
-- No actual files are uploaded to cloud storage
-- Perfect for testing the upload UI/UX without cloud infrastructure
+- Each run generates a different random receipt with realistic data
+- Receipts include various merchants (groceries, restaurants, pharmacies, etc.)
+- Items and amounts are randomized
+- Tax calculated at 8%
+- Perfect for testing without actual images
 
 ---
 
-**Happy Demo Recording!**
+**Ready to test!**

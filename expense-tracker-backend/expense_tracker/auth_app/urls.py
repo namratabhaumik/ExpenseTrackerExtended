@@ -1,19 +1,24 @@
 from django.urls import path
+
 from . import views
 from .views import (
-    login_view,
-    signup_view,
-    confirm_signup_view,
-    forgot_password_view,
-    confirm_forgot_password_view,
-    verify_reset_code_view,
-    profile_view,
     change_password_view,
+    confirm_forgot_password_view,
+    confirm_signup_view,
+    csrf_token_view,
+    forgot_password_view,
+    login_view,
+    logout_view,
+    profile_view,
+    signup_view,
+    verify_reset_code_view,
 )
 
 urlpatterns = [
     path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
     path('signup/', signup_view, name='signup'),
+    path('csrf-token/', csrf_token_view, name='csrf_token'),
     path('confirm-signup/', confirm_signup_view, name='confirm_signup'),
     path('forgot-password/', forgot_password_view, name='forgot_password'),
     path('confirm-forgot-password/', confirm_forgot_password_view,

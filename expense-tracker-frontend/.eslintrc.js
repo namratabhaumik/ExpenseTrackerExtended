@@ -36,7 +36,7 @@ module.exports = {
     semi: ["error", "always"],
     quotes: ["error", "single"],
     indent: ["error", 2],
-    "max-len": ["warn", { code: 100 }],
+    "max-len": "off",
     "testing-library/no-unnecessary-act": "off", // Disable false positive warnings
   },
   settings: {
