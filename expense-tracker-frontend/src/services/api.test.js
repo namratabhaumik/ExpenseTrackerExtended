@@ -66,20 +66,37 @@ describe('api helpers', () => {
 
   test('apiPostFormData sends FormData body and returns data', async () => {
     let callCount = 0;
-    global.fetch = jest.fn().mockImplementation((_url, opts) => {
+    global.fetch = jest.fn().mockImplementation((url, opts) => {
       callCount += 1;
-      // First call is for CSRF token fetch
-      if (callCount === 1) {
+      // First call: ensureCSRFTokenCookie() - GET /api/csrf-token/
+      if (callCount === 1 && url.includes('/csrf-token/')) {
         return Promise.resolve({
           ok: true,
           json: async () => ({ csrf_token: 'test-token' }),
         });
       }
-      // Second call is the actual POST request
-      expect(opts.method).toBe('POST');
-      // should have CSRF token in headers
-      expect(opts.headers).toEqual({ 'X-CSRFToken': 'test-token' });
-      return Promise.resolve({ ok: true, json: async () => ({ ok: true }) });
+      // Second call: fallback fetchCSRFToken() - GET /api/csrf-token/ (since cookie reading fails in test)
+      if (callCount === 2 && url.includes('/csrf-token/')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ csrf_token: 'test-token' }),
+        });
+      }
+      // Third call is the actual POST request
+      if (callCount === 3 && url.includes('/upload')) {
+        expect(opts.method).toBe('POST');
+        // should have CSRF token in headers
+        expect(opts.headers).toEqual({ 'X-CSRFToken': 'test-token' });
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ ok: true }),
+        });
+      }
+      // Default fallback
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({}),
+      });
     });
 
     const fd = new FormData();
