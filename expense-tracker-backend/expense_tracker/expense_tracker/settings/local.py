@@ -4,10 +4,10 @@ Local development settings for expense_tracker.
 Used for local development with SQLite, local authentication, and local file storage.
 """
 
-from .base import *
+from .base import BASE_DIR, INSTALLED_APPS as BASE_INSTALLED_APPS
 
 # Add local app for local development implementations
-INSTALLED_APPS.append('local_app')
+INSTALLED_APPS = [*BASE_INSTALLED_APPS, 'local_app']
 
 # DEBUG mode for development
 DEBUG = True
