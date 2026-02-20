@@ -2,6 +2,8 @@
 
 Guide for deploying the Expense Tracker to production using AWS, GCP, and Firebase.
 
+**Note:** Cloud mode uses **AWS Cognito** for authentication, while local development mode uses **Django sessions with CSRF protection**. See [AUTH_FLOW.md](./AUTH_FLOW.md) for a comparison of both authentication mechanisms.
+
 ## Cloud Mode Architecture
 
 ```

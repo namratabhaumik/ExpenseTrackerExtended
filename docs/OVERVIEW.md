@@ -43,7 +43,7 @@ The Expense Tracker supports two deployment modes with identical functionality.
 | **Frontend** | React (localhost:3000) | Firebase Hosting |
 | **Backend** | Django (localhost:8000) | GCP Cloud Run |
 | **Database** | SQLite | PostgreSQL (Supabase) |
-| **Auth** | Mock JWT | AWS Cognito |
+| **Auth** | Django Sessions + CSRF | AWS Cognito |
 | **Storage** | Mock URLs | AWS S3 |
 
 ## Data Flow

@@ -16,7 +16,8 @@
 │  ┌──────────────────────────────┐  │
 │  │  python manage.py runserver  │  │
 │  │  Django (Port 8000)          │  │
-│  │  - local_auth.py (mock JWT)  │  │
+│  │  - Django Sessions (Auth)    │  │
+│  │  - CSRF Protection           │  │
 │  │  - Database operations       │  │
 │  └──────┬───────────────────────┘  │
 │         │                           │
@@ -62,16 +63,33 @@ npm start
 ```
 User enters email/password
     ↓
-Backend accepts any credentials
+POST /api/login/ with credentials
     ↓
-Generate mock JWT token (base64)
+Backend creates Django session
     ↓
-Set HttpOnly cookie
+Set sessionid cookie (HttpOnly, SameSite=Lax)
+    ↓
+Return CSRF token (csrftoken cookie)
     ↓
 User authenticated
+    ↓
+All subsequent requests include:
+- sessionid cookie (automatic)
+- X-CSRFToken header (for mutations)
 ```
 
-Any email/password combination works for testing.
+**How it works:**
+- Any email/password combination works for testing
+- Django creates a session in the database
+- Session ID stored in secure HTTP-only cookie
+- CSRF token prevents cross-site request forgery
+- Uses Django's built-in session management
+
+**Making authenticated requests:**
+1. Frontend automatically sends sessionid cookie with each request
+2. Frontend includes X-CSRFToken header for POST/PUT/DELETE
+3. Backend validates session and CSRF token
+4. User is authenticated for duration of session
 
 ## Database
 
