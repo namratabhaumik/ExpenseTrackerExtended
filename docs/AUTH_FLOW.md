@@ -4,7 +4,7 @@ Detailed documentation of authentication mechanisms in both local and cloud mode
 
 ## Login Flow
 
-### Local Mode
+### Local Mode (Django Sessions)
 
 ```
 User (Frontend)
@@ -27,49 +27,44 @@ POST /api/login/
     ↓
 Backend (views.py - login_view)
     ├─ IS_LOCAL_DEMO = true
-    ├─ Call local_auth.local_login()
+    ├─ Create Django User if needed
+    ├─ Authenticate with Django auth
+    ├─ Create session via login()
     │
     ↓
-local_auth.py
-    ├─ Accept any credentials
-    ├─ Create mock user_id: "demo_test_com"
-    ├─ Create JWT payload:
-    │  {
-    │    "sub": "demo@test.com",
-    │    "iat": 1707417600,
-    │    "exp": 1707504000
-    │  }
-    ├─ Encode as base64
+Django SessionBackend
+    ├─ Create session in database
+    ├─ Generate session key
+    ├─ Return session data
     │
     ↓
 Backend Response
-    ├─ Set HttpOnly cookie:
-    │  ├─ access_token = base64(payload)
+    ├─ Set sessionid cookie:
+    │  ├─ value = session_key (32-char random)
     │  ├─ httponly = True
-    │  ├─ secure = False (local)
+    │  ├─ secure = False (local dev)
     │  ├─ samesite = Lax
-    │  └─ max_age = 86400 (24 hours)
+    │  └─ max_age = 1209600 (14 days)
     │
     ├─ Return JSON:
     │  {
-    │    "message": "Login successful",
-    │    "id_token": "...",
-    │    "refresh_token": "...",
-    │    "status": "success"
+    │    "status": "success",
+    │    "email": "demo@test.com",
+    │    "csrf_token": "xyz123..."
     │  }
     │
     ↓
 Frontend
-    ├─ Store refresh_token in localStorage
-    ├─ Receive access_token in cookie (automatic)
+    ├─ Store csrf_token in memory (clearable)
+    ├─ Receive sessionid cookie (automatic)
     ├─ Redirect to dashboard
     │
     ↓
 Authenticated
-    └─ Ready for API calls with access_token cookie
+    └─ Ready for API calls with session cookie
 ```
 
-### Cloud Mode
+### Cloud Mode (AWS Cognito)
 
 ```
 User (Frontend)
@@ -93,17 +88,10 @@ POST /api/login/
 Backend (views.py - login_view)
     ├─ IS_LOCAL_DEMO = false
     ├─ Calculate secret_hash (HMAC-SHA256)
-    ├─ Call AWS Cognito
+    ├─ Call AWS Cognito initiate_auth()
     │
     ↓
 AWS Cognito
-    ├─ initiate_auth() with:
-    │  ├─ AuthFlow: USER_PASSWORD_AUTH
-    │  ├─ ClientId: COGNITO_CLIENT_ID
-    │  ├─ Username: user@example.com
-    │  ├─ Password: SecurePassword123!
-    │  └─ SECRET_HASH: calculated_hash
-    │
     ├─ Verify credentials in user pool
     ├─ Generate JWT tokens:
     │  ├─ id_token (contains user claims)
@@ -112,8 +100,7 @@ AWS Cognito
     │
     ↓
 Backend Response
-    ├─ Set HttpOnly cookie:
-    │  ├─ access_token = Cognito_AccessToken
+    ├─ Set access_token cookie:
     │  ├─ httponly = True
     │  ├─ secure = True (HTTPS only)
     │  ├─ samesite = None
@@ -121,16 +108,16 @@ Backend Response
     │
     ├─ Return JSON:
     │  {
-    │    "message": "Login successful",
+    │    "status": "success",
+    │    "email": "user@example.com",
     │    "id_token": "cognito_id_token",
-    │    "refresh_token": "cognito_refresh_token",
-    │    "status": "success"
+    │    "csrf_token": "xyz123..."
     │  }
     │
     ↓
 Frontend
     ├─ Store refresh_token in localStorage
-    ├─ Receive access_token in cookie
+    ├─ Receive access_token cookie
     ├─ Redirect to dashboard
     │
     ↓
@@ -140,7 +127,7 @@ Authenticated
 
 ## Signup Flow
 
-### Local Mode
+### Local Mode (Django Session)
 
 ```
 User (Frontend)
@@ -163,15 +150,16 @@ POST /api/signup/
     ↓
 Backend (signup_view)
     ├─ IS_LOCAL_DEMO = true
-    ├─ Call local_auth.local_signup()
-    ├─ Validate email format
-    ├─ Accept signup
+    ├─ Create Django User
+    ├─ Hash password with Django's password hasher
+    ├─ Save to database
+    ├─ User auto-confirmed in local mode
     │
     ↓
 Response
     {
-        "message": "Sign up successful! You can now log in.",
-        "status": "success"
+        "status": "success",
+        "message": "Sign up successful! You can now log in."
     }
     │
     ↓
@@ -181,9 +169,10 @@ Frontend
     │
     ↓
 Ready to Login
+    └─ User can now login with new credentials
 ```
 
-### Cloud Mode
+### Cloud Mode (AWS Cognito)
 
 ```
 User (Frontend)
@@ -219,8 +208,8 @@ AWS Cognito
     ↓
 Backend Response
     {
-        "message": "Sign up successful! Check your email for confirmation code.",
-        "status": "success"
+        "status": "success",
+        "message": "Sign up successful! Check your email for confirmation code."
     }
     │
     ↓
@@ -230,42 +219,35 @@ Frontend
     │
     ↓
 Awaiting Email Confirmation
+    └─ User must verify email before login
 ```
 
-## Token Validation
+## Request Authentication
 
-### On Protected API Calls
+### Local Mode (Django Session)
 
 ```
 Client sends request to protected endpoint
     │
-    ├─ Headers: Authorization: Bearer token
-    │  OR
-    ├─ Cookies: access_token=...
+    ├─ Cookies: sessionid=xyz123...
+    ├─ Headers: X-CSRFToken: csrf_token_value
     │
     ↓
-Middleware (JWTAuthenticationMiddleware)
-    ├─ Extract token from header or cookie
+Django SessionMiddleware
+    ├─ Extract sessionid from cookie
+    ├─ Look up session in database
+    ├─ Load session data
     │
-    ├─ [LOCAL MODE]                  vs.    [CLOUD MODE]
-    │
-    ├─ Decode base64                      ├─ Call Cognito get_user()
-    ├─ Verify JWT structure              ├─ Validate token signature
-    ├─ Extract user_email                ├─ Check expiration
-    │                                     ├─ Get user attributes
-    │
-    ↓                                       ↓
-    │
-    Set request.user_info = {
-        'user_id': 'email_based_id',
-        'email': 'user@example.com',
-        'name': 'user'
-    }
+    ↓
+Django CsrfViewMiddleware
+    ├─ Extract X-CSRFToken header
+    ├─ Compare with CSRF token in session
+    ├─ Verify they match
     │
     ↓
 View Function
-    ├─ Access request.user_info
-    ├─ Verify user owns requested resource
+    ├─ request.user is authenticated
+    ├─ request.user.email contains user email
     ├─ Process request
     │
     ↓
@@ -273,86 +255,79 @@ Response
     └─ Return data for authenticated user
 ```
 
-## Token Refresh
-
-### Local Mode
+### Cloud Mode (Cognito)
 
 ```
-Access Token Expired (24 hours)
+Client sends request to protected endpoint
+    │
+    ├─ Headers: Authorization: Bearer access_token
+    │  OR
+    ├─ Cookies: access_token=cognito_token
     │
     ↓
-Frontend checks response status
-    ├─ If 401 Unauthorized
-    ├─ Use refresh_token from localStorage
+Backend Auth Handler
+    ├─ Extract token from header or cookie
+    ├─ Call Cognito get_user()
+    ├─ Validate token signature
+    ├─ Check expiration
+    ├─ Get user attributes
     │
     ↓
-POST /api/refresh-token/
-    {
-        "refresh_token": "stored_refresh_token"
-    }
-    │
-    ↓
-Backend
-    ├─ IS_LOCAL_DEMO = true
-    ├─ Decode refresh_token
-    ├─ Validate expiration
-    ├─ Generate new access_token
+View Function
+    ├─ request.user_info contains user data
+    ├─ request.user_info['email'] = user email
+    ├─ Process request
     │
     ↓
 Response
-    {
-        "access_token": "new_access_token"
-    }
-    │
-    ↓
-Frontend
-    ├─ Update cookie with new access_token
-    ├─ Retry original request
-    │
-    ↓
-Request Succeeds
+    └─ Return data for authenticated user
 ```
 
-### Cloud Mode
+## CSRF Protection (Local Mode)
 
 ```
-Access Token Expired (1 hour)
-    │
+1. Get CSRF Token
     ↓
-Frontend checks response status
-    ├─ If 401 Unauthorized
-    ├─ Use refresh_token from localStorage
-    │
+    GET /api/csrf-token/
     ↓
-POST /api/refresh-token/
+    Django sets csrftoken cookie
+    ↓
+    Frontend reads cookie via JavaScript
+
+2. Use CSRF Token
+    ↓
+    POST /api/login/
     {
-        "refresh_token": "cognito_refresh_token"
+        "email": "test@example.com",
+        "password": "password"
     }
-    │
+    Headers: X-CSRFToken: value_from_cookie
     ↓
-Backend
-    ├─ IS_LOCAL_DEMO = false
-    ├─ Call Cognito initiate_auth()
-    ├─ AuthFlow: REFRESH_TOKEN_AUTH
-    ├─ Use refresh_token
-    │
+    Django validates token matches
+
+3. Token Rotation
     ↓
-AWS Cognito
-    ├─ Validate refresh_token
-    ├─ Issue new access_token and id_token
-    │
+    After login, CSRF token is cleared
     ↓
-Backend
-    ├─ Set new access_token in cookie
-    ├─ Return new tokens
-    │
+    Frontend must fetch new token
     ↓
-Frontend
-    ├─ Update stored tokens
-    ├─ Retry original request
-    │
-    ↓
-Request Succeeds
+    GET /api/csrf-token/ again
+```
+
+## Session Persistence (Local Mode)
+
+Sessions are stored in Django's session database:
+- **Location**: `django_session` table in SQLite
+- **Duration**: 14 days (configurable)
+- **Auto-cleanup**: Django cleans expired sessions periodically
+
+Session data structure:
+```json
+{
+  "session_key": "32_character_random_string",
+  "session_data": "encoded_session_dict",
+  "expire_date": "2026-03-05 19:52:00"
+}
 ```
 
 ## Logout Flow
@@ -362,25 +337,23 @@ User clicks Logout button
     │
     ↓
 Frontend
-    ├─ Clear localStorage (refresh_token)
-    ├─ Clear cookies
+    ├─ Clear stored CSRF token
+    ├─ Clear localStorage/sessionStorage
     ├─ POST /api/logout/
     │
     ↓
 Backend
-    ├─ Clear session (if used)
+    ├─ [LOCAL MODE]                 vs.    [CLOUD MODE]
     │
-    ├─ [LOCAL MODE]           vs.    [CLOUD MODE]
+    ├─ Call Django logout()             ├─ Call Cognito admin_user_global_sign_out()
+    │  (deletes session)                ├─ Invalidate all tokens
     │
-    ├─ Nothing to invalidate         ├─ Call Cognito admin_user_global_sign_out()
-    │  (tokens expire anyway)        ├─ Invalidate all tokens
-    │
-    ↓                                  ↓
+    ↓                                     ↓
     │
 Response
     {
-        "message": "Logged out successfully",
-        "status": "success"
+        "status": "success",
+        "message": "Logged out successfully"
     }
     │
     ↓
@@ -400,42 +373,63 @@ Logged Out
 ```
 Invalid Credentials
     ↓
-[Local Mode]              [Cloud Mode]
-├─ Always accept         ├─ Cognito returns
-├─ Return tokens         │  NotAuthorizedException
-                         ├─ Backend returns 401
-                         └─ Frontend shows error message
+[Local Mode]                [Cloud Mode]
+├─ Check Django user       ├─ Cognito returns
+├─ Verify password hash    │  NotAuthorizedException
+├─ Return 401 error        ├─ Backend returns 401
+├─ Message: "Invalid       └─ Frontend shows
+│  credentials"              error message
 
-Missing Token
+Missing Session/Token
     ↓
-Frontend sends request without token
+Frontend sends request without authentication
     │
     ↓
-Middleware checks
-    │
-    ├─ No token found
-    │
-    ↓
-Return 401 Unauthorized
+[Local Mode]                [Cloud Mode]
+├─ No sessionid cookie     ├─ No bearer token
+├─ Return 401              ├─ Return 401
     │
     ↓
 Frontend
     ├─ Redirect to login
     ├─ Clear stored auth data
 
-Expired Token
+Expired Session/Token
     ↓
-Token.exp < current_time
+[Local Mode]                [Cloud Mode]
+├─ Session expired         ├─ Token expired
+├─ Return 401              ├─ Frontend uses refresh_token
+├─ User must re-login      ├─ If refresh fails, redirect to login
+```
+
+## Password Change
+
+```
+User changes password (Profile > Change Password)
     │
     ↓
-Middleware rejects
+POST /api/change-password/
+    {
+        "current_password": "old_pass",
+        "new_password": "new_pass"
+    }
     │
     ↓
-Return 401 Unauthorized
+Backend
+    ├─ Verify current password
+    ├─ Update password in database
+    ├─ [LOCAL MODE ONLY] Force logout:
+    │  ├─ Delete current session
+    │  ├─ Return 401 response
     │
     ↓
 Frontend
-    ├─ Try to refresh with refresh_token
-    ├─ If refresh fails, redirect to login
+    ├─ Receives 401 response
+    ├─ Auto-logout happens
+    ├─ Clear CSRF token
+    ├─ Redirect to login page
+    ├─ Show "Password changed, please login again"
+    │
+    ↓
+User must login with new password
 ```
-
