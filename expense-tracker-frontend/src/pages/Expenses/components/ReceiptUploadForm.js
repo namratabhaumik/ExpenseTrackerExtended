@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ClipLoader } from 'react-spinners';
 import { showSuccessToast, showErrorToast } from '../../../utils/toast';
-import { apiPost, APIError } from '../../../services/api';
+import { apiPost } from '../../../services/api';
 
-function ReceiptUploadForm() {
+function ReceiptUploadForm({ hasExpenses = false, defaultExpenseId = '' }) {
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptFilename, setReceiptFilename] = useState('');
-  const [receiptExpenseId, setReceiptExpenseId] = useState('');
+  const [receiptExpenseId, setReceiptExpenseId] = useState(defaultExpenseId);
   const [receiptStatus, setReceiptStatus] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Update the expense ID when a new expense is added
+  useEffect(() => {
+    if (defaultExpenseId) {
+      setReceiptExpenseId(defaultExpenseId);
+    }
+  }, [defaultExpenseId]);
 
   const handleReceiptFileChange = (e) => {
     setReceiptFile(e.target.files[0]);
@@ -86,7 +93,7 @@ function ReceiptUploadForm() {
           type="file"
           accept="image/*,.pdf"
           onChange={handleReceiptFileChange}
-          disabled={loading}
+          disabled={loading || !hasExpenses}
         />
         <input
           type="text"
@@ -125,6 +132,9 @@ function ReceiptUploadForm() {
   );
 }
 
-ReceiptUploadForm.propTypes = {};
+ReceiptUploadForm.propTypes = {
+  hasExpenses: PropTypes.bool,
+  defaultExpenseId: PropTypes.string,
+};
 
 export default ReceiptUploadForm;

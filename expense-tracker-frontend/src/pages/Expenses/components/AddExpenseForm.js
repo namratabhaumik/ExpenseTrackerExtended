@@ -22,9 +22,10 @@ function AddExpenseForm({ onSuccess, setDashboardRefreshFlag }) {
     setAddError('');
     setLoading(true);
     try {
-      await apiPost('/api/expenses/', form);
+      const response = await apiPost('/api/expenses/', form);
+      const expenseId = response.id || response.expense_id;
       setForm({ amount: '', category: '', description: '' });
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(expenseId);
       if (setDashboardRefreshFlag) setDashboardRefreshFlag((f) => f + 1);
       showSuccessToast('Expense added successfully!', {
         position: 'top-right',

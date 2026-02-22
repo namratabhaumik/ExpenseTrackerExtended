@@ -34,22 +34,23 @@ def get_dynamodb_table():
 
 
 class DynamoDBExpenseRepository(ExpenseRepository):
-    """Expense storage using AWS DynamoDB."""
+    """Expense storage using AWS DynamoDB with integer user_id interface."""
 
     def __init__(self):
         self.table = get_dynamodb_table()
 
     def create(
-        self, user_id: str, amount: float, category: str, description: str = ''
+        self, user_id: int, amount: float, category: str, description: str = ''
     ) -> Dict:
-        """Create a new expense in DynamoDB."""
+        """Create a new expense in DynamoDB, converting user_id to string for storage."""
         try:
             expense_id = str(uuid.uuid4())
             timestamp = datetime.utcnow().isoformat()
+            user_id_str = str(user_id)
 
             item = {
                 'expense_id': expense_id,
-                'user_id': user_id,
+                'user_id': user_id_str,
                 'amount': Decimal(str(amount)),
                 'category': category,
                 'description': description,
@@ -74,18 +75,21 @@ class DynamoDBExpenseRepository(ExpenseRepository):
             logger.error(f'Error creating expense: {str(e)}', exc_info=True)
             raise
 
-    def get_by_user(self, user_id: str) -> List[Dict]:
-        """Get all expenses for a user from DynamoDB."""
+    def get_by_user(self, user_id: int) -> List[Dict]:
+        """Get all expenses for a user from DynamoDB, converting user_id to string for query."""
         try:
+            user_id_str = str(user_id)
             response = self.table.scan(
                 FilterExpression='user_id = :user_id',
-                ExpressionAttributeValues={':user_id': user_id},
+                ExpressionAttributeValues={':user_id': user_id_str},
             )
 
             expenses = []
             for item in response.get('Items', []):
                 # Convert Decimal to float for JSON serialization
                 item['amount'] = float(item['amount'])
+                # Ensure user_id is returned as integer
+                item['user_id'] = int(item['user_id'])
                 expenses.append(item)
 
             logger.info(f'Retrieved {len(expenses)} expenses for user: {user_id}')
@@ -103,6 +107,8 @@ class DynamoDBExpenseRepository(ExpenseRepository):
             item = response.get('Item')
             if item:
                 item['amount'] = float(item['amount'])
+                # Ensure user_id is returned as integer
+                item['user_id'] = int(item['user_id'])
                 logger.info(f'Retrieved expense: {expense_id}')
                 return item
 
@@ -130,20 +136,21 @@ class DynamoDBExpenseRepository(ExpenseRepository):
 
     def add_expense_with_receipt(
         self,
-        user_id: str,
+        user_id: int,
         amount: float,
         category: str,
         description: str = '',
         receipt_url: Optional[str] = None,
     ) -> Dict:
-        """Create a new expense with optional receipt URL."""
+        """Create a new expense with optional receipt URL, converting user_id to string for storage."""
         try:
             expense_id = str(uuid.uuid4())
             timestamp = datetime.utcnow().isoformat()
+            user_id_str = str(user_id)
 
             item = {
                 'expense_id': expense_id,
-                'user_id': user_id,
+                'user_id': user_id_str,
                 'amount': Decimal(str(amount)),
                 'category': category,
                 'description': description,

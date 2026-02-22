@@ -208,8 +208,14 @@ class DynamoDBExpense:
 
 
 class Expense(models.Model):
-    """Legacy Django model - deprecated in favor of DynamoDB."""
-    user_id = models.CharField(max_length=255)
+    """Expense model with proper User relationship for SQLite storage."""
+    user = models.ForeignKey(
+        'auth.User',
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='expenses',
+        help_text='User who created this expense'
+    )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
@@ -221,4 +227,5 @@ class Expense(models.Model):
         ordering = ['-timestamp']
 
     def __str__(self):
-        return f"{self.user_id} - {self.amount} - {self.category}"
+        user_display = self.user.email if self.user else "No User"
+        return f"{user_display} - {self.amount} - {self.category}"

@@ -7,8 +7,8 @@ A fully functional expense tracker application built with Django backend and Rea
 - **Backend**: Django REST API
 - **Frontend**: React with Tailwind CSS
 - **Database**: SQLite (local) or PostgreSQL via Supabase (cloud)
-- **Authentication**: Mock auth (local) or AWS Cognito (cloud)
-- **File Storage**: Mock uploads (local) or AWS S3 (cloud)
+- **Authentication**: Django sessions with CSRF protection (local) or AWS Cognito (cloud)
+- **File Storage**: Mock URLs (local) or AWS S3 (cloud)
 
 ## Demo
 

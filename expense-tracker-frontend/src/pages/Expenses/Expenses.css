@@ -67,6 +67,15 @@
   outline: none;
 }
 
+.expenses-form input:disabled,
+.expenses-receipt-form input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .expenses-form button,
 .expenses-receipt-form button {
   background: #10b981;
@@ -82,6 +91,19 @@
 .expenses-form button:hover,
 .expenses-receipt-form button:hover {
   background: #14b8a6;
+}
+
+.expenses-form button:disabled,
+.expenses-receipt-form button:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.expenses-form button:disabled:hover,
+.expenses-receipt-form button:disabled:hover {
+  background: #d1d5db;
 }
 
 .expenses-status {
