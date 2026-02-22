@@ -33,7 +33,7 @@ def migrate_user_ids_to_foreign_key(apps, schema_editor):
             expense.delete()
             deleted_count += 1
 
-    print(f"\nMigration summary:")
+    print("\nMigration summary:")
     print(f"  Migrated: {migrated_count} expenses to User ForeignKey")
     print(f"  Deleted: {deleted_count} orphaned expenses")
 

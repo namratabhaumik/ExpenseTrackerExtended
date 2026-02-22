@@ -2,10 +2,9 @@
 
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
-from django.contrib.sessions.models import Session
 from django.test import TestCase
 
-from auth_app.admin import ExpenseAdmin, CustomUserAdmin, SessionAdmin
+from auth_app.admin import ExpenseAdmin, CustomUserAdmin
 from auth_app.models import Expense
 
 
@@ -186,11 +185,6 @@ class ExpenseAdminTest(TestCase):
 
     def test_expense_ordering(self):
         """Test that expenses are ordered correctly"""
-        older_expense = Expense.objects.create(
-            user=self.user,
-            amount=10.00,
-            category='Food'
-        )
         newer_expense = Expense.objects.create(
             user=self.user,
             amount=20.00,

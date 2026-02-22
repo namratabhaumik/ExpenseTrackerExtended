@@ -2,13 +2,9 @@
 
 import base64
 import json
-import os
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch
 
 from django.contrib.auth.models import User
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from ..implementations.local_auth_service import LocalAuthService
 from ..implementations.local_file_storage import LocalFileStorage
